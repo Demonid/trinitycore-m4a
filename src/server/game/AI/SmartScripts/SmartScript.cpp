@@ -51,7 +51,6 @@ SmartScript::SmartScript()
     mTemplate = SMARTAI_TEMPLATE_BASIC;
     meOrigGUID = 0;
     goOrigGUID = 0;
-    mResumeActionList = true;
     mLastInvoker = 0;
 }
 
@@ -78,22 +77,6 @@ void SmartScript::OnReset()
 
 void SmartScript::ProcessEventsFor(SMART_EVENT e, Unit* unit, uint32 var0, uint32 var1, bool bvar, const SpellInfo* spell, GameObject* gob)
 {
-    if (e == SMART_EVENT_AGGRO)
-    {
-        if (!mResumeActionList)
-            mTimedActionList.clear();//clear action list if it is not resumable
-        else
-        {
-            for (SmartAIEventList::iterator itr = mTimedActionList.begin(); itr != mTimedActionList.end(); ++itr)
-            {
-                if (itr->enableTimed)
-                {
-                    InitTimer((*itr));//re-init the currently enabled timer, so it restarts the timer when resumed
-                    break;
-                }
-            }
-        }
-    }
     for (SmartAIEventList::iterator i = mEvents.begin(); i != mEvents.end(); ++i)
     {
         SMART_EVENT eventType = SMART_EVENT((*i).GetEventType());
@@ -1797,6 +1780,20 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
             // TODO: Resume path when reached jump location
             break;
         }
+        case SMART_ACTION_GO_SET_LOOT_STATE:
+        {
+            ObjectList* targets = GetTargets(e, unit);
+            
+            if (!targets)
+                return;
+                
+            for (ObjectList::const_iterator itr = targets->begin(); itr != targets->end(); ++itr)
+                if (IsGameObject(*itr))
+                    (*itr)->ToGameObject()->SetLootState((LootState)e.action.setGoLootState.state);
+
+            delete targets;
+            break;
+        }
         case SMART_ACTION_SEND_GOSSIP_MENU:
         {
             if (!GetBaseObject())
@@ -2619,6 +2616,13 @@ void SmartScript::ProcessEvent(SmartScriptHolder& e, Unit* unit, uint32 var0, ui
             ProcessAction(e, NULL, var0);
             break;
         }
+        case SMART_EVENT_GO_STATE_CHANGED:
+        {
+            if (e.event.goStateChanged.state != var0)
+                return;
+            ProcessAction(e, unit, var0, var1);
+            break;
+        }
         default:
             sLog->outErrorDb("SmartScript::ProcessEvent: Unhandled Event type %u", e.GetEventType());
             break;
@@ -3017,7 +3021,6 @@ void SmartScript::SetScript9(SmartScriptHolder& e, uint32 entry)
             i->event.type = SMART_EVENT_UPDATE_IC;
         else if (e.action.timedActionList.timerType > 1)
             i->event.type = SMART_EVENT_UPDATE;
-        mResumeActionList = e.action.timedActionList.dontResume ? false : true;
         InitTimer((*i));
     }
 }
