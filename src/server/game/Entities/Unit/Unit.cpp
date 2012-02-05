@@ -516,6 +516,24 @@ bool Unit::HasAuraTypeWithFamilyFlags(AuraType auraType, uint32 familyName, uint
     return false;
 }
 
+bool Unit::HasBreakableByDamageAuraType(AuraType type) const
+{
+    AuraEffectList const& auras = GetAuraEffectsByType(type);
+    for (AuraEffectList::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+        if ((*itr)->GetSpellInfo()->Attributes & SPELL_ATTR0_BREAKABLE_BY_DAMAGE || (*itr)->GetSpellInfo()->AuraInterruptFlags & AURA_INTERRUPT_FLAG_TAKE_DAMAGE)
+            return true;
+    return false;
+}
+
+bool Unit::HasBreakableByDamageCrowdControlAura() const
+{
+    return (   HasBreakableByDamageAuraType(SPELL_AURA_MOD_CONFUSE)
+            || HasBreakableByDamageAuraType(SPELL_AURA_MOD_FEAR)
+            || HasBreakableByDamageAuraType(SPELL_AURA_MOD_STUN)
+            || HasBreakableByDamageAuraType(SPELL_AURA_MOD_ROOT)
+            || HasBreakableByDamageAuraType(SPELL_AURA_TRANSFORM));
+}
+
 void Unit::DealDamageMods(Unit* victim, uint32 &damage, uint32* absorb)
 {
     if (!victim || !victim->isAlive() || victim->HasUnitState(UNIT_STATE_IN_FLIGHT) || (victim->GetTypeId() == TYPEID_UNIT && victim->ToCreature()->IsInEvadeMode()))
@@ -3334,19 +3352,19 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
         return;
 
     bool remove = false;
-    for (AuraMap::iterator i = m_ownedAuras.begin(); i != m_ownedAuras.end(); ++i)
+    for (AuraApplicationMap::iterator i = m_appliedAuras.begin(); i != m_appliedAuras.end(); ++i)
     {
         if (remove)
         {
             remove = false;
-            i = m_ownedAuras.begin();
+            i = m_appliedAuras.begin();
         }
 
-        if (aura->CanStackWith(i->second))
+        if (aura->CanStackWith(i->second->GetBase()))
             continue;
 
-        RemoveOwnedAura(i, AURA_REMOVE_BY_DEFAULT);
-        if (i == m_ownedAuras.end())
+        RemoveAura(i, AURA_REMOVE_BY_DEFAULT);
+        if (i == m_appliedAuras.end())
             break;
         remove = true;
     }
