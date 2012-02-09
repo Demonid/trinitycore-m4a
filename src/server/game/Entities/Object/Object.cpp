@@ -1812,11 +1812,15 @@ bool WorldObject::CanDetectStealthOf(WorldObject const* obj) const
 
         // Level difference: 5 point / level, starting from level 1.
         // There may be spells for this and the starting points too, but
-        //   not in the DBCs of the client.
+        // not in the DBCs of the client.
         detectionValue += int32(getLevelForTarget(obj) - 1) * 5;
 
         // Apply modifiers
         detectionValue += m_stealthDetect.GetValue(StealthType(i));
+        if (obj->isType(TYPEMASK_GAMEOBJECT))
+            if (Unit* owner = ((GameObject*)obj)->GetOwner())
+                detectionValue -= int32(owner->getLevelForTarget(this) - 1) * 5;
+
         detectionValue -= obj->m_stealth.GetValue(StealthType(i));
 
         // Calculate max distance
@@ -2463,7 +2467,7 @@ namespace Trinity
 
                 float x, y, z;
 
-                if (!c->isAlive() || c->HasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED) ||
+                if (!c->isAlive() || c->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED | UNIT_STATE_DISTRACTED) ||
                     !c->GetMotionMaster()->GetDestination(x, y, z))
                 {
                     x = c->GetPositionX();
