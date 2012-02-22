@@ -468,6 +468,11 @@ void SpellScript::PreventHitAura()
         m_spell->m_spellAura->Remove();
 }
 
+void SpellScript::GetSummonPosition(uint32 i, Position &pos, float radius = 0.0f, uint32 count = 0)
+{
+    m_spell->GetSummonPosition(i, pos, radius, count);
+}
+
 void SpellScript::PreventHitEffect(SpellEffIndex effIndex)
 {
     if (!IsInHitPhase() && !IsInEffectHook())

@@ -1394,7 +1394,6 @@ class Unit : public WorldObject
         bool IsNeutralToAll() const;
         bool IsInPartyWith(Unit const* unit) const;
         bool IsInRaidWith(Unit const* unit) const;
-        bool IsTargetMatchingCheck(Unit const* target, SpellTargetSelectionCheckTypes check) const;
         void GetPartyMemberInDist(std::list<Unit*> &units, float dist);
         void GetPartyMembers(std::list<Unit*> &units);
         void GetRaidMember(std::list<Unit*> &units, float dist);
@@ -2008,7 +2007,8 @@ class Unit : public WorldObject
         uint32 BuildAuraStateUpdateForTarget(Unit* target) const;
         bool HasAuraState(AuraStateType flag, SpellInfo const* spellProto = NULL, Unit const* Caster = NULL) const ;
         void UnsummonAllTotems();
-        Unit* SelectMagnetTarget(Unit* victim, SpellInfo const* spellInfo = NULL);
+        Unit* GetMagicHitRedirectTarget(Unit* victim, SpellInfo const* spellInfo);
+        Unit* GetMeleeHitRedirectTarget(Unit* victim, SpellInfo const* spellInfo = NULL);
         int32 SpellBaseDamageBonus(SpellSchoolMask schoolMask);
         int32 SpellBaseHealingBonus(SpellSchoolMask schoolMask);
         int32 SpellBaseDamageBonusForVictim(SpellSchoolMask schoolMask, Unit* pVictim);
