@@ -99,7 +99,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    sLog->outDetail("WORLD: CMSG_USE_ITEM packet, bagIndex: %u, slot: %u, castCount: %u, spellId: %u, Item: %u, glyphIndex: %u, data length = %i", bagIndex, slot, castCount, spellId, pItem->GetEntry(), glyphIndex, (uint32)recvPacket.size());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_USE_ITEM packet, bagIndex: %u, slot: %u, castCount: %u, spellId: %u, Item: %u, glyphIndex: %u, data length = %i", bagIndex, slot, castCount, spellId, pItem->GetEntry(), glyphIndex, (uint32)recvPacket.size());
 
     ItemTemplate const* proto = pItem->GetTemplate();
     if (!proto)
@@ -175,7 +175,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
 
 void WorldSession::HandleOpenItemOpcode(WorldPacket& recvPacket)
 {
-    sLog->outDetail("WORLD: CMSG_OPEN_ITEM packet, data length = %i", (uint32)recvPacket.size());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_OPEN_ITEM packet, data length = %i", (uint32)recvPacket.size());
 
     Player* pUser = _player;
 
@@ -650,12 +650,24 @@ void WorldSession::HandleUpdateProjectilePosition(WorldPacket& recvPacket)
     uint8 castCount;
     float x, y, z;    // Position of missile hit
 
-    recvPacket.readPackGUID(casterGuid);
+    recvPacket >> casterGuid;
     recvPacket >> spellId;
     recvPacket >> castCount;
     recvPacket >> x;
     recvPacket >> y;
     recvPacket >> z;
+
+    Unit* caster = ObjectAccessor::GetUnit(*_player, casterGuid);
+    if (!caster)
+        return;
+
+    Spell* spell = caster->FindCurrentSpellBySpellId(spellId);
+    if (!spell || !spell->m_targets.HasDst())
+        return;
+
+    Position pos = *spell->m_targets.GetDstPos();
+    pos.Relocate(x, y, z);
+    spell->m_targets.ModDst(pos);
 
     WorldPacket data(SMSG_SET_PROJECTILE_POSITION, 21);
     data << uint64(casterGuid);
@@ -663,5 +675,5 @@ void WorldSession::HandleUpdateProjectilePosition(WorldPacket& recvPacket)
     data << float(x);
     data << float(y);
     data << float(z);
-    SendPacket(&data);
+    caster->SendMessageToSet(&data, true);
 }

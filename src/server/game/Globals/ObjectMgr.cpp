@@ -2111,9 +2111,9 @@ void ObjectMgr::LoadItemTemplates()
     //                                            118             119             120             121             122            123              124            125
                                              "TotemCategory, socketColor_1, socketContent_1, socketColor_2, socketContent_2, socketColor_3, socketContent_3, socketBonus, "
     //                                            126                 127                     128            129            130            131         132         133
-                                             "GemProperties, RequiredDisenchantSkill, ArmorDamageModifier, Duration, ItemLimitCategory, HolidayId, ScriptName, DisenchantID, "
+                                             "GemProperties, RequiredDisenchantSkill, ArmorDamageModifier, duration, ItemLimitCategory, HolidayId, ScriptName, DisenchantID, "
     //                                           134        135            136
-                                             "FoodType, minMoneyLoot, maxMoneyLoot FROM item_template");
+                                             "FoodType, minMoneyLoot, maxMoneyLoot, flagsCustom FROM item_template");
 
     if (!result)
     {
@@ -2230,7 +2230,7 @@ void ObjectMgr::LoadItemTemplates()
         itemTemplate.GemProperties           = fields[126].GetUInt32();
         itemTemplate.RequiredDisenchantSkill = uint32(fields[127].GetInt16());
         itemTemplate.ArmorDamageModifier     = fields[128].GetFloat();
-        itemTemplate.Duration                = fields[129].GetInt32();
+        itemTemplate.Duration                = fields[129].GetUInt32();
         itemTemplate.ItemLimitCategory       = uint32(fields[130].GetInt16());
         itemTemplate.HolidayId               = fields[131].GetUInt32();
         itemTemplate.ScriptId                = sObjectMgr->GetScriptId(fields[132].GetCString());
@@ -2238,6 +2238,7 @@ void ObjectMgr::LoadItemTemplates()
         itemTemplate.FoodType                = uint32(fields[134].GetUInt8());
         itemTemplate.MinMoneyLoot            = fields[135].GetUInt32();
         itemTemplate.MaxMoneyLoot            = fields[136].GetUInt32();
+        itemTemplate.FlagsCu                 = fields[137].GetUInt32();
 
         // Checks
 
@@ -2645,6 +2646,12 @@ void ObjectMgr::LoadItemTemplates()
             itemTemplate.HolidayId = 0;
         }
 
+        if (itemTemplate.FlagsCu & ITEM_FLAGS_CU_DURATION_REAL_TIME && !itemTemplate.Duration)
+        {
+            sLog->outErrorDb("Item (Entry %u) has flag ITEM_FLAGS_CU_DURATION_REAL_TIME but it does not have duration limit", entry);
+            itemTemplate.FlagsCu &= ~ITEM_FLAGS_CU_DURATION_REAL_TIME;
+        }
+
         ++count;
     }
     while (result->NextRow());
@@ -2731,7 +2738,7 @@ void ObjectMgr::LoadItemSetNames()
             if (setEntry->itemId[i])
                 itemSetItems.insert(setEntry->itemId[i]);
     }
-    
+
     //                                                  0        1            2
     QueryResult result = WorldDatabase.Query("SELECT `entry`, `name`, `InventoryType` FROM `item_set_names`");
 
@@ -6247,74 +6254,54 @@ uint32 ObjectMgr::GenerateLowGuid(HighGuid guidhigh)
     switch (guidhigh)
     {
         case HIGHGUID_ITEM:
-            if (_hiItemGuid >= 0xFFFFFFFE)
-            {
-                sLog->outError("Item guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
+        {
+            ASSERT(_hiItemGuid < 0xFFFFFFFE && "Item guid overflow!");
             return _hiItemGuid++;
+        }
         case HIGHGUID_UNIT:
-            if (_hiCreatureGuid >= 0x00FFFFFE)
-            {
-                sLog->outError("Creature guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
+        {
+            ASSERT(_hiCreatureGuid < 0x00FFFFFE && "Creature guid overflow!");
             return _hiCreatureGuid++;
+        }
         case HIGHGUID_PET:
-            if (_hiPetGuid >= 0x00FFFFFE)
-            {
-                sLog->outError("Pet guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
+        {
+            ASSERT(_hiPetGuid < 0x00FFFFFE && "Pet guid overflow!");
             return _hiPetGuid++;
+        }
         case HIGHGUID_VEHICLE:
-            if (_hiVehicleGuid >= 0x00FFFFFF)
-            {
-                sLog->outError("Vehicle guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
+        {
+            ASSERT(_hiVehicleGuid < 0x00FFFFFF && "Vehicle guid overflow!");
             return _hiVehicleGuid++;
+        }
         case HIGHGUID_PLAYER:
-            if (_hiCharGuid >= 0xFFFFFFFE)
-            {
-                sLog->outError("Players guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
+        {
+            ASSERT(_hiCharGuid < 0xFFFFFFFE && "Player guid overflow!");
             return _hiCharGuid++;
+        }
         case HIGHGUID_GAMEOBJECT:
-            if (_hiGoGuid >= 0x00FFFFFE)
-            {
-                sLog->outError("Gameobject guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
+        {
+            ASSERT(_hiGoGuid < 0x00FFFFFE && "Gameobject guid overflow!");
             return _hiGoGuid++;
+        }
         case HIGHGUID_CORPSE:
-            if (_hiCorpseGuid >= 0xFFFFFFFE)
-            {
-                sLog->outError("Corpse guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
+        {
+            ASSERT(_hiCorpseGuid < 0xFFFFFFFE && "Corpse guid overflow!");
             return _hiCorpseGuid++;
+        }
         case HIGHGUID_DYNAMICOBJECT:
-            if (_hiDoGuid >= 0xFFFFFFFE)
-            {
-                sLog->outError("DynamicObject guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
+        {
+            ASSERT(_hiDoGuid < 0xFFFFFFFE && "DynamicObject guid overflow!");
             return _hiDoGuid++;
+        }
         case HIGHGUID_MO_TRANSPORT:
-            if (_hiMoTransGuid >= 0xFFFFFFFE)
-            {
-                sLog->outError("MO Transport guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
+        {
+            ASSERT(_hiMoTransGuid < 0xFFFFFFFE && "MO Transport guid overflow!");
             return _hiMoTransGuid++;
+        }
         default:
-            ASSERT(0);
+            ASSERT(false && "ObjectMgr::GenerateLowGuid - Unknown HIGHGUID type");
+            return 0;
     }
-
-    ASSERT(0);
-    return 0;
 }
 
 void ObjectMgr::LoadGameObjectLocales()
