@@ -35,8 +35,7 @@ void MapManager::LoadTransports()
 
     if (!result)
     {
-        sLog->outInfo(LOG_FILTER_TRANSPORTS, ">> Loaded 0 transports. DB table `transports` is empty!");
-
+        sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded 0 transports. DB table `transports` is empty!");
         return;
     }
 
@@ -66,7 +65,7 @@ void MapManager::LoadTransports()
             continue;
         }
 
-        // sLog->outInfo(LOG_FILTER_TRANSPORTS, "Loading transport %d between %s, %s", entry, name.c_str(), goinfo->name);
+        // sLog->outInfo(LOG_FILTER_SERVER_LOADING, "Loading transport %d between %s, %s", entry, name.c_str(), goinfo->name);
 
         std::set<uint32> mapsUsed;
 
@@ -121,8 +120,7 @@ void MapManager::LoadTransports()
         while (result->NextRow());
     }
 
-    sLog->outInfo(LOG_FILTER_TRANSPORTS, ">> Loaded %u transports in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
-
+    sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded %u transports in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
 void MapManager::LoadTransportNPCs()
@@ -134,8 +132,7 @@ void MapManager::LoadTransportNPCs()
 
     if (!result)
     {
-        sLog->outInfo(LOG_FILTER_TRANSPORTS, ">> Loaded 0 transport NPCs. DB table `creature_transport` is empty!");
-
+        sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded 0 transport NPCs. DB table `creature_transport` is empty!");
         return;
     }
 
@@ -166,8 +163,7 @@ void MapManager::LoadTransportNPCs()
     }
     while (result->NextRow());
 
-    sLog->outInfo(LOG_FILTER_TRANSPORTS, ">> Loaded %u transport npcs in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
-
+    sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded %u transport npcs in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
 Transport::Transport(uint32 period, uint32 script) : GameObject(), m_pathTime(0), m_timer(0),
@@ -708,17 +704,15 @@ void Transport::UpdateNPCPositions()
     }
 }
 
-//! This method transforms supplied transport offsets into global coordinates
 void Transport::CalculatePassengerPosition(float& x, float& y, float& z, float& o)
 {
     float inx = x, iny = y, inz = z, ino = o;
     o = GetOrientation() + ino;
-    x = GetPositionX() + (inx * cos(GetOrientation()) + iny * sin(GetOrientation() + M_PI));
-    y = GetPositionY() + (iny * cos(GetOrientation()) + inx * sin(GetOrientation()));
+    x = GetPositionX() + inx * cos(GetOrientation()) - iny * sin(GetOrientation());
+    y = GetPositionY() + iny * cos(GetOrientation()) + inx * sin(GetOrientation());
     z = GetPositionZ() + inz;
 }
 
-//! This method transforms supplied global coordinates into local offsets
 void Transport::CalculatePassengerOffset(float& x, float& y, float& z, float& o)
 {
     o -= GetOrientation();
@@ -726,6 +720,6 @@ void Transport::CalculatePassengerOffset(float& x, float& y, float& z, float& o)
     y -= GetPositionY();    // y = searchedY * cos(o) + searchedX * sin(o)
     x -= GetPositionX();    // x = searchedX * cos(o) + searchedY * sin(o + pi)
     float inx = x, iny = y;
-    y = (iny - inx * tan(GetOrientation())) / (cos(GetOrientation()) - sin(GetOrientation() + M_PI) * tan(GetOrientation()));
-    x = (inx - iny * sin(GetOrientation() + M_PI) / cos(GetOrientation())) / (cos(GetOrientation()) - tan(GetOrientation()) * sin(GetOrientation() + M_PI));
+    y = (iny - inx * tan(GetOrientation())) / (cos(GetOrientation()) + sin(GetOrientation()) * tan(GetOrientation()));
+    x = (inx + iny * tan(GetOrientation())) / (cos(GetOrientation()) + sin(GetOrientation()) * tan(GetOrientation()));
 }

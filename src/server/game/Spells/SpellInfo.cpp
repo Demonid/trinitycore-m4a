@@ -361,7 +361,7 @@ bool SpellEffectInfo::IsAura() const
 
 bool SpellEffectInfo::IsAura(AuraType aura) const
 {
-    return IsAura() && ApplyAuraName == aura;
+    return IsAura() && ApplyAuraName == uint32(aura);
 }
 
 bool SpellEffectInfo::IsTargetingArea() const
@@ -1020,7 +1020,7 @@ bool SpellInfo::IsPassiveStackableWithRanks() const
 
 bool SpellInfo::IsMultiSlotAura() const
 {
-    return IsPassive() || Id == 44413;
+    return IsPassive() || Id == 40075 || Id == 44413; // No other way to make 40075 have more than 1 copy of aura
 }
 
 bool SpellInfo::IsDeathPersistent() const
@@ -1127,10 +1127,6 @@ bool SpellInfo::CanPierceImmuneAura(SpellInfo const* aura) const
 
 bool SpellInfo::CanDispelAura(SpellInfo const* aura) const
 {
-    // These auras (like ressurection sickness) can't be dispelled
-    if (aura->Attributes & SPELL_ATTR0_NEGATIVE_1)
-        return false;
-
     // These spells (like Mass Dispel) can dispell all auras
     if (Attributes & SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY)
         return true;
@@ -2205,14 +2201,15 @@ bool SpellInfo::_IsPositiveEffect(uint8 effIndex, bool deep) const
         case SPELLFAMILY_GENERIC:
             switch (Id)
             {
+                case 29214: // Wrath of the Plaguebringer
                 case 34700: // Allergic Reaction
+                case 54836: // Wrath of the Plaguebringer
                 case 61987: // Avenging Wrath Marker
                 case 61988: // Divine Shield exclude aura
-                case 62532: // Conservator's Grip
                     return false;
+                case 30877: // Tag Murloc
                 case 61716: // Rabbit Costume
                 case 61734: // Noblegarden Bunny
-                case 30877: // Tag Murloc
                 case 62344: // Fists of Stone
                     return true;
                 default:
@@ -2298,6 +2295,8 @@ bool SpellInfo::_IsPositiveEffect(uint8 effIndex, bool deep) const
         case SPELL_EFFECT_HEAL_PCT:
         case SPELL_EFFECT_ENERGIZE_PCT:
             return true;
+        case SPELL_EFFECT_APPLY_AREA_AURA_ENEMY:
+            return false;
 
             // non-positive aura use
         case SPELL_EFFECT_APPLY_AURA:

@@ -128,7 +128,7 @@ enum eScriptFlags
     SF_PLAYSOUND_DISTANCE_SOUND = 0x2,
 
     // Orientation flags
-    SF_ORIENTATION_FACE_TARGET  = 0x1,
+    SF_ORIENTATION_FACE_TARGET  = 0x1
 };
 
 struct ScriptInfo
@@ -536,7 +536,7 @@ enum SkillRangeType
     SKILL_RANGE_LEVEL,                                      // 1..max skill for level
     SKILL_RANGE_MONO,                                       // 1..1, grey monolite bar
     SKILL_RANGE_RANK,                                       // 1..skill for known rank
-    SKILL_RANGE_NONE,                                       // 0..0 always
+    SKILL_RANGE_NONE                                        // 0..0 always
 };
 
 SkillRangeType GetSkillRangeType(SkillLineEntry const* pSkill, bool racial);
@@ -561,7 +561,7 @@ LanguageDesc const* GetLanguageDescByID(uint32 lang);
 enum EncounterCreditType
 {
     ENCOUNTER_CREDIT_KILL_CREATURE  = 0,
-    ENCOUNTER_CREDIT_CAST_SPELL     = 1,
+    ENCOUNTER_CREDIT_CAST_SPELL     = 1
 };
 
 struct DungeonEncounter
@@ -787,13 +787,13 @@ class ObjectMgr
         void LoadQuests();
         void LoadQuestRelations()
         {
-            sLog->outInfo(LOG_FILTER_GENERAL, "Loading GO Start Quest Data...");
+            sLog->outInfo(LOG_FILTER_SERVER_LOADING, "Loading GO Start Quest Data...");
             LoadGameobjectQuestRelations();
-            sLog->outInfo(LOG_FILTER_GENERAL, "Loading GO End Quest Data...");
+            sLog->outInfo(LOG_FILTER_SERVER_LOADING, "Loading GO End Quest Data...");
             LoadGameobjectInvolvedRelations();
-            sLog->outInfo(LOG_FILTER_GENERAL, "Loading Creature Start Quest Data...");
+            sLog->outInfo(LOG_FILTER_SERVER_LOADING, "Loading Creature Start Quest Data...");
             LoadCreatureQuestRelations();
-            sLog->outInfo(LOG_FILTER_GENERAL, "Loading Creature End Quest Data...");
+            sLog->outInfo(LOG_FILTER_SERVER_LOADING, "Loading Creature End Quest Data...");
             LoadCreatureInvolvedRelations();
         }
         void LoadGameobjectQuestRelations();
@@ -1285,7 +1285,7 @@ class ObjectMgr
             CREATURE_TO_CREATURE,
             CREATURE_TO_GO,         // Creature is dependant on GO
             GO_TO_GO,
-            GO_TO_CREATURE,         // GO is dependant on creature
+            GO_TO_CREATURE          // GO is dependant on creature
         };
 };
 
