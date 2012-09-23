@@ -2001,8 +2001,8 @@ void ObjectMgr::LoadItemTemplates()
 {
     uint32 oldMSTime = getMSTime();
 
-    //                                                 0      1       2       3     4        5        6       7          8         9        10        11           12
-    QueryResult result = WorldDatabase.Query("SELECT entry, class, subclass, unk0, name, displayid, Quality, Flags, FlagsExtra, BuyCount, BuyPrice, SellPrice, InventoryType, "
+    //                                                 0      1       2               3              4        5        6       7          8         9        10        11           12
+    QueryResult result = WorldDatabase.Query("SELECT entry, class, subclass, SoundOverrideSubclass, name, displayid, Quality, Flags, FlagsExtra, BuyCount, BuyPrice, SellPrice, InventoryType, "
     //                                              13              14           15          16             17               18                19              20
                                              "AllowableClass, AllowableRace, ItemLevel, RequiredLevel, RequiredSkill, RequiredSkillRank, requiredspell, requiredhonorrank, "
     //                                              21                      22                       23               24        25          26             27           28
@@ -2055,7 +2055,7 @@ void ObjectMgr::LoadItemTemplates()
         itemTemplate.ItemId                    = entry;
         itemTemplate.Class                     = uint32(fields[1].GetUInt8());
         itemTemplate.SubClass                  = uint32(fields[2].GetUInt8());
-        itemTemplate.Unk0                      = fields[3].GetInt32();
+        itemTemplate.SoundOverrideSubclass     = int32(fields[3].GetInt8());
         itemTemplate.Name1                     = fields[4].GetString();
         itemTemplate.DisplayInfoID             = fields[5].GetUInt32();
         itemTemplate.Quality                   = uint32(fields[6].GetUInt8());
@@ -2171,11 +2171,11 @@ void ObjectMgr::LoadItemTemplates()
                     itemTemplate.Class = dbcitem->Class;
             }
 
-            if (itemTemplate.Unk0 != dbcitem->Unk0)
+            if (itemTemplate.SoundOverrideSubclass != dbcitem->SoundOverrideSubclass)
             {
-                sLog->outError(LOG_FILTER_SQL, "Item (Entry: %u) does not have a correct Unk0 (%i), must be %i .", entry, itemTemplate.Unk0, dbcitem->Unk0);
+                sLog->outError(LOG_FILTER_SQL, "Item (Entry: %u) does not have a correct SoundOverrideSubclass (%i), must be %i .", entry, itemTemplate.SoundOverrideSubclass, dbcitem->SoundOverrideSubclass);
                 if (enforceDBCAttributes)
-                    itemTemplate.Unk0 = dbcitem->Unk0;
+                    itemTemplate.SoundOverrideSubclass = dbcitem->SoundOverrideSubclass;
             }
             if (itemTemplate.Material != dbcitem->Material)
             {
@@ -5606,8 +5606,8 @@ WorldSafeLocsEntry const* ObjectMgr::GetDefaultGraveYard(uint32 team)
 {
     enum DefaultGraveyard
     {
-        HORDE_GRAVEYARD = 10, // Crossroads
-        ALLIANCE_GRAVEYARD = 4, // Westfall
+        HORDE_GRAVEYARD    = 10, // Crossroads
+        ALLIANCE_GRAVEYARD = 4   // Westfall
     };
 
     if (team == HORDE)
@@ -7301,6 +7301,11 @@ uint8 ObjectMgr::CheckPlayerName(const std::string& name, bool create)
     if (!isValidString(wname, strictMask, false, create))
         return CHAR_NAME_MIXED_LANGUAGES;
 
+    wstrToLower(wname);
+    for (size_t i = 2; i < wname.size(); ++i)
+        if (wname[i] == wname[i-1] && wname[i] == wname[i-2])
+            return CHAR_NAME_THREE_CONSECUTIVE;
+
     return CHAR_NAME_SUCCESS;
 }
 
@@ -7901,8 +7906,6 @@ void ObjectMgr::LoadTrainerSpell()
 
     // For reload case
     _cacheTrainerSpellStore.clear();
-
-    std::set<uint32> skip_trainers;
 
     QueryResult result = WorldDatabase.Query("SELECT b.entry, a.spell, a.spellcost, a.reqskill, a.reqskillvalue, a.reqlevel FROM npc_trainer AS a "
                                              "INNER JOIN npc_trainer AS b ON a.entry = -(b.spell) "

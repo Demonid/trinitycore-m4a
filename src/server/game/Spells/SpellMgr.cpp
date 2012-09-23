@@ -74,6 +74,9 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellInfo const* spellproto,
             // Pet charge effects (Infernal Awakening, Demon Charge)
             if (spellproto->SpellVisual[0] == 2816 && spellproto->SpellIconID == 15)
                 return DIMINISHING_CONTROLLED_STUN;
+            // Frost Tomb
+            else if (spellproto->Id == 48400)
+                return DIMINISHING_NONE;
             // Gnaw
             else if (spellproto->Id == 47481)
                 return DIMINISHING_CONTROLLED_STUN;
@@ -1135,7 +1138,7 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
         case 68719: // Oil Refinery - Isle of Conquest.
         case 68720: // Quarry - Isle of Conquest.
         {
-            if (player->GetBattlegroundTypeId() != BATTLEGROUND_IC || !player->GetBattleground())
+            if (!player || player->GetBattlegroundTypeId() != BATTLEGROUND_IC || !player->GetBattleground())
                 return false;
 
             uint8 nodeType = spellId == 68719 ? NODE_TYPE_REFINERY : NODE_TYPE_QUARRY;
@@ -2986,6 +2989,16 @@ void SpellMgr::LoadDbcDataCorrections()
 
         switch (spellInfo->Id)
         {
+            case 42730: 
+                spellInfo->EffectTriggerSpell[EFFECT_1] = 42739;
+                break;
+            case 59735:
+                spellInfo->EffectTriggerSpell[EFFECT_1] = 59736;
+                break;
+            case 52611: // Summon Skeletons
+            case 52612: // Summon Skeletons
+                spellInfo->EffectMiscValueB[0] = 64;
+                break;
             case 40244: // Simon Game Visual
             case 40245: // Simon Game Visual
             case 40246: // Simon Game Visual
@@ -3425,6 +3438,9 @@ void SpellMgr::LoadDbcDataCorrections()
                 break;
             case 71159: // Awaken Plagued Zombies
                 spellInfo->DurationIndex = 21;
+                break;
+            case 70530: // Volatile Ooze Beam Protection (Professor Putricide)
+                spellInfo->Effect[0] = SPELL_EFFECT_APPLY_AURA; // for an unknown reason this was SPELL_EFFECT_APPLY_AREA_AURA_RAID
                 break;
             // THIS IS HERE BECAUSE COOLDOWN ON CREATURE PROCS IS NOT IMPLEMENTED
             case 71604: // Mutated Strength (Professor Putricide)

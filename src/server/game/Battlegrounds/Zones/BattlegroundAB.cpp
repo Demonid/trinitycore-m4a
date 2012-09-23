@@ -210,24 +210,24 @@ void BattlegroundAB::RemovePlayer(Player* /*player*/, uint64 /*guid*/, uint32 /*
 
 }
 
-void BattlegroundAB::HandleAreaTrigger(Player* Source, uint32 Trigger)
+void BattlegroundAB::HandleAreaTrigger(Player* player, uint32 trigger)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
-    switch (Trigger)
+    switch (trigger)
     {
         case 3948:                                          // Arathi Basin Alliance Exit.
-            if (Source->GetTeam() != ALLIANCE)
-                Source->GetSession()->SendAreaTriggerMessage("Only The Alliance can use that portal");
+            if (player->GetTeam() != ALLIANCE)
+                player->GetSession()->SendAreaTriggerMessage("Only The Alliance can use that portal");
             else
-                Source->LeaveBattleground();
+                player->LeaveBattleground();
             break;
         case 3949:                                          // Arathi Basin Horde Exit.
-            if (Source->GetTeam() != HORDE)
-                Source->GetSession()->SendAreaTriggerMessage("Only The Horde can use that portal");
+            if (player->GetTeam() != HORDE)
+                player->GetSession()->SendAreaTriggerMessage("Only The Horde can use that portal");
             else
-                Source->LeaveBattleground();
+                player->LeaveBattleground();
             break;
         case 3866:                                          // Stables
         case 3869:                                          // Gold Mine
@@ -238,8 +238,7 @@ void BattlegroundAB::HandleAreaTrigger(Player* Source, uint32 Trigger)
         case 4021:                                          // Unk2
             //break;
         default:
-            //sLog->outError(LOG_FILTER_BATTLEGROUND, "WARNING: Unhandled AreaTrigger in Battleground: %u", Trigger);
-            //Source->GetSession()->SendAreaTriggerMessage("Warning: Unhandled AreaTrigger in Battleground: %u", Trigger);
+            Battleground::HandleAreaTrigger(player, trigger);
             break;
     }
 }
@@ -371,9 +370,10 @@ void BattlegroundAB::_NodeOccupied(uint8 node, Team team)
 
     if (node >= BG_AB_DYNAMIC_NODES_COUNT)//only dynamic nodes, no start points
         return;
-    Creature* trigger = GetBGCreature(node+7);//0-6 spirit guides
+
+    Creature* trigger = BgCreatures[node+7] ? GetBGCreature(node+7) : NULL;//0-6 spirit guides
     if (!trigger)
-       trigger = AddCreature(WORLD_TRIGGER, node+7, team, BG_AB_NodePositions[node][0], BG_AB_NodePositions[node][1], BG_AB_NodePositions[node][2], BG_AB_NodePositions[node][3]);
+        trigger = AddCreature(WORLD_TRIGGER, node+7, team, BG_AB_NodePositions[node][0], BG_AB_NodePositions[node][1], BG_AB_NodePositions[node][2], BG_AB_NodePositions[node][3]);
 
     //add bonus honor aura trigger creature when node is accupied
     //cast bonus aura (+50% honor in 25yards)
@@ -681,11 +681,11 @@ void BattlegroundAB::UpdatePlayerScore(Player* Source, uint32 type, uint32 value
     {
         case SCORE_BASES_ASSAULTED:
             ((BattlegroundABScore*)itr->second)->BasesAssaulted += value;
-            Source->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, AB_OBJECTIVE_ASSAULT_BASE);
+            Source->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, AB_OBJECTIVE_ASSAULT_BASE);
             break;
         case SCORE_BASES_DEFENDED:
             ((BattlegroundABScore*)itr->second)->BasesDefended += value;
-            Source->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, AB_OBJECTIVE_DEFEND_BASE);
+            Source->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, AB_OBJECTIVE_DEFEND_BASE);
             break;
         default:
             Battleground::UpdatePlayerScore(Source, type, value, doAddHonor);

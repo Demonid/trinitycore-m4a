@@ -1764,10 +1764,10 @@ bool WorldObject::canSeeOrDetect(WorldObject const* obj, bool ignoreStealth, boo
     if (obj->IsAlwaysVisibleFor(this) || CanAlwaysSee(obj))
         return true;
 
-    bool corpseCheck = false;
     bool corpseVisibility = false;
     if (distanceCheck)
     {
+        bool corpseCheck = false;
         if (Player const* thisPlayer = ToPlayer())
         {
             if (thisPlayer->isDead() && thisPlayer->GetHealth() > 0 && // Cheap way to check for ghost state
@@ -2533,6 +2533,15 @@ GameObject* WorldObject::FindNearestGameObject(uint32 entry, float range) const
     GameObject* go = NULL;
     Trinity::NearestGameObjectEntryInObjectRangeCheck checker(*this, entry, range);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectEntryInObjectRangeCheck> searcher(this, go, checker);
+    VisitNearbyGridObject(range, searcher);
+    return go;
+}
+
+GameObject* WorldObject::FindNearestGameObjectOfType(GameobjectTypes type, float range) const
+{
+    GameObject* go = NULL;
+    Trinity::NearestGameObjectTypeInObjectRangeCheck checker(*this, type, range);
+    Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectTypeInObjectRangeCheck> searcher(this, go, checker);
     VisitNearbyGridObject(range, searcher);
     return go;
 }
