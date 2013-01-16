@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -30,23 +30,26 @@
 
 class ChannelMgr
 {
-    public:
-        uint32 team;
-        typedef std::map<std::wstring, Channel*> ChannelMap;
+    typedef std::map<std::wstring, Channel*> ChannelMap;
 
-        explicit ChannelMgr(uint32 team)
-            : team(std::move(team))
-        {
-        }
+    public:
+        explicit ChannelMgr(uint32 team) : team(team)
+        { }
 
         ~ChannelMgr();
 
-        Channel* GetJoinChannel(std::string name, uint32 channel_id);
-        Channel* GetChannel(std::string name, Player* p, bool pkt = true);
-        void LeftChannel(std::string name);
+        static ChannelMgr * forTeam(uint32 team);
+        void setTeam(uint32 newTeam) { team = newTeam; }
+
+        Channel* GetJoinChannel(std::string const& name, uint32 channel_id);
+        Channel* GetChannel(std::string const& name, Player* p, bool pkt = true);
+        void LeftChannel(std::string const& name);
+
     private:
         ChannelMap channels;
-        void MakeNotOnPacket(WorldPacket* data, std::string name);
+        uint32 team;
+
+        void MakeNotOnPacket(WorldPacket* data, std::string const& name);
 };
 
 class AllianceChannelMgr
@@ -62,7 +65,5 @@ class HordeChannelMgr
 public:
     HordeChannelMgr();
 };
-
-ChannelMgr* channelMgr(uint32 team);
 
 #endif

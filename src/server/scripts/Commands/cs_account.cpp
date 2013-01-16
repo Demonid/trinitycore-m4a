@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,9 +23,11 @@ Category: commandscripts
 EndScriptData */
 
 #include "stdafx.hpp"
-#include "ScriptMgr.h"
 #include "AccountMgr.h"
 #include "Chat.h"
+#include "Language.h"
+#include "Player.h"
+#include "ScriptMgr.h"
 
 class account_commandscript : public CommandScript
 {
@@ -112,9 +114,9 @@ public:
                 handler->PSendSysMessage(LANG_ACCOUNT_CREATED, accountName);
                 if (handler->GetSession())
                 {
-                    sLog->outInfo(LOG_FILTER_CHARACTER, "Account: %d (IP: %s) Character:[%s] (GUID: %u) Change Password."
-                        , handler->GetSession()->GetAccountId(),handler->GetSession()->GetRemoteAddress().c_str()
-                        , handler->GetSession()->GetPlayer()->GetName(), handler->GetSession()->GetPlayer()->GetGUIDLow());
+                    sLog->outInfo(LOG_FILTER_CHARACTER, "Account: %d (IP: %s) Character:[%s] (GUID: %u) Change Password.",
+                        handler->GetSession()->GetAccountId(), handler->GetSession()->GetRemoteAddress().c_str(),
+                        handler->GetSession()->GetPlayer()->GetName().c_str(), handler->GetSession()->GetPlayer()->GetGUIDLow());
                 }
                 break;
             case AOR_NAME_TOO_LONG:
@@ -305,6 +307,9 @@ public:
         {
             handler->SendSysMessage(LANG_COMMAND_WRONGOLDPASSWORD);
             handler->SetSentErrorMessage(true);
+            sLog->outInfo(LOG_FILTER_CHARACTER, "Account: %u (IP: %s) Character:[%s] (GUID: %u) Tried to change password.",
+                handler->GetSession()->GetAccountId(), handler->GetSession()->GetRemoteAddress().c_str(),
+                handler->GetSession()->GetPlayer()->GetName().c_str(), handler->GetSession()->GetPlayer()->GetGUIDLow());
             return false;
         }
 
@@ -320,6 +325,9 @@ public:
         {
             case AOR_OK:
                 handler->SendSysMessage(LANG_COMMAND_PASSWORD);
+                sLog->outInfo(LOG_FILTER_CHARACTER, "Account: %u (IP: %s) Character:[%s] (GUID: %u) Changed Password.",
+                    handler->GetSession()->GetAccountId(), handler->GetSession()->GetRemoteAddress().c_str(),
+                    handler->GetSession()->GetPlayer()->GetName().c_str(), handler->GetSession()->GetPlayer()->GetGUIDLow());
                 break;
             case AOR_PASS_TOO_LONG:
                 handler->SendSysMessage(LANG_PASSWORD_TOO_LONG);

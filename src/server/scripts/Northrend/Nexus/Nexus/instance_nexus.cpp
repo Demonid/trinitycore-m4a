@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,6 +20,7 @@
 #include "ScriptMgr.h"
 #include "InstanceScript.h"
 #include "nexus.h"
+#include "Player.h"
 
 #define NUMBER_OF_ENCOUNTERS      4
 
@@ -154,7 +155,7 @@ public:
             }
         }
 
-        uint32 GetData(uint32 identifier)
+        uint32 GetData(uint32 identifier) const
         {
             switch (identifier)
             {
@@ -221,7 +222,7 @@ public:
             }
         }
 
-        uint64 GetData64(uint32 uiIdentifier)
+        uint64 GetData64(uint32 uiIdentifier) const
         {
             switch (uiIdentifier)
             {

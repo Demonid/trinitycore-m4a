@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -86,8 +86,7 @@ enum TrinityStrings
     LANG_CONNECTED_PLAYERS              = 60,
     LANG_ACCOUNT_ADDON                  = 61,
     LANG_IMPROPER_VALUE                 = 62,
-    LANG_CANT_DO_NOW                    = 63,
-    // Room for more level 0              64-99 not used
+    // Room for more level 0              63-99 not used
 
     // level 1 chat
     LANG_GLOBAL_NOTIFY                  = 100,
@@ -532,7 +531,7 @@ enum TrinityStrings
     LANG_NPC_SETDATA                    = 555,
 
     //! Old ones now free:
-    // LANG_HOVER_DISABLED              = 556,
+    LANG_COMMAND_NEAR_NPC_MESSAGE       = 556,
 
     LANG_YOURS_LEVEL_UP                 = 557,
     LANG_YOURS_LEVEL_DOWN               = 558,
@@ -929,6 +928,7 @@ enum TrinityStrings
     LANG_COMMAND_TICKETSHOWESCALATEDLIST = 2026,
     LANG_COMMAND_TICKETPENDING          = 2027,
     LANG_COMMAND_TICKETRESET            = 2028,
+    LANG_COMMAND_TICKETLISTRESPONSE     = 2029,
 
     // Trinity strings                    5000-9999
     LANG_COMMAND_FREEZE                 = 5000,
@@ -950,8 +950,8 @@ enum TrinityStrings
     LANG_BATTLEGROUND                   = 5015,
     LANG_ARENA                          = 5016,
     LANG_RAID                           = 5017,
-    LANG_HEROIC                         = 5018,
-    LANG_MOUNTABLE                      = 5019,
+                                        //= 5018,
+                                        //= 5019,
     LANG_NPCINFO_PHASEMASK              = 5020,
     LANG_NPCINFO_ARMOR                  = 5021,
     LANG_CHANNEL_ENABLE_OWNERSHIP       = 5022,
@@ -967,7 +967,8 @@ enum TrinityStrings
     LANG_COMMAND_NO_BATTLEGROUND_FOUND  = 5032,
     LANG_COMMAND_NO_ACHIEVEMENT_CRITERIA_FOUND = 5033,
     LANG_COMMAND_NO_OUTDOOR_PVP_FORUND  = 5034,
-    // Room for more Trinity strings      5035-9999
+    LANG_CALL_FOR_HELP                  = 5035,
+    // Room for more Trinity strings      5036-9999
 
     // Level requirement notifications
     LANG_SAY_REQ                        = 6604,
@@ -989,6 +990,27 @@ enum TrinityStrings
 
     LANG_WORLD_CLOSED                    = 7523,
     LANG_WORLD_OPENED                    = 7524,
+
+    LANG_LFG_PLAYER_INFO                = 9980,
+    LANG_LFG_GROUP_INFO                 = 9981,
+    LANG_LFG_NOT_IN_GROUP               = 9982,
+    LANG_LFG_CLEAN                      = 9983,
+    LANG_LFG_OPTIONS                    = 9984,
+    LANG_LFG_OPTIONS_CHANGED            = 9985,
+    LANG_LFG_STATE_NONE                 = 9986,
+    LANG_LFG_STATE_ROLECHECK            = 9987,
+    LANG_LFG_STATE_QUEUED               = 9988,
+    LANG_LFG_STATE_PROPOSAL             = 9989,
+    LANG_LFG_STATE_BOOT                 = 9990,
+    LANG_LFG_STATE_DUNGEON              = 9991,
+    LANG_LFG_STATE_FINISHED_DUNGEON     = 9992,
+    LANG_LFG_STATE_RAIDBROWSER          = 9993,
+    LANG_LFG_ROLE_TANK                  = 9994,
+    LANG_LFG_ROLE_HEALER                = 9995,
+    LANG_LFG_ROLE_DAMAGE                = 9996,
+    LANG_LFG_ROLE_LEADER                = 9997,
+    LANG_LFG_ROLE_NONE                  = 9998,
+    LANG_LFG_ERROR                      = 9999,
 
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
@@ -1076,11 +1098,10 @@ enum TrinityStrings
 
     // Use for custom patches             11000-11999
     LANG_AUTO_BROADCAST                 = 11000,
-    LANG_INVALID_REALMID                = 11001
+    LANG_INVALID_REALMID                = 11001,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)
     // For other tables maybe             2000010000-2147483647 (max index)
 };
 #endif
-

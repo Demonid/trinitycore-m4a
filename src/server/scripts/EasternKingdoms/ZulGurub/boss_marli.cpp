@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,37 +28,32 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "zulgurub.h"
 
-#define SAY_AGGRO               -1309005
-#define SAY_TRANSFORM           -1309006
-#define SAY_SPIDER_SPAWN        -1309007
-#define SAY_DEATH               -1309008
+enum Says
+{
+    SAY_AGGRO               = 0,
+    SAY_TRANSFORM           = 1,
+    SAY_SPIDER_SPAWN        = 2,
+    SAY_DEATH               = 3
+};
 
-#define SPELL_CHARGE              22911
-#define SPELL_ASPECT_OF_MARLI     24686                     // A stun spell
-#define SPELL_ENVOLWINGWEB        24110
-#define SPELL_POISONVOLLEY        24099
-#define SPELL_SPIDER_FORM         24084
-
-//The Spider Spells
-#define SPELL_LEVELUP             24312                     //Not right Spell.
+enum Spells
+{
+    SPELL_CHARGE            = 22911,
+    SPELL_ASPECT_OF_MARLI   = 24686, // A stun spell
+    SPELL_ENVOLWINGWEB      = 24110,
+    SPELL_POISONVOLLEY      = 24099,
+    SPELL_SPIDER_FORM       = 24084,
+    // The Spider Spell
+    SPELL_LEVELUP           = 24312  // Not right Spell.
+};
 
 class boss_marli : public CreatureScript
 {
-    public:
+    public: boss_marli() : CreatureScript("boss_marli") {}
 
-        boss_marli()
-            : CreatureScript("boss_marli")
+        struct boss_marliAI : public BossAI
         {
-        }
-
-        struct boss_marliAI : public ScriptedAI
-        {
-            boss_marliAI(Creature* creature) : ScriptedAI(creature)
-            {
-                instance = creature->GetInstanceScript();
-            }
-
-            InstanceScript* instance;
+            boss_marliAI(Creature* creature) : BossAI(creature, DATA_MARLI) {}
 
             uint32 SpawnStartSpiders_Timer;
             uint32 PoisonVolley_Timer;
@@ -85,16 +80,16 @@ class boss_marli : public CreatureScript
                 PhaseTwo = false;
             }
 
-            void EnterCombat(Unit* /*who*/)
-            {
-                DoScriptText(SAY_AGGRO, me);
-            }
-
             void JustDied(Unit* /*killer*/)
             {
-                DoScriptText(SAY_DEATH, me);
-                if (instance)
-                    instance->SetData(DATA_MARLI, DONE);
+                _JustDied();
+                Talk(SAY_DEATH);
+            }
+
+            void EnterCombat(Unit* /*who*/)
+            {
+                _EnterCombat();
+                Talk(SAY_AGGRO);
             }
 
             void UpdateAI(const uint32 diff)
@@ -118,7 +113,7 @@ class boss_marli : public CreatureScript
 
                     if (!Spawned && SpawnStartSpiders_Timer <= diff)
                     {
-                        DoScriptText(SAY_SPIDER_SPAWN, me);
+                        Talk(SAY_SPIDER_SPAWN);
 
                         Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0);
                         if (!target)
@@ -156,7 +151,7 @@ class boss_marli : public CreatureScript
 
                     if (!PhaseTwo && Transform_Timer <= diff)
                     {
-                        DoScriptText(SAY_TRANSFORM, me);
+                        Talk(SAY_TRANSFORM);
                         DoCast(me, SPELL_SPIDER_FORM);
                         const CreatureTemplate* cinfo = me->GetCreatureTemplate();
                         me->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, (cinfo->mindmg +((cinfo->mindmg/100) * 35)));
@@ -220,15 +215,10 @@ class boss_marli : public CreatureScript
         }
 };
 
-//Spawn of Marli
+// Spawn of Marli
 class mob_spawn_of_marli : public CreatureScript
 {
-    public:
-
-        mob_spawn_of_marli()
-            : CreatureScript("mob_spawn_of_marli")
-        {
-        }
+    public: mob_spawn_of_marli() : CreatureScript("mob_spawn_of_marli") {}
 
         struct mob_spawn_of_marliAI : public ScriptedAI
         {

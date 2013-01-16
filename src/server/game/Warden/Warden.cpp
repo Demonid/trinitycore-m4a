@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -107,7 +107,7 @@ void Warden::Update()
                 if (_clientResponseTimer > maxClientResponseDelay * IN_MILLISECONDS)
                 {
                     sLog->outWarn(LOG_FILTER_WARDEN, "%s (latency: %u, IP: %s) exceeded Warden module response delay for more than %s - disconnecting client",
-                                   _session->GetPlayerName(false).c_str(), _session->GetLatency(), _session->GetRemoteAddress().c_str(), secsToTimeString(maxClientResponseDelay, true).c_str());
+                                   _session->GetPlayerInfo().c_str(), _session->GetLatency(), _session->GetRemoteAddress().c_str(), secsToTimeString(maxClientResponseDelay, true).c_str());
                     _session->KickPlayer();
                 }
                 else
@@ -152,13 +152,28 @@ bool Warden::IsValidCheckSum(uint32 checksum, const uint8* data, const uint16 le
     }
 }
 
+struct keyData {
+    union
+    {
+        struct
+        {
+            uint8 bytes[20];
+        } bytes;
+
+        struct
+        {
+            uint32 ints[5];
+        } ints;
+    };
+};
+
 uint32 Warden::BuildChecksum(const uint8* data, uint32 length)
 {
-    uint8 hash[20];
-    SHA1(data, length, hash);
+    keyData hash;
+    SHA1(data, length, hash.bytes.bytes);
     uint32 checkSum = 0;
     for (uint8 i = 0; i < 5; ++i)
-        checkSum = checkSum ^ *(uint32*)(&hash[0] + i * 4);
+        checkSum = checkSum ^ hash.ints.ints[i];
 
     return checkSum;
 }

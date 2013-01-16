@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,7 +15,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdafx.hpp>
+#include "stdafx.hpp"
 #include "Appender.h"
 #include "Common.h"
 
@@ -218,6 +218,8 @@ char const* Appender::getLogFilterTypeString(LogFilterType type)
             return "SERVER LOADING";
         case LOG_FILTER_OPCODES:
             return "OPCODE";
+        case LOG_FILTER_SOAP:
+            return "SOAP";
         default:
             break;
     }

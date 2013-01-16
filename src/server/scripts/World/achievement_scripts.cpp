@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,6 +24,8 @@
 #include "BattlegroundSA.h"
 #include "BattlegroundAV.h"
 #include "Vehicle.h"
+#include "Player.h"
+#include "Creature.h"
 
 class achievement_resilient_victory : public AchievementCriteriaScript
 {

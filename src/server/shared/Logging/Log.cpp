@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -89,8 +89,8 @@ void Log::CreateAppenderFromConfig(const char* name)
     std::string options = "Appender.";
     options.append(name);
     options = ConfigMgr::GetStringDefault(options.c_str(), "");
-    Tokens tokens(options, ',');
-    Tokens::iterator iter = tokens.begin();
+    Tokenizer tokens(options, ',');
+    Tokenizer::const_iterator iter = tokens.begin();
 
     if (tokens.size() < 2)
     {
@@ -170,7 +170,7 @@ void Log::CreateLoggerFromConfig(const char* name)
         return;
 
     LogLevel level = LOG_LEVEL_DISABLED;
-    int32 type = -1;
+    uint8 type = uint8(-1);
 
     std::string options = "Logger.";
     options.append(name);
@@ -182,8 +182,8 @@ void Log::CreateLoggerFromConfig(const char* name)
         return;
     }
 
-    Tokens tokens(options, ',');
-    Tokens::iterator iter = tokens.begin();
+    Tokenizer tokens(options, ',');
+    Tokenizer::const_iterator iter = tokens.begin();
 
     if (tokens.size() != 3)
     {
@@ -191,7 +191,7 @@ void Log::CreateLoggerFromConfig(const char* name)
         return;
     }
 
-    type = atoi(*iter);
+    type = uint8(atoi(*iter));
     if (type > MaxLogFilter)
     {
         fprintf(stderr, "Log::CreateLoggerFromConfig: Wrong type %u for logger %s\n", type, name);
@@ -282,9 +282,12 @@ void Log::vlog(LogFilterType filter, LogLevel level, char const* str, va_list ar
 
 void Log::write(LogMessage* msg)
 {
-    msg->text.append("\n");
-    Logger* logger = GetLoggerByType(msg->type);
-    worker->enqueue(new LogOperation(logger, msg));
+    if (worker)
+    {
+        msg->text.append("\n");
+        Logger* logger = GetLoggerByType(msg->type);
+        worker->enqueue(new LogOperation(logger, msg));
+    }
 }
 
 std::string Log::GetTimestampStr()
@@ -332,7 +335,7 @@ bool Log::SetLogLevel(std::string const& name, const char* newLevelc, bool isLog
 
 bool Log::ShouldLog(LogFilterType type, LogLevel level) const
 {
-    LoggerMap::const_iterator it = loggers.find(type);
+    LoggerMap::const_iterator it = loggers.find(uint8(type));
     if (it != loggers.end())
     {
         LogLevel loggerLevel = it->second.getLogLevel();
@@ -433,10 +436,10 @@ void Log::outCharDump(char const* str, uint32 accountId, uint32 guid, char const
        << ")\n" << str << "\n== END DUMP ==\n";
 
     LogMessage* msg = new LogMessage(LOG_LEVEL_INFO, LOG_FILTER_PLAYER_DUMP, ss.str());
-    ss.clear();
-    ss << guid << '_' << name;
+    std::ostringstream param;
+    param << guid << '_' << name;
 
-    msg->param1 = ss.str();
+    msg->param1 = param.str();
 
     write(msg);
 }
@@ -482,6 +485,7 @@ void Log::Close()
 void Log::LoadFromConfig()
 {
     Close();
+    worker = new LogWorker();
     AppenderId = 0;
     m_logsDir = ConfigMgr::GetStringDefault("LogsDir", "");
     if (!m_logsDir.empty())
@@ -489,5 +493,4 @@ void Log::LoadFromConfig()
             m_logsDir.push_back('/');
     ReadAppendersFromConfig();
     ReadLoggersFromConfig();
-    worker = new LogWorker();
 }

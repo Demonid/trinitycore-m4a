@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -23,8 +23,6 @@
 #include <array>
 #include "Language.h"
 #include "Battleground.h"
-
-class Battleground;
 
 enum BG_EY_Misc
 {
@@ -108,11 +106,11 @@ enum EYBattlegroundObjectEntry
 enum EYBattlegroundPointsTrigger
 {
     TR_BLOOD_ELF_POINT        = 4476,
-    TR_FEL_REAVER_POINT      = 4514,
+    TR_FEL_REAVER_POINT       = 4514,
     TR_MAGE_TOWER_POINT       = 4516,
     TR_DRAENEI_RUINS_POINT    = 4518,
     TR_BLOOD_ELF_BUFF         = 4568,
-    TR_FEL_REAVER_BUFF       = 4569,
+    TR_FEL_REAVER_BUFF        = 4569,
     TR_MAGE_TOWER_BUFF        = 4570,
     TR_DRAENEI_RUINS_BUFF     = 4571
 };
@@ -327,21 +325,20 @@ const BattlegroundEYCapturingPointStruct m_CapturingPointTypes[EY_POINTS_MAX] =
     BattlegroundEYCapturingPointStruct(BG_EY_OBJECT_N_BANNER_MAGE_TOWER_CENTER, BG_EY_OBJECT_A_BANNER_MAGE_TOWER_CENTER, LANG_BG_EY_HAS_TAKEN_A_M_TOWER, BG_EY_OBJECT_H_BANNER_MAGE_TOWER_CENTER, LANG_BG_EY_HAS_TAKEN_H_M_TOWER, EY_GRAVEYARD_MAGE_TOWER)
 };
 
-class BattlegroundEYScore : public BattlegroundScore
+struct BattlegroundEYScore : public BattlegroundScore
 {
-    public:
-        BattlegroundEYScore() : FlagCaptures(0) {};
-        virtual ~BattlegroundEYScore() {};
+    BattlegroundEYScore() : FlagCaptures(0) { }
+    ~BattlegroundEYScore() { }
 
-        std::pair<std::size_t, Stat_data_type> stat_data() const
-        {
-            std::array<int32, max_stats> d;
-            auto first = d.begin(), it = first;
-            *it++ = FlagCaptures;
-            return std::make_pair(it - first, std::move(d));
-        }
+    std::pair<std::size_t, Stat_data_type> stat_data() const override
+    {
+        std::array<int32, max_stats> d;
+        auto first = d.begin(), it = first;
+        *it++ = FlagCaptures;
+        return std::make_pair(it - first, std::move(d));
+    }
 
-        uint32 FlagCaptures;
+    uint32 FlagCaptures;
 };
 
 class BattlegroundEY : public Battleground
@@ -351,9 +348,9 @@ class BattlegroundEY : public Battleground
         ~BattlegroundEY();
 
         /* inherited from BattlegroundClass */
-        virtual void AddPlayer(Player* player);
-        virtual void StartingEventCloseDoors();
-        virtual void StartingEventOpenDoors();
+        void AddPlayer(Player* player);
+        void StartingEventCloseDoors();
+        void StartingEventOpenDoors();
 
         /* BG Flags */
         uint64 GetFlagPickerGUID(int32 /*team*/ = -1) const    { return m_FlagKeeper; }
@@ -367,24 +364,26 @@ class BattlegroundEY : public Battleground
         void HandleBuffUse(uint64 buff_guid);
         void HandleAreaTrigger(Player* Source, uint32 Trigger);
         void HandleKillPlayer(Player* player, Player* killer);
-        virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
-        virtual bool SetupBattleground();
-        virtual void Reset();
+        WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
+        bool SetupBattleground();
+        void Reset();
         void UpdateTeamScore(uint32 Team);
         void EndBattleground(uint32 winner);
         void UpdatePlayerScore(Player* Source, uint32 type, uint32 value, bool doAddHonor = true);
-        virtual void FillInitialWorldStates(WorldPacket& data);
-        void SetDroppedFlagGUID(uint64 guid)       { m_DroppedFlagGUID = guid;}
+        void FillInitialWorldStates(WorldPacket& data);
+        void SetDroppedFlagGUID(uint64 guid, int32 /*TeamID*/ = -1)  { m_DroppedFlagGUID = guid;}
         uint64 GetDroppedFlagGUID() const          { return m_DroppedFlagGUID;}
 
         /* Battleground Events */
-        virtual void EventPlayerClickedOnFlag(Player* Source, GameObject* target_obj);
-        virtual void EventPlayerDroppedFlag(Player* Source);
+        void EventPlayerClickedOnFlag(Player* Source, GameObject* target_obj);
+        void EventPlayerDroppedFlag(Player* Source);
 
         /* achievement req. */
         bool IsAllNodesConrolledByTeam(uint32 team) const;
+
+        uint32 GetPrematureWinner();
     private:
-        virtual void PostUpdateImpl(uint32 diff);
+        void PostUpdateImpl(uint32 diff);
 
         void EventPlayerCapturedFlag(Player* Source, uint32 BgObjectType);
         void EventTeamCapturedPoint(Player* Source, uint32 Point);
@@ -398,7 +397,6 @@ class BattlegroundEY : public Battleground
         void UpdatePointStatuses();
 
         /* Scorekeeping */
-        uint32 GetTeamScore(uint32 Team) const { return m_TeamScores[GetTeamIndexByTeamId(Team)]; }
         void AddPoints(uint32 Team, uint32 Points);
 
         void RemovePoint(uint32 TeamID, uint32 Points = 1) { m_TeamScores[GetTeamIndexByTeamId(TeamID)] -= Points; }

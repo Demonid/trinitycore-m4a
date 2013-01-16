@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -28,7 +28,13 @@ file(GLOB sources_localdir *.cpp *.h *.hpp)
 # Build shared sourcelist
 #
 
+if (USE_COREPCH)
+  set(shared_STAT_PCH_HDR PrecompiledHeaders/sharedPCH.h)
+  set(shared_STAT_PCH_SRC PrecompiledHeaders/sharedPCH.cpp)
+endif()
+
 set(shared_STAT_SRCS
+  ${shared_STAT_SRCS}
   ${sources_Configuration}
   ${sources_Cryptography}
   ${sources_Database}
@@ -36,7 +42,6 @@ set(shared_STAT_SRCS
   ${sources_Dynamic}
   ${sources_Logging}
   ${sources_Packets}
-  PrecompiledHeaders/sharedPCH.h
   ${sources_Threading}
   ${sources_Utilities}
   ${sources_localdir}
@@ -67,19 +72,19 @@ include_directories(
   ${OPENSSL_INCLUDE_DIR}
 )
 
-add_library(shared STATIC ${shared_STAT_SRCS})
+add_library(shared STATIC
+  ${shared_STAT_SRCS}
+)
 
 target_link_libraries(shared
   ${ACE_LIBRARY}
 )
 
 # Generate precompiled header
-if( USE_COREPCH )
-  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES Clang)
-    add_precompiled_header(shared ${CMAKE_CURRENT_SOURCE_DIR}/stdafx.hpp)
-  elseif(MSVC)
-    set_precompiled_header(shared "stdafx.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/stdafx.cpp")
+if (USE_COREPCH)
+  if(MSVC)
+    set_precompiled_header(shared "stdafx.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/stdafx.cpp")
+  else()
+    add_cxx_pch(shared ${shared_STAT_PCH_HDR} ${shared_STAT_PCH_SRC})
   endif()
-endif()
-
+endif ()

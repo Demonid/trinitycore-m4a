@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -248,6 +248,11 @@ class Field
                 return std::string(string, data.length);
             }
             return std::string((char*)data.value);
+        }
+
+        bool IsNull() const
+        {
+            return data.value == NULL;
         }
 
     protected:

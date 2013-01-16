@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,7 +29,7 @@ class instance_ruins_of_ahnqiraj : public InstanceMapScript
         {
             instance_ruins_of_ahnqiraj_InstanceMapScript(Map* map) : InstanceScript(map)
             {
-                SetBossNumber(MAX_ENCOUNTER);
+                SetBossNumber(NUM_ENCOUNTER);
 
                 _kurinaxxGUID   = 0;
                 _rajaxxGUID     = 0;
@@ -37,6 +37,7 @@ class instance_ruins_of_ahnqiraj : public InstanceMapScript
                 _buruGUID       = 0;
                 _ayamissGUID    = 0;
                 _ossirianGUID   = 0;
+                _paralyzedGUID  = 0;
             }
 
             void OnCreatureCreate(Creature* creature)
@@ -72,22 +73,30 @@ class instance_ruins_of_ahnqiraj : public InstanceMapScript
                 return true;
             }
 
-            uint64 GetData64(uint32 type)
+            void SetData64(uint32 type, uint64 data)
+            {
+                if (type == DATA_PARALYZED)
+                    _paralyzedGUID = data;
+            }
+
+            uint64 GetData64(uint32 type) const
             {
                 switch (type)
                 {
-                    case BOSS_KURINNAXX:
+                    case DATA_KURINNAXX:
                         return _kurinaxxGUID;
-                    case BOSS_RAJAXX:
+                    case DATA_RAJAXX:
                         return _rajaxxGUID;
-                    case BOSS_MOAM:
+                    case DATA_MOAM:
                         return _moamGUID;
-                    case BOSS_BURU:
+                    case DATA_BURU:
                         return _buruGUID;
-                    case BOSS_AYAMISS:
+                    case DATA_AYAMISS:
                         return _ayamissGUID;
-                    case BOSS_OSSIRIAN:
+                    case DATA_OSSIRIAN:
                         return _ossirianGUID;
+                    case DATA_PARALYZED:
+                        return _paralyzedGUID;
                 }
 
                 return 0;
@@ -121,7 +130,7 @@ class instance_ruins_of_ahnqiraj : public InstanceMapScript
 
                 if (dataHead1 == 'R' && dataHead2 == 'A')
                 {
-                    for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
+                    for (uint8 i = 0; i < NUM_ENCOUNTER; ++i)
                     {
                         uint32 tmpState;
                         loadStream >> tmpState;
@@ -143,6 +152,7 @@ class instance_ruins_of_ahnqiraj : public InstanceMapScript
             uint64 _buruGUID;
             uint64 _ayamissGUID;
             uint64 _ossirianGUID;
+            uint64 _paralyzedGUID;
         };
 
         InstanceScript* GetInstanceScript(InstanceMap* map) const

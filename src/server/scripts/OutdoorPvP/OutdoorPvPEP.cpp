@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -694,7 +694,7 @@ void OutdoorPvPEP::BuffTeams()
 {
     for (PlayerSet::iterator itr = m_players[0].begin(); itr != m_players[0].end(); ++itr)
     {
-        Player* player = *itr;
+        if (Player* player = ObjectAccessor::FindPlayer(*itr))
         {
             for (int i = 0; i < 4; ++i)
                 player->RemoveAurasDueToSpell(EP_AllianceBuffs[i]);
@@ -704,7 +704,7 @@ void OutdoorPvPEP::BuffTeams()
     }
     for (PlayerSet::iterator itr = m_players[1].begin(); itr != m_players[1].end(); ++itr)
     {
-        Player* player = *itr;
+        if (Player* player = ObjectAccessor::FindPlayer(*itr))
         {
             for (int i = 0; i < 4; ++i)
                 player->RemoveAurasDueToSpell(EP_HordeBuffs[i]);

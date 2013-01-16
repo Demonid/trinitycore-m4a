@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,7 +22,7 @@ Comment: All bf related commands
 Category: commandscripts
 EndScriptData */
 
-#include <stdafx.hpp>
+#include "stdafx.hpp"
 #include "ScriptMgr.h"
 #include "Chat.h"
 #include "BattlefieldMgr.h"

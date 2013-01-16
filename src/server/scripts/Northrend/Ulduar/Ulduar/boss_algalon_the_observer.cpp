@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,6 +25,7 @@
 #include "MapManager.h"
 #include "MoveSplineInit.h"
 #include "ulduar.h"
+#include "Player.h"
 
 enum Texts
 {
@@ -374,11 +375,11 @@ class boss_algalon_the_observer : public CreatureScript
                     case ACTION_INIT_ALGALON:
                         _firstPull = false;
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
-                        break;;
+                        break;
                 }
             }
 
-            uint32 GetData(uint32 type)
+            uint32 GetData(uint32 type) const
             {
                 return type == DATA_HAS_FED_ON_TEARS ? _fedOnTears : 1;
             }
@@ -522,7 +523,7 @@ class boss_algalon_the_observer : public CreatureScript
                         if (Creature* wormHole = DoSummon(NPC_WORM_HOLE, CollapsingStarPos[i], TEMPSUMMON_MANUAL_DESPAWN))
                             wormHole->m_Events.AddEvent(new SummonUnleashedDarkMatter(wormHole), wormHole->m_Events.CalculateTime(i >= 2 ? 8000 : 6000));
                 }
-                else if ((int32(me->GetHealth()) - int32(damage)) < CalculatePctF<int32>(int32(me->GetMaxHealth()), 2.5f) && !_fightWon)
+                else if ((int32(me->GetHealth()) - int32(damage)) < CalculatePct<int32>(int32(me->GetMaxHealth()), 2.5f) && !_fightWon)
                 {
                     _fightWon = true;
                     damage = 0;
@@ -728,7 +729,7 @@ class npc_living_constellation : public CreatureScript
                 _isActive = false;
             }
 
-            uint32 GetData(uint32 /*type*/)
+            uint32 GetData(uint32 /*type*/) const
             {
                 return _isActive ? 1 : 0;
             }
@@ -979,7 +980,7 @@ class go_celestial_planetarium_access : public GameObjectScript
                         if (!lock->Index[i])
                             continue;
 
-                        if (player->HasItemCount(lock->Index[i], 1))
+                        if (player->HasItemCount(lock->Index[i]))
                         {
                             hasKey = true;
                             break;
@@ -1329,7 +1330,7 @@ class spell_algalon_supermassive_fail : public SpellScriptLoader
                 if (!GetHitPlayer())
                     return;
 
-                GetHitPlayer()->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BE_SPELL_TARGET, ACHIEVEMENT_CRITERIA_CONDITION_NO_SPELL_HIT, GetSpellInfo()->Id, true);
+                GetHitPlayer()->ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BE_SPELL_TARGET, ACHIEVEMENT_CRITERIA_CONDITION_NO_SPELL_HIT, GetSpellInfo()->Id, true);
             }
 
             void Register()

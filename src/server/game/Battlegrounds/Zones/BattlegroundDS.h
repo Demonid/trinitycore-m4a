@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
 #include <memory>
 #include <array>
 #include "Battleground.h"
-
-class Battleground;
 
 enum BattlegroundDSObjectTypes
 {
@@ -83,22 +81,6 @@ enum BattlegroundDSData
     BG_DS_WATERFALL_STATUS_OFF                   = 3
 };
 
-class BattlegroundDSScore : public BattlegroundScore
-{
-    public:
-        BattlegroundDSScore() {};
-        virtual ~BattlegroundDSScore() {};
-
-        std::pair<std::size_t, Stat_data_type> stat_data() const
-        {
-            std::array<int32, max_stats> d;
-            auto first = d.begin(), it = first;
-            return std::make_pair(it - first, std::move(d));
-        }
-
-        //TODO fix me
-};
-
 class BattlegroundDS : public Battleground
 {
     public:
@@ -106,15 +88,15 @@ class BattlegroundDS : public Battleground
         ~BattlegroundDS();
 
         /* inherited from BattlegroundClass */
-        virtual void AddPlayer(Player* player);
-        virtual void StartingEventCloseDoors();
-        virtual void StartingEventOpenDoors();
+        void AddPlayer(Player* player);
+        void StartingEventCloseDoors();
+        void StartingEventOpenDoors();
 
         void RemovePlayer(Player* player, uint64 guid, uint32 team);
         void HandleAreaTrigger(Player* Source, uint32 Trigger);
         bool SetupBattleground();
-        virtual void Reset();
-        virtual void FillInitialWorldStates(WorldPacket &d);
+        void Reset();
+        void FillInitialWorldStates(WorldPacket &d);
         void HandleKillPlayer(Player* player, Player* killer);
         bool HandlePlayerUnderMap(Player* player);
     private:
@@ -124,7 +106,7 @@ class BattlegroundDS : public Battleground
         uint32 _pipeKnockBackTimer;
         uint8 _pipeKnockBackCount;
 
-        virtual void PostUpdateImpl(uint32 diff);
+        void PostUpdateImpl(uint32 diff);
     protected:
         uint32 getWaterFallStatus() { return _waterfallStatus; };
         void setWaterFallStatus(uint8 status) { _waterfallStatus = status; };

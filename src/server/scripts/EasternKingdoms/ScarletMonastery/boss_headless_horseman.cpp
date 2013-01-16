@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -29,14 +29,28 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "SpellMgr.h"
 #include "scarlet_monastery.h"
+#include "LFGMgr.h"
+#include "Player.h"
+#include "Group.h"
+#include "SpellInfo.h"
 
+namespace
+{
+    auto &&SAY_ENTRANCE         = "It is over, your search is done. Let fate choose now, the righteous one.";
+    auto &&SAY_HEAD             = " Get over here, you idiot!";
+    auto &&SAY_REJOINED         = "Here's my body, fit and pure! Now, your blackened souls I'll cure!";
+    auto &&SAY_DEATH            = "This end have I reached before. What new adventure lies in store?";
+    auto &&SAY_KILL             = "Your body lies beaten, battered and broken. Let my curse be your own, fate has spoken.";
+    auto &&SAY_CONFLAGARATION   = "Harken, cur! Tis you I spurn! Now feel... the burn!";
+    auto &&SAY_PUMPKINS         = "Soldiers arise, stand and fight! Bring victory at last to this fallen knight!";
+}
 
 uint32 RandomLaugh[] = {11965, 11975, 11976};
 
 enum Entries
 {
     HH_MOUNTED                  = 23682,
-    HH_DISMOUNTED               = 23800,  // unhorsed?? wtf type of engrish was that?
+    HH_DISMOUNTED               = 23800,
     HEAD                        = 23775,
     PULSING_PUMPKIN             = 23694,
     PUMPKIN_FIEND               = 23545,
@@ -159,7 +173,7 @@ static Locations Spawn[]=
     {1765.28f, 1347.46f, 17.55f}     //spawn point for smoke
 };
 
-static const char* Text[]=
+static char const* Text[]=
 {
     "Horseman rise...",
     "Your time is nigh...",
@@ -168,13 +182,6 @@ static const char* Text[]=
 };
 
 #define EMOTE_LAUGHS    "Headless Horseman laughs"  // needs assigned to db.
-#define SAY_ENTRANCE    "It is over, your search is done. Let fate choose now, the righteous one."
-#define SAY_HEAD        " Get over here, you idiot!"
-#define SAY_REJOINED    "Here's my body, fit and pure! Now, your blackened souls I'll cure!"
-#define SAY_DEATH       "This end have I reached before. What new adventure lies in store?"
-#define SAY_KILL        "Your body lies beaten, battered and broken. Let my curse be your own, fate has spoken."
-#define SAY_CONFLAGARATION "Harken, cur! Tis you I spurn! Now feel... the burn!"
-#define SAY_PUMPKINS    "Soldiers arise, stand and fight! Bring victory at last to this fallen knight!"
 
 class mob_wisp_invis : public CreatureScript
 {
@@ -275,7 +282,7 @@ public:
           _events.ScheduleEvent(EVENT_HEAD_LAUGH, urand(10000,12000));
         }
 
-        void EnterCombat(Unit* /*who*/) {}
+        void EnterCombat(Unit* /*who*/) { }
 
         void DamageTaken(Unit* /*done_by*/, uint32 &damage)
         {
@@ -478,9 +485,12 @@ public:
               me->MonsterYell(SAY_KILL, 0,0);
         }
 
-        void SaySound(int32 textEntry, Unit* target = 0)
+        void SaySound(uint8 textEntry, Unit* target = 0)
         {
-            DoScriptText(textEntry, me, target);
+            if (target)
+                Talk(textEntry, target->GetGUID());
+            else
+                Talk(textEntry);
         }
        
         void SpellHitTarget(Unit* unit, const SpellInfo* spell)
@@ -502,6 +512,10 @@ public:
 
             if (Creature* Head = Unit::GetCreature((*me), _instance->GetData64(ENTRY_HEAD)))
                 Head->DisappearAndDie();
+
+            Map::PlayerList const& players = me->GetMap()->GetPlayers();
+            if (!players.isEmpty())
+                sLFGMgr->FinishDungeon(players.begin()->getSource()->GetGroup()->GetGUID(), 285);
         }
 
         void SpellHit(Unit* caster, const SpellInfo* spell)
@@ -517,8 +531,8 @@ public:
                 caster->GetMotionMaster()->Clear(false);
                 caster->GetMotionMaster()->MoveFollow(me, 6, float(urand(0, 5)));
                 //DoResetThreat();//not sure if need
-                std::list<HostileReference*>::const_iterator itr;
-                for (itr = caster->getThreatManager().getThreatList().begin(); itr != caster->getThreatManager().getThreatList().end(); ++itr)
+                ThreatContainer::StorageType threatlist = caster->getThreatManager().getThreatList();
+                for (ThreatContainer::StorageType::const_iterator itr = threatlist.begin(); itr != threatlist.end(); ++itr)
                 {
                     Unit* unit = Unit::GetUnit(*me, (*itr)->getUnitGuid());
                     if (unit && unit->isAlive() && unit != caster)

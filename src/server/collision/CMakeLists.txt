@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -17,15 +17,21 @@ file(GLOB_RECURSE sources_Maps Maps/*.cpp Maps/*.h)
 file(GLOB_RECURSE sources_Models Models/*.cpp Models/*.h)
 file(GLOB sources_localdir *.cpp *.h *.hpp)
 
+if (USE_COREPCH)
+  set(collision_STAT_PCH_HDR PrecompiledHeaders/collisionPCH.h)
+  set(collision_STAT_PCH_SRC PrecompiledHeaders/collisionPCH.cpp)
+endif ()
+
 set(collision_STAT_SRCS
+  ${collision_STAT_SRCS}
   ${sources_Management}
   ${sources_Maps}
   ${sources_Models}
-  PrecompiledHeaders/collisionPCH.h
   ${sources_localdir}
 )
 
 include_directories(
+  ${CMAKE_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/Management
   ${CMAKE_CURRENT_SOURCE_DIR}/Maps
@@ -68,21 +74,19 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/server/game/World
   ${CMAKE_SOURCE_DIR}/src/server/game/Spells
   ${CMAKE_SOURCE_DIR}/src/server/game/Spells/Auras
-  ${CMAKE_BINARY_DIR}
   ${ACE_INCLUDE_DIR}
   ${MYSQL_INCLUDE_DIR}
-  ${OPENSSL_INCLUDE_DIR}
 )
 
-add_library(collision STATIC ${collision_STAT_SRCS})
+add_library(collision STATIC
+  ${collision_STAT_SRCS}
+)
 
 # Generate precompiled header
-if( USE_COREPCH )
-  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES Clang)
-    add_precompiled_header(collision ${CMAKE_CURRENT_SOURCE_DIR}/stdafx.hpp)
-  elseif(MSVC)
-    set_precompiled_header(collision "stdafx.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/stdafx.cpp")
+if (USE_COREPCH)
+  if(MSVC)
+    set_precompiled_header(collision "stdafx.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/stdafx.cpp")
+  else()
+    add_cxx_pch(collision ${collision_STAT_PCH_HDR} ${collision_STAT_PCH_SRC})
   endif()
-endif()
-
+endif ()

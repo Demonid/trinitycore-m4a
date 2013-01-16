@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2010 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -46,10 +45,10 @@ class BattlefieldMgr
     // called when player resurrects
     void HandlePlayerResurrects(Player * player, uint32 areaflag);
     // return assigned battlefield
-    Battlefield *GetBattlefieldToZoneId(uint32 zoneid);
-    Battlefield *GetBattlefieldByBattleId(uint32 battleid);
+    Battlefield* GetBattlefieldToZoneId(uint32 zoneid);
+    Battlefield* GetBattlefieldByBattleId(uint32 battleid);
 
-    ZoneScript *GetZoneScript(uint32 zoneId);
+    ZoneScript* GetZoneScript(uint32 zoneId);
 
     void AddZone(uint32 zoneid, Battlefield * handle);
 

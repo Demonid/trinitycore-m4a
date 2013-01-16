@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #include <utility>
 #include "Define.h"
 
-#include<map>
+#include <map>
 
 // Note. All times are in milliseconds here.
 
@@ -30,9 +30,7 @@ class BasicEvent
 {
     public:
         BasicEvent() { to_Abort = false; }
-        virtual ~BasicEvent()                               // override destructor to perform some actions on event removal
-        {
-        };
+        virtual ~BasicEvent() {}                            // override destructor to perform some actions on event removal
 
         // this method executes when the event is triggered
         // return false if event does not want to be deleted
@@ -95,4 +93,3 @@ inline void add_simple_event(EventProcessor &events, Fn f, uint64 duration)
     events.AddEvent(new simple_event<Fn>(std::move(f)), events.CalculateTime(duration));
 }
 #endif
-

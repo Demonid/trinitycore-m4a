@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,12 +22,14 @@ Comment: All ban related commands
 Category: commandscripts
 EndScriptData */
 
-#include <stdafx.hpp>
-#include "ScriptMgr.h"
-#include "Chat.h"
+#include "stdafx.hpp"
 #include "AccountMgr.h"
+#include "Chat.h"
+#include "Language.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
+#include "Player.h"
+#include "ScriptMgr.h"
 
 class ban_commandscript : public CommandScript
 {

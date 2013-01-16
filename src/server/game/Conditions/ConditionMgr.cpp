@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -17,15 +17,17 @@
  */
 
 #include "stdafx.hpp"
+#include "ConditionMgr.h"
+#include "AchievementMgr.h"
+#include "GameEventMgr.h"
+#include "InstanceScript.h"
+#include "ObjectMgr.h"
 #include "Player.h"
+#include "ReputationMgr.h"
+#include "ScriptedCreature.h"
+#include "ScriptMgr.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
-#include "GameEventMgr.h"
-#include "ObjectMgr.h"
-#include "InstanceScript.h"
-#include "ConditionMgr.h"
-#include "ScriptMgr.h"
-#include "ScriptedCreature.h"
 #include "Spell.h"
 
 // Checks if object meets the condition
@@ -84,7 +86,7 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo)
         case CONDITION_ACHIEVEMENT:
         {
             if (Player* player = object->ToPlayer())
-                condMeets = player->GetAchievementMgr().HasAchieved(ConditionValue1);
+                condMeets = player->HasAchieved(ConditionValue1);
             break;
         }
         case CONDITION_TEAM:
@@ -103,6 +105,12 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo)
         {
             if (Unit* unit = object->ToUnit())
                 condMeets = unit->getRaceMask() & ConditionValue1;
+            break;
+        }
+        case CONDITION_GENDER:
+        {
+            if (Player* player = object->ToPlayer())
+                condMeets = player->getGender() == ConditionValue1;
             break;
         }
         case CONDITION_SKILL:
@@ -147,11 +155,27 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo)
         case CONDITION_ACTIVE_EVENT:
             condMeets = sGameEventMgr->IsActiveEvent(ConditionValue1);
             break;
-        case CONDITION_INSTANCE_DATA:
+        case CONDITION_INSTANCE_INFO:
         {
             Map* map = object->GetMap();
-            if (map && map->IsDungeon() && ((InstanceMap*)map)->GetInstanceScript())
-                condMeets = ((InstanceMap*)map)->GetInstanceScript()->GetData(ConditionValue1) == ConditionValue2;
+            if (map && map->IsDungeon())
+            {
+                if (InstanceScript const* instance = ((InstanceMap*)map)->GetInstanceScript())
+                {
+                    switch (ConditionValue3)
+                    {
+                        case INSTANCE_INFO_DATA:
+                            condMeets = instance->GetData(ConditionValue1) == ConditionValue2;
+                            break;
+                        case INSTANCE_INFO_DATA64:
+                            condMeets = instance->GetData64(ConditionValue1) == ConditionValue2;
+                            break;
+                        case INSTANCE_INFO_BOSS_STATE:
+                            condMeets = instance->GetBossState(ConditionValue1) == EncounterState(ConditionValue2);
+                            break;
+                    }
+                }
+            }
             break;
         }
         case CONDITION_MAPID:
@@ -224,6 +248,9 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo)
                         case RELATION_PASSENGER_OF:
                             condMeets = unit->IsOnVehicle(toUnit);
                             break;
+                        case RELATION_CREATED_BY:
+                            condMeets = unit->GetCreatorGUID() == toUnit->GetGUID();
+                            break;
                     }
                 }
             }
@@ -280,16 +307,15 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo)
                 condMeets = player->HasTitle(ConditionValue1);
             break;
         }
-        case CONDITION_MAP_DIFFICULTY:
+        case CONDITION_SPAWNMASK:
+        {
+            condMeets = ((1 << object->GetMap()->GetSpawnMode()) & ConditionValue1);
+            break;
+        }
+        case CONDITION_UNIT_STATE:
         {
             if (Unit* unit = object->ToUnit())
-            {
-                if (unit->GetMap()->IsRaid())
-                    if (unit->GetMap()->Is25ManRaid() != ((ConditionValue1 & RAID_DIFFICULTY_MASK_25MAN) != 0))
-                        return false;
-
-                condMeets = unit->GetMap()->GetSpawnMode() >= ConditionValue1;
-            }
+                condMeets = unit->HasUnitState(ConditionValue1);
             break;
         }
         default:
@@ -364,7 +390,7 @@ uint32 Condition::GetSearcherTypeMaskForCondition()
         case CONDITION_ACTIVE_EVENT:
             mask |= GRID_MAP_TYPE_MASK_ALL;
             break;
-        case CONDITION_INSTANCE_DATA:
+        case CONDITION_INSTANCE_INFO:
             mask |= GRID_MAP_TYPE_MASK_ALL;
             break;
         case CONDITION_MAPID:
@@ -443,8 +469,14 @@ uint32 Condition::GetSearcherTypeMaskForCondition()
         case CONDITION_TITLE:
             mask |= GRID_MAP_TYPE_MASK_PLAYER;
             break;
-        case CONDITION_MAP_DIFFICULTY:
+        case CONDITION_SPAWNMASK:
             mask |= GRID_MAP_TYPE_MASK_ALL;
+            break;
+        case CONDITION_GENDER:
+            mask |= GRID_MAP_TYPE_MASK_PLAYER;
+            break;
+        case CONDITION_UNIT_STATE:
+            mask |= GRID_MAP_TYPE_MASK_CREATURE | GRID_MAP_TYPE_MASK_PLAYER;
             break;
         default:
             ASSERT(false && "Condition::GetSearcherTypeMaskForCondition - missing condition handling!");
@@ -466,6 +498,8 @@ uint32 Condition::GetMaxAvailableConditionTargets()
         case CONDITION_SOURCE_TYPE_GOSSIP_MENU:
         case CONDITION_SOURCE_TYPE_GOSSIP_MENU_OPTION:
         case CONDITION_SOURCE_TYPE_SMART_EVENT:
+        case CONDITION_SOURCE_TYPE_NPC_VENDOR:
+        case CONDITION_SOURCE_TYPE_SPELL_PROC:
             return 2;
         default:
             return 1;
@@ -616,7 +650,8 @@ bool ConditionMgr::CanHaveSourceGroupSet(ConditionSourceType sourceType) const
             sourceType == CONDITION_SOURCE_TYPE_VEHICLE_SPELL ||
             sourceType == CONDITION_SOURCE_TYPE_SPELL_IMPLICIT_TARGET ||
             sourceType == CONDITION_SOURCE_TYPE_SPELL_CLICK_EVENT ||
-            sourceType == CONDITION_SOURCE_TYPE_SMART_EVENT);
+            sourceType == CONDITION_SOURCE_TYPE_SMART_EVENT ||
+            sourceType == CONDITION_SOURCE_TYPE_NPC_VENDOR);
 }
 
 bool ConditionMgr::CanHaveSourceIdSet(ConditionSourceType sourceType) const
@@ -643,7 +678,6 @@ ConditionList ConditionMgr::GetConditionsForNotGroupedEntry(ConditionSourceType 
     return spellCond;
 }
 
-
 ConditionList ConditionMgr::GetConditionsForSpellClickEvent(uint32 creatureId, uint32 spellId)
 {
     ConditionList cond;
@@ -666,7 +700,7 @@ ConditionList ConditionMgr::GetConditionsForVehicleSpell(uint32 creatureId, uint
     CreatureSpellConditionContainer::const_iterator itr = VehicleSpellConditionStore.find(creatureId);
     if (itr != VehicleSpellConditionStore.end())
     {
-            ConditionTypeContainer::const_iterator i = (*itr).second.find(spellId);
+        ConditionTypeContainer::const_iterator i = (*itr).second.find(spellId);
         if (i != (*itr).second.end())
         {
             cond = (*i).second;
@@ -687,6 +721,22 @@ ConditionList ConditionMgr::GetConditionsForSmartEvent(int32 entryOrGuid, uint32
         {
             cond = (*i).second;
             sLog->outDebug(LOG_FILTER_CONDITIONSYS, "GetConditionsForSmartEvent: found conditions for Smart Event entry or guid %d event_id %u", entryOrGuid, eventId);
+        }
+    }
+    return cond;
+}
+
+ConditionList ConditionMgr::GetConditionsForNpcVendorEvent(uint32 creatureId, uint32 itemId)
+{
+    ConditionList cond;
+    NpcVendorConditionContainer::const_iterator itr = NpcVendorConditionContainerStore.find(creatureId);
+    if (itr != NpcVendorConditionContainerStore.end())
+    {
+        ConditionTypeContainer::const_iterator i = (*itr).second.find(itemId);
+        if (i != (*itr).second.end())
+        {
+            cond = (*i).second;
+            sLog->outDebug(LOG_FILTER_CONDITIONSYS, "GetConditionsForNpcVendorEvent: found conditions for creature entry %u item %u", creatureId, itemId);
         }
     }
     return cond;
@@ -724,12 +774,11 @@ void ConditionMgr::LoadConditions(bool isReload)
     }
 
     QueryResult result = WorldDatabase.Query("SELECT SourceTypeOrReferenceId, SourceGroup, SourceEntry, SourceId, ElseGroup, ConditionTypeOrReference, ConditionTarget, "
-                                             " ConditionValue1, ConditionValue2, ConditionValue3, NegativeCondition, ErrorTextId, ScriptName FROM conditions");
+                                             " ConditionValue1, ConditionValue2, ConditionValue3, NegativeCondition, ErrorType, ErrorTextId, ScriptName FROM conditions");
 
     if (!result)
     {
         sLog->outError(LOG_FILTER_SQL, ">> Loaded 0 conditions. DB table `conditions` is empty!");
-
         return;
     }
 
@@ -740,19 +789,20 @@ void ConditionMgr::LoadConditions(bool isReload)
         Field* fields = result->Fetch();
 
         Condition* cond = new Condition();
-        int32 iSourceTypeOrReferenceId   = fields[0].GetInt32();
+        int32 iSourceTypeOrReferenceId  = fields[0].GetInt32();
         cond->SourceGroup               = fields[1].GetUInt32();
-        cond->SourceEntry               = fields[2].GetUInt32();
+        cond->SourceEntry               = fields[2].GetInt32();
         cond->SourceId                  = fields[3].GetInt32();
         cond->ElseGroup                 = fields[4].GetUInt32();
-        int32 iConditionTypeOrReference  = fields[5].GetInt32();
+        int32 iConditionTypeOrReference = fields[5].GetInt32();
         cond->ConditionTarget           = fields[6].GetUInt8();
         cond->ConditionValue1           = fields[7].GetUInt32();
         cond->ConditionValue2           = fields[8].GetUInt32();
         cond->ConditionValue3           = fields[9].GetUInt32();
         cond->NegativeCondition         = fields[10].GetUInt8();
-        cond->ErrorTextId                 = fields[11].GetUInt32();
-        cond->ScriptId                  = sObjectMgr->GetScriptId(fields[12].GetCString());
+        cond->ErrorType                 = fields[11].GetUInt32();
+        cond->ErrorTextId               = fields[12].GetUInt32();
+        cond->ScriptId                  = sObjectMgr->GetScriptId(fields[13].GetCString());
 
         if (iConditionTypeOrReference >= 0)
             cond->ConditionType = ConditionTypes(iConditionTypeOrReference);
@@ -829,6 +879,18 @@ void ConditionMgr::LoadConditions(bool isReload)
             continue;
         }
 
+        if (cond->ErrorType && cond->SourceType != CONDITION_SOURCE_TYPE_SPELL)
+        {
+            sLog->outError(LOG_FILTER_SQL, "Condition type %u entry %i can't have ErrorType (%u), set to 0!", uint32(cond->SourceType), cond->SourceEntry, cond->ErrorType);
+            cond->ErrorType = 0;
+        }
+
+        if (cond->ErrorTextId && !cond->ErrorType)
+        {
+            sLog->outError(LOG_FILTER_SQL, "Condition type %u entry %i has any ErrorType, ErrorTextId (%u) is set, set to 0!", uint32(cond->SourceType), cond->SourceEntry, cond->ErrorTextId);
+            cond->ErrorTextId = 0;
+        }
+
         if (cond->SourceGroup)
         {
             bool valid = false;
@@ -899,6 +961,13 @@ void ConditionMgr::LoadConditions(bool isReload)
                     //! TODO: PAIR_32 ?
                     std::pair<int32, uint32> key = std::make_pair(cond->SourceEntry, cond->SourceId);
                     SmartEventConditionStore[key][cond->SourceGroup].push_back(cond);
+                    valid = true;
+                    ++count;
+                    continue;
+                }
+                case CONDITION_SOURCE_TYPE_NPC_VENDOR:
+                {
+                    NpcVendorConditionContainerStore[cond->SourceGroup][cond->SourceEntry].push_back(cond);
                     valid = true;
                     ++count;
                     continue;
@@ -1345,6 +1414,7 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond)
             break;
         }
         case CONDITION_SOURCE_TYPE_SPELL:
+        case CONDITION_SOURCE_TYPE_SPELL_PROC:
         {
             SpellInfo const* spellProto = sSpellMgr->GetSpellInfo(cond->SourceEntry);
             if (!spellProto)
@@ -1394,6 +1464,21 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond)
                 return false;
             }
             break;
+        case CONDITION_SOURCE_TYPE_NPC_VENDOR:
+        {
+            if (!sObjectMgr->GetCreatureTemplate(cond->SourceGroup))
+            {
+                sLog->outError(LOG_FILTER_SQL, "SourceEntry %u in `condition` table, does not exist in `creature_template`, ignoring.", cond->SourceGroup);
+                return false;
+            }
+            ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(cond->SourceEntry);
+            if (!itemTemplate)
+            {
+                sLog->outError(LOG_FILTER_SQL, "SourceEntry %u in `condition` table, does not exist in `item_template`, ignoring.", cond->SourceEntry);
+                return false;
+            }
+            break;
+        }
         case CONDITION_SOURCE_TYPE_GOSSIP_MENU:
         case CONDITION_SOURCE_TYPE_GOSSIP_MENU_OPTION:
         case CONDITION_SOURCE_TYPE_SMART_EVENT:
@@ -1404,6 +1489,7 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond)
 
     return true;
 }
+
 bool ConditionMgr::isConditionTypeValid(Condition* cond)
 {
     if (cond->ConditionType == CONDITION_NONE || cond->ConditionType >= CONDITION_MAX)
@@ -1414,7 +1500,7 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond)
 
     if (cond->ConditionTarget >= cond->GetMaxAvailableConditionTargets())
     {
-        sLog->outError(LOG_FILTER_SQL, "SourceType %u, SourceEntry %u in `condition` table, has incorrect ConditionTarget set, ignoring.", cond->SourceType, cond->SourceEntry);
+        sLog->outError(LOG_FILTER_SQL, "SourceType %u, SourceEntry %u, SourceGroup %u in `condition` table, has incorrect ConditionTarget set, ignoring.", cond->SourceType, cond->SourceEntry, cond->SourceGroup);
         return false;
     }
 
@@ -1567,7 +1653,7 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond)
         }
         case CONDITION_ACHIEVEMENT:
         {
-            AchievementEntry const* achievement = sAchievementStore.LookupEntry(cond->ConditionValue1);
+            AchievementEntry const* achievement = sAchievementMgr->GetAchievement(cond->ConditionValue1);
             if (!achievement)
             {
                 sLog->outError(LOG_FILTER_SQL, "Achivement condition has non existing achivement id (%u), skipped", cond->ConditionValue1);
@@ -1606,6 +1692,20 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond)
                 sLog->outError(LOG_FILTER_SQL, "Race condition has useless data in value2 (%u)!", cond->ConditionValue2);
             if (cond->ConditionValue3)
                 sLog->outError(LOG_FILTER_SQL, "Race condition has useless data in value3 (%u)!", cond->ConditionValue3);
+            break;
+        }
+        case CONDITION_GENDER:
+        {
+            if (!Player::IsValidGender(uint8(cond->ConditionValue1)))
+            {
+                sLog->outError(LOG_FILTER_SQL, "Gender condition has invalid gender (%u), skipped", cond->ConditionValue1);
+                return false;
+            }
+
+            if (cond->ConditionValue2)
+                sLog->outError(LOG_FILTER_SQL, "Gender condition has useless data in value2 (%u)!", cond->ConditionValue2);
+            if (cond->ConditionValue3)
+                sLog->outError(LOG_FILTER_SQL, "Gender condition has useless data in value3 (%u)!", cond->ConditionValue3);
             break;
         }
         case CONDITION_MAPID:
@@ -1827,7 +1927,7 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond)
             break;
         }
         case CONDITION_AREAID:
-        case CONDITION_INSTANCE_DATA:
+        case CONDITION_INSTANCE_INFO:
             break;
         case CONDITION_WORLD_STATE:
         {
@@ -1858,21 +1958,24 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond)
             }
             break;
         }
-        case CONDITION_MAP_DIFFICULTY:
+        case CONDITION_SPAWNMASK:
         {
-            if (cond->ConditionValue1 >= MAX_DIFFICULTY)
+            if (cond->ConditionValue1 > SPAWNMASK_RAID_ALL)
             {
-                sLog->outError(LOG_FILTER_SQL, "Map Difficulty condition has non existing map difficulty in value1 (%u), skipped", cond->ConditionValue1);
+                sLog->outError(LOG_FILTER_SQL, "SpawnMask condition has non existing SpawnMask in value1 (%u), skipped", cond->ConditionValue1);
                 return false;
             }
             break;
         }
-        case CONDITION_UNUSED_20:
-            sLog->outError(LOG_FILTER_SQL, "Found ConditionTypeOrReference = CONDITION_UNUSED_20 in `conditions` table - ignoring");
-            return false;
-        case CONDITION_UNUSED_21:
-            sLog->outError(LOG_FILTER_SQL, "Found ConditionTypeOrReference = CONDITION_UNUSED_21 in `conditions` table - ignoring");
-            return false;
+        case CONDITION_UNIT_STATE:
+        {
+            if (cond->ConditionValue1 > uint32(UNIT_STATE_ALL_STATE))
+            {
+                sLog->outError(LOG_FILTER_SQL, "UnitState condition has non existing UnitState in value1 (%u), skipped", cond->ConditionValue1);
+                return false;
+            }
+            break;
+        }
         case CONDITION_UNUSED_24:
             sLog->outError(LOG_FILTER_SQL, "Found ConditionTypeOrReference = CONDITION_UNUSED_24 in `conditions` table - ignoring");
             return false;
@@ -1940,6 +2043,19 @@ void ConditionMgr::Clean()
     }
 
     SpellClickEventConditionStore.clear();
+
+    for (NpcVendorConditionContainer::iterator itr = NpcVendorConditionContainerStore.begin(); itr != NpcVendorConditionContainerStore.end(); ++itr)
+    {
+        for (ConditionTypeContainer::iterator it = itr->second.begin(); it != itr->second.end(); ++it)
+        {
+            for (ConditionList::const_iterator i = it->second.begin(); i != it->second.end(); ++i)
+                delete *i;
+            it->second.clear();
+        }
+        itr->second.clear();
+    }
+
+    NpcVendorConditionContainerStore.clear();
 
     // this is a BIG hack, feel free to fix it if you can figure out the ConditionMgr ;)
     for (std::list<Condition*>::const_iterator itr = AllocatedMemoryStore.begin(); itr != AllocatedMemoryStore.end(); ++itr)

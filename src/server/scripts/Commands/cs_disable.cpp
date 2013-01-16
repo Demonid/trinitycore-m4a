@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,12 +22,16 @@ Comment: All disable related commands
 Category: commandscripts
 EndScriptData */
 
-#include <stdafx.hpp>
-#include "ScriptMgr.h"
-#include "ObjectMgr.h"
-#include "Chat.h"
+#include "stdafx.hpp"
 #include "DisableMgr.h"
+#include "AchievementMgr.h"
+#include "Chat.h"
+#include "Language.h"
+#include "ObjectMgr.h"
 #include "OutdoorPvP.h"
+#include "Player.h"
+#include "ScriptMgr.h"
+#include "SpellMgr.h"
 
 class disable_commandscript : public CommandScript
 {
@@ -138,7 +142,7 @@ public:
             }
             case DISABLE_TYPE_ACHIEVEMENT_CRITERIA:
             {
-                if (!sAchievementCriteriaStore.LookupEntry(entry))
+                if (!sAchievementMgr->GetAchievementCriteria(entry))
                 {
                     handler->PSendSysMessage(LANG_COMMAND_NO_ACHIEVEMENT_CRITERIA_FOUND);
                     handler->SetSentErrorMessage(true);

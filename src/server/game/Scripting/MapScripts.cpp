@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -17,19 +17,20 @@
  */
 
 #include "stdafx.hpp"
-#include "Map.h"
-#include "World.h"
 #include "CellImpl.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
-#include "Transport.h"
-#include "ScriptedCreature.h"
-#include "WaypointManager.h"
 #include "GossipDef.h"
+#include "Map.h"
 #include "MapManager.h"
-#include "ObjectMgr.h"
 #include "MapRefManager.h"
+#include "ObjectMgr.h"
+#include "Pet.h"
+#include "ScriptedCreature.h"
 #include "ScriptMgr.h"
+#include "Transport.h"
+#include "WaypointManager.h"
+#include "World.h"
 
 /// Put scripts in the execution queue
 void Map::ScriptsStart(ScriptMapMap const& scripts, uint32 id, Object* source, Object* target)

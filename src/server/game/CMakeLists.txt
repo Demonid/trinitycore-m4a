@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -8,22 +8,10 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-if( USE_COREPCH )
-  include_directories(${CMAKE_CURRENT_BINARY_DIR})
-endif()
-
 file(GLOB_RECURSE sources_Accounts Accounts/*.cpp Accounts/*.h)
 file(GLOB_RECURSE sources_Achievements Achievements/*.cpp Achievements/*.h)
 file(GLOB_RECURSE sources_Addons Addons/*.cpp Addons/*.h)
 file(GLOB_RECURSE sources_AI AI/*.cpp AI/*.h AI/*.hpp)
-file(GLOB EXCLUDED_SOURCES
-  AI/ScriptedAI/ScriptedCreature.cpp
-  AI/ScriptedAI/ScriptedEscortAI.cpp
-  AI/ScriptedAI/ScriptedFollowerAI.cpp
-  AI/ScriptedAI/ScriptedGuardAI.cpp
-  AI/ScriptedAI/ScriptedSimpleAI.cpp)
-list(REMOVE_ITEM sources_AI ${EXCLUDED_SOURCES})
-unset(EXCLUDED_SOURCES)
 file(GLOB_RECURSE sources_AuctionHouse AuctionHouse/*.cpp AuctionHouse/*.h)
 file(GLOB_RECURSE sources_Battlefield Battlefield/*.cpp Battlefield/*.h)
 file(GLOB_RECURSE sources_Battlegrounds Battlegrounds/*.cpp Battlegrounds/*.h)
@@ -51,12 +39,6 @@ file(GLOB_RECURSE sources_Pools Pools/*.cpp Pools/*.h)
 file(GLOB_RECURSE sources_Quests Quests/*.cpp Quests/*.h)
 file(GLOB_RECURSE sources_Reputation Reputation/*.cpp Reputation/*.h)
 file(GLOB_RECURSE sources_Scripting Scripting/*.cpp Scripting/*.h)
-file(GLOB EXCLUDED_SOURCES
-  Scripting/ScriptLoader.cpp
-  Scripting/ScriptMgr.cpp
-  Scripting/ScriptSystem.cpp)
-list(REMOVE_ITEM sources_Scripting ${EXCLUDED_SOURCES})
-unset(EXCLUDED_SOURCES)
 file(GLOB_RECURSE sources_Server Server/*.cpp Server/*.h)
 file(GLOB_RECURSE sources_Skills Skills/*.cpp Skills/*.h)
 file(GLOB_RECURSE sources_Spells Spells/*.cpp Spells/*.h)
@@ -70,7 +52,13 @@ file(GLOB sources_localdir *.cpp *.hpp)
 
 # Create game-libary
 
+if (USE_COREPCH)
+  set(game_STAT_PCH_HDR PrecompiledHeaders/gamePCH.h)
+  set(game_STAT_PCH_SRC PrecompiledHeaders/gamePCH.cpp)
+endif ()
+
 set(game_STAT_SRCS
+  ${game_STAT_SRCS}
   ${sources_Accounts}
   ${sources_Achievements}
   ${sources_Addons}
@@ -99,7 +87,6 @@ set(game_STAT_SRCS
   ${sources_Movement}
   ${sources_OutdoorPvP}
   ${sources_Pools}
-  PrecompiledHeaders/gamePCH.h
   ${sources_Quests}
   ${sources_Reputation}
   ${sources_Scripting}
@@ -215,18 +202,19 @@ include_directories(
   ${OPENSSL_INCLUDE_DIR}
 )
 
-add_library(game STATIC ${game_STAT_SRCS})
+add_library(game STATIC
+  ${game_STAT_SRCS}
+)
 
 add_dependencies(game revision.h)
 
 target_link_libraries(game)
 
 # Generate precompiled header
-if( USE_COREPCH )
-  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES Clang)
-    add_precompiled_header(game ${CMAKE_CURRENT_SOURCE_DIR}/stdafx.hpp)
-  elseif(MSVC)
-    set_precompiled_header(game "stdafx.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/stdafx.cpp")
+if (USE_COREPCH)
+  if(MSVC)
+    set_precompiled_header(game "stdafx.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/stdafx.cpp")
+  else()
+    add_cxx_pch(game ${game_STAT_PCH_HDR} ${game_STAT_PCH_SRC})
   endif()
-endif()
+endif ()

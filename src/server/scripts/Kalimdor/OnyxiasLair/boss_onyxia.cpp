@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,7 +43,7 @@ enum Yells
     SAY_PHASE_3_TRANS           = 3,
 
     // Emote
-    EMOTE_BREATH                = 4,
+    EMOTE_BREATH                = 4
 };
 
 enum Spells
@@ -73,7 +73,7 @@ enum Spells
     //SPELL_BREATH                = 21131,                  // 8x in "array", different initial cast than the other arrays
 
     // Phase 3 spells
-    SPELL_BELLOWING_ROAR         = 18431,
+    SPELL_BELLOWING_ROAR         = 18431
 };
 
 struct OnyxMove

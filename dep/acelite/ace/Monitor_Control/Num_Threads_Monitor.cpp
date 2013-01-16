@@ -1,10 +1,10 @@
-// $Id: Num_Threads_Monitor.cpp 86518 2009-08-18 12:30:56Z olli $
+// $Id: Num_Threads_Monitor.cpp 95533 2012-02-14 22:59:17Z wotte $
 
 #include "ace/Monitor_Control/Num_Threads_Monitor.h"
 
 #if defined (ACE_HAS_MONITOR_FRAMEWORK) && (ACE_HAS_MONITOR_FRAMEWORK == 1)
 
-#if defined (linux)
+#if defined (ACE_LINUX)
 #include "ace/OS_NS_stdio.h"
 #endif
 
@@ -21,7 +21,7 @@ namespace ACE
       : Monitor_Base (name, Monitor_Control_Types::MC_NUMBER)
 #if defined (ACE_HAS_WIN32_PDH)
       , Windows_Monitor (ACE_TEXT ("\\System\\Threads"))
-#elif defined (linux)
+#elif defined (ACE_LINUX)
       , file_ptr_ (0)
       , nthreads_ (0UL)
 #endif
@@ -34,7 +34,7 @@ namespace ACE
 #if defined (ACE_HAS_WIN32_PDH)
       this->update_i ();
       this->receive (this->value_);
-#elif defined (linux)
+#elif defined (ACE_LINUX)
       this->file_ptr_ = ACE_OS::fopen (ACE_TEXT ("/proc/self/status"),
                                        ACE_TEXT ("r"));
 
@@ -78,7 +78,7 @@ namespace ACE
     {
       return Num_Threads_Monitor::default_name_;
     }
-    
+
     void
     Num_Threads_Monitor::clear_i (void)
     {

@@ -9,6 +9,8 @@ build*/
 *~
 .git/
 *.kdev*
+.DS_Store
+CMakeLists.txt.user
 *.bak
 *.patch
 *.diff

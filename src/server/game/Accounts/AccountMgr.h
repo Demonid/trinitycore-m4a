@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -42,12 +42,12 @@ namespace AccountMgr
     AccountOpResult ChangePassword(uint32 accountId, std::string newPassword);
     bool CheckPassword(uint32 accountId, std::string password);
 
-    uint32 GetId(std::string username);
+    uint32 GetId(std::string const& username);
     uint32 GetSecurity(uint32 accountId);
     uint32 GetSecurity(uint32 accountId, int32 realmId);
     bool GetName(uint32 accountId, std::string& name);
     uint32 GetCharactersCount(uint32 accountId);
-    std::string CalculateShaPassHash(std::string& name, std::string& password);
+    std::string CalculateShaPassHash(std::string const& name, std::string const& password);
 
     bool normalizeString(std::string& utf8String);
     bool IsPlayerAccount(uint32 gmlevel);

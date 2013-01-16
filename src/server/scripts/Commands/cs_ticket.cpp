@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,12 +22,15 @@ Comment: All ticket related commands
 Category: commandscripts
 EndScriptData */
 
-#include <stdafx.hpp>
-#include "ScriptMgr.h"
-#include "Chat.h"
+#include "stdafx.hpp"
 #include "AccountMgr.h"
+#include "Chat.h"
+#include "Language.h"
 #include "ObjectMgr.h"
+#include "Opcodes.h"
+#include "Player.h"
 #include "TicketMgr.h"
+#include "ScriptMgr.h"
 
 class ticket_commandscript : public CommandScript
 {
@@ -157,7 +160,7 @@ public:
         sTicketMgr->CloseTicket(ticket->GetId(), player ? player->GetGUID() : -1);
         sTicketMgr->UpdateLastChange();
 
-        std::string msg = ticket->FormatMessageString(*handler, player ? player->GetName() : "Console", NULL, NULL, NULL);
+        std::string msg = ticket->FormatMessageString(*handler, player ? player->GetName().c_str() : "Console", NULL, NULL, NULL);
         handler->SendGlobalGMSysMessage(msg.c_str());
 
         // Inform player, who submitted this ticket, that it is closed
@@ -207,7 +210,7 @@ public:
         sTicketMgr->UpdateLastChange();
 
         std::string msg = ticket->FormatMessageString(*handler, NULL, ticket->GetAssignedToName().c_str(), NULL, NULL);
-        msg += handler->PGetParseString(LANG_COMMAND_TICKETLISTADDCOMMENT, player ? player->GetName() : "Console", comment);
+        msg += handler->PGetParseString(LANG_COMMAND_TICKETLISTADDCOMMENT, player ? player->GetName().c_str() : "Console", comment);
         handler->SendGlobalGMSysMessage(msg.c_str());
 
         return true;
@@ -259,7 +262,7 @@ public:
             return true;
         }
 
-        std::string msg = ticket->FormatMessageString(*handler, NULL, NULL, NULL, handler->GetSession() ? handler->GetSession()->GetPlayer()->GetName() : "Console");
+        std::string msg = ticket->FormatMessageString(*handler, NULL, NULL, NULL, handler->GetSession() ? handler->GetSession()->GetPlayer()->GetName().c_str() : "Console");
         handler->SendGlobalGMSysMessage(msg.c_str());
 
         sTicketMgr->RemoveTicket(ticket->GetId());
@@ -384,13 +387,14 @@ public:
             return true;
         }
 
+        std::string assignedTo = ticket->GetAssignedToName(); // copy assignedto name because we need it after the ticket has been unnassigned
         SQLTransaction trans = SQLTransaction(NULL);
         ticket->SetUnassigned();
         ticket->SaveToDB(trans);
         sTicketMgr->UpdateLastChange();
 
-        std::string msg = ticket->FormatMessageString(*handler, NULL, ticket->GetAssignedToName().c_str(),
-            handler->GetSession() ? handler->GetSession()->GetPlayer()->GetName() : "Console", NULL);
+        std::string msg = ticket->FormatMessageString(*handler, NULL, assignedTo.c_str(),
+            handler->GetSession() ? handler->GetSession()->GetPlayer()->GetName().c_str() : "Console", NULL);
         handler->SendGlobalGMSysMessage(msg.c_str());
 
         return true;
@@ -428,7 +432,7 @@ public:
 
         // Detect target's GUID
         uint64 guid = 0;
-        if (Player* player = sObjectAccessor->FindPlayerByName(name.c_str()))
+        if (Player* player = sObjectAccessor->FindPlayerByName(name))
             guid = player->GetGUID();
         else
             guid = sObjectMgr->GetPlayerGUIDByName(name);

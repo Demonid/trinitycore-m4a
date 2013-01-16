@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,41 +28,36 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "zulgurub.h"
 
-#define SAY_AGGRO                   -1309020
-#define SAY_FLEEING                 -1309021
-#define SAY_MINION_DESTROY          -1309022                //where does it belong?
-#define SAY_PROTECT_ALTAR           -1309023                //where does it belong?
-
-#define SPELL_BLOODSIPHON            24322
-#define SPELL_CORRUPTEDBLOOD         24328
-#define SPELL_CAUSEINSANITY          24327                  //Not working disabled.
-#define SPELL_WILLOFHAKKAR           24178
-#define SPELL_ENRAGE                 24318
-
-// The Aspects of all High Priests
-#define SPELL_ASPECT_OF_JEKLIK       24687
-#define SPELL_ASPECT_OF_VENOXIS      24688
-#define SPELL_ASPECT_OF_MARLI        24686
-#define SPELL_ASPECT_OF_THEKAL       24689
-#define SPELL_ASPECT_OF_ARLOKK       24690
-
-class boss_hakkar : public CreatureScript
+enum Says
 {
-    public:
+    SAY_AGGRO                   = 0,
+    SAY_FLEEING                 = 1,
+    SAY_MINION_DESTROY          = 2,                //where does it belong?
+    SAY_PROTECT_ALTAR           = 3                 //where does it belong?
+};
 
-        boss_hakkar()
-            : CreatureScript("boss_hakkar")
+enum Spells
+{
+    SPELL_BLOODSIPHON           = 24322,
+    SPELL_CORRUPTEDBLOOD        = 24328,
+    SPELL_CAUSEINSANITY         = 24327,                 //Not working disabled.
+    SPELL_WILLOFHAKKAR          = 24178,
+    SPELL_ENRAGE                = 24318,
+// The Aspects of all High Priests
+    SPELL_ASPECT_OF_JEKLIK      = 24687,
+    SPELL_ASPECT_OF_VENOXIS     = 24688,
+    SPELL_ASPECT_OF_MARLI       = 24686,
+    SPELL_ASPECT_OF_THEKAL      = 24689,
+    SPELL_ASPECT_OF_ARLOKK      = 24690
+};
+
+class boss_hakkar : public CreatureScript // hakkar
+{
+    public: boss_hakkar() : CreatureScript("boss_hakkar") {}
+
+        struct boss_hakkarAI : public BossAI
         {
-        }
-
-        struct boss_hakkarAI : public ScriptedAI
-        {
-            boss_hakkarAI(Creature* creature) : ScriptedAI(creature)
-            {
-                instance = creature->GetInstanceScript();
-            }
-
-            InstanceScript* instance;
+            boss_hakkarAI(Creature* creature) : BossAI(creature, DATA_HAKKAR) {}
 
             uint32 BloodSiphon_Timer;
             uint32 CorruptedBlood_Timer;
@@ -107,9 +102,15 @@ class boss_hakkar : public CreatureScript
                 Enraged = false;
             }
 
+            void JustDied(Unit* /*killer*/)
+            {
+                _JustDied();
+            }
+
             void EnterCombat(Unit* /*who*/)
             {
-                DoScriptText(SAY_AGGRO, me);
+                _EnterCombat();
+                Talk(SAY_AGGRO);
             }
 
             void UpdateAI(const uint32 diff)

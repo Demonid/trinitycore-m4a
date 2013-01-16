@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -17,12 +17,13 @@
  */
 
 #include "stdafx.hpp"
-#include "DatabaseEnv.h"
 #include "AccountMgr.h"
+#include "DatabaseEnv.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "Util.h"
 #include <Cryptography/SHA1.h>
+#include "WorldSession.h"
 
 namespace AccountMgr
 {
@@ -177,7 +178,7 @@ AccountOpResult ChangePassword(uint32 accountId, std::string newPassword)
     return AOR_OK;
 }
 
-uint32 GetId(std::string username)
+uint32 GetId(std::string const& username)
 {
     PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_GET_ACCOUNT_ID_BY_USERNAME);
     stmt->setString(0, username);
@@ -266,7 +267,7 @@ bool normalizeString(std::string& utf8String)
     return WStrToUtf8(buffer, maxLength, utf8String);
 }
 
-std::string CalculateShaPassHash(std::string& name, std::string& password)
+std::string CalculateShaPassHash(std::string const& name, std::string const& password)
 {
     SHA1Hash sha;
     sha.Initialize();
@@ -275,10 +276,7 @@ std::string CalculateShaPassHash(std::string& name, std::string& password)
     sha.UpdateData(password);
     sha.Finalize();
 
-    std::string encoded;
-    hexEncodeByteArray(sha.GetDigest(), sha.GetLength(), encoded);
-
-    return encoded;
+    return ByteArrayToHexStr(sha.GetDigest(), sha.GetLength());
 }
 
 bool IsPlayerAccount(uint32 gmlevel)

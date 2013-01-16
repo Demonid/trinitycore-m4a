@@ -1,4 +1,4 @@
-// $Id: CPU_Load_Monitor.cpp 86518 2009-08-18 12:30:56Z olli $
+// $Id: CPU_Load_Monitor.cpp 95533 2012-02-14 22:59:17Z wotte $
 
 #include "ace/Monitor_Control/CPU_Load_Monitor.h"
 
@@ -8,7 +8,7 @@
 #include <sys/sysinfo.h>
 #endif
 
-#if defined (linux)
+#if defined (ACE_LINUX)
 #include "ace/OS_NS_stdio.h"
 #endif
 
@@ -26,7 +26,7 @@ namespace ACE
 #if defined (ACE_HAS_WIN32_PDH)
       , Windows_Monitor (ACE_TEXT("\\Processor(_Total)\\% Processor Time"))
 #endif
-#if defined (linux) || defined (ACE_HAS_KSTAT)
+#if defined (ACE_LINUX) || defined (ACE_HAS_KSTAT)
       , user_ (0)
       , wait_ (0)
       , kernel_ (0)
@@ -34,7 +34,7 @@ namespace ACE
       , prev_idle_ (0)
       , prev_total_ (0.0)
 #endif
-#if defined (linux)
+#if defined (ACE_LINUX)
       , file_ptr_ (0)
 #elif defined (ACE_HAS_KSTAT)
       , kstats_ (0)
@@ -51,19 +51,19 @@ namespace ACE
 #if defined (ACE_HAS_WIN32_PDH)
       this->update_i ();
       this->receive (this->value_);
-#elif defined (linux)
+#elif defined (ACE_LINUX)
       this->access_proc_stat (&this->idle_);
 #elif defined (ACE_HAS_KSTAT)
       this->access_kstats (&this->idle_);
 #endif
 
-#if defined (linux) || defined (ACE_HAS_KSTAT)
+#if defined (ACE_LINUX) || defined (ACE_HAS_KSTAT)
       double delta_idle = this->idle_ - this->prev_idle_;
       double total =
         this->user_ + this->wait_ + this->kernel_ + this->idle_;
       double delta_total = total - this->prev_total_;
 
-      if (delta_total == 0.0)
+      if (ACE::is_equal (delta_total, 0.0))
         {
           /// The system hasn't updated /proc/stat since the last call
           /// to update(), we must avoid dividing by 0.
@@ -85,7 +85,7 @@ namespace ACE
     {
       return CPU_Load_Monitor::default_name_;
     }
-    
+
     void
     CPU_Load_Monitor::clear_i (void)
     {
@@ -96,11 +96,11 @@ namespace ACE
       this->init ();
       this->Monitor_Base::clear_i ();
     }
-    
+
     void
     CPU_Load_Monitor::init (void)
     {
-#if defined (linux)
+#if defined (ACE_LINUX)
       /// All data in this file are stored as running 'jiffy' totals, so we
       /// get values here in the constructor to subtract for the difference
       /// in subsequent calls.
@@ -117,7 +117,7 @@ namespace ACE
 #endif
     }
 
-#if defined (linux)
+#if defined (ACE_LINUX)
     void
     CPU_Load_Monitor::access_proc_stat (unsigned long *which_idle)
     {

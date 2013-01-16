@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -9,11 +9,11 @@
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # Enable precompiled headers when using the GCC compiler.
-if( USE_SCRIPTPCH )
-  include_directories(
-    ${CMAKE_CURRENT_BINARY_DIR}
-  )
-endif()
+
+if (USE_SCRIPTPCH)
+  set(scripts_STAT_PCH_HDR PrecompiledHeaders/ScriptPCH.h)
+  set(scripts_STAT_PCH_SRC PrecompiledHeaders/ScriptPCH.cpp)
+endif ()
 
 message(STATUS "SCRIPT PREPARATIONS")
 include(Spells/CMakeLists.txt)
@@ -29,10 +29,6 @@ set(scripts_STAT_SRCS
   ../game/AI/ScriptedAI/ScriptedEscortAI.cpp
   ../game/AI/ScriptedAI/ScriptedCreature.cpp
   ../game/AI/ScriptedAI/ScriptedFollowerAI.cpp
-  ../game/Scripting/ScriptLoader.cpp
-  ../game/Scripting/ScriptMgr.cpp
-  ../game/Scripting/ScriptSystem.cpp
-  PrecompiledHeaders/ScriptPCH.h
   ${sources_localdir}
 )
 
@@ -44,6 +40,7 @@ if(SCRIPTS)
   include(Kalimdor/CMakeLists.txt)
   include(Outland/CMakeLists.txt)
   include(Northrend/CMakeLists.txt)
+  include(Events/CMakeLists.txt)
 endif()
 
 message(STATUS "SCRIPT PREPARATION COMPLETE")
@@ -150,18 +147,19 @@ include_directories(
   ${MYSQL_INCLUDE_DIR}
 )
 
-add_library(scripts STATIC ${scripts_STAT_SRCS})
+add_library(scripts STATIC
+  ${scripts_STAT_SRCS}
+)
 
 add_dependencies(scripts revision.h)
 
 target_link_libraries(scripts ${Boost_LIBRARIES} game)
 
 # Generate precompiled header
-if( USE_SCRIPTPCH )
-  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES Clang)
-    add_precompiled_header(scripts ${CMAKE_CURRENT_SOURCE_DIR}/stdafx.hpp)
-  elseif(MSVC)
-    set_precompiled_header(scripts "stdafx.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/stdafx.cpp")
+if (USE_SCRIPTPCH)
+  if(MSVC)
+    set_precompiled_header(scripts "stdafx.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/stdafx.cpp")
+  else()
+    add_cxx_pch(scripts ${scripts_STAT_PCH_HDR} ${scripts_STAT_PCH_SRC})
   endif()
 endif()

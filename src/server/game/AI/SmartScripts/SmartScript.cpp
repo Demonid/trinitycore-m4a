@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,25 +16,25 @@
  */
 
 #include "stdafx.hpp"
-#include "DatabaseEnv.h"
-#include "ObjectMgr.h"
-#include "ObjectDefines.h"
-#include "GridDefines.h"
-#include "GridNotifiers.h"
-#include "SpellMgr.h"
-#include "GridNotifiersImpl.h"
 #include "Cell.h"
 #include "CellImpl.h"
-#include "InstanceScript.h"
-#include "ScriptedCreature.h"
-#include "GossipDef.h"
-#include "ScriptedCreature.h"
-#include "SmartScript.h"
-#include "SmartAI.h"
-#include "Group.h"
-#include "Vehicle.h"
-#include "ScriptedGossip.h"
 #include "CreatureTextMgr.h"
+#include "DatabaseEnv.h"
+#include "GossipDef.h"
+#include "GridDefines.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "Group.h"
+#include "InstanceScript.h"
+#include "Language.h"
+#include "ObjectDefines.h"
+#include "ObjectMgr.h"
+#include "ScriptedCreature.h"
+#include "ScriptedGossip.h"
+#include "SmartAI.h"
+#include "SmartScript.h"
+#include "SpellMgr.h"
+#include "Vehicle.h"
 
 class TrinityStringTextBuilder
 {
@@ -47,13 +47,13 @@ class TrinityStringTextBuilder
         size_t operator()(WorldPacket* data, LocaleConstant locale) const
         {
             std::string text = sObjectMgr->GetTrinityString(_textId, locale);
-            char const* localizedName = _source->GetNameForLocaleIdx(locale);
+            std::string localizedName = _source->GetNameForLocaleIdx(locale);
 
             *data << uint8(_msgType);
             *data << uint32(_language);
             *data << uint64(_source->GetGUID());
             *data << uint32(1);                                      // 2.1.0
-            *data << uint32(strlen(localizedName)+1);
+            *data << uint32(localizedName.size() + 1);
             *data << localizedName;
             size_t whisperGUIDpos = data->wpos();
             *data << uint64(_targetGUID);                           // Unit Target
@@ -131,12 +131,10 @@ void SmartScript::ProcessEventsFor(SMART_EVENT e, Unit* unit, uint32 var0, uint3
 
         if (eventType == e/* && (!(*i).event.event_phase_mask || IsInPhase((*i).event.event_phase_mask)) && !((*i).event.event_flags & SMART_EVENT_FLAG_NOT_REPEATABLE && (*i).runOnce)*/)
         {
-            bool meets = true;
             ConditionList conds = sConditionMgr->GetConditionsForSmartEvent((*i).entryOrGuid, (*i).event_id, (*i).source_type);
             ConditionSourceInfo info = ConditionSourceInfo(unit, GetBaseObject());
-            meets = sConditionMgr->IsObjectMeetToConditions(info, conds);
 
-            if (meets)
+            if (sConditionMgr->IsObjectMeetToConditions(info, conds))
                 ProcessEvent(*i, unit, var0, var1, bvar, spell, gob);
         }
     }
@@ -157,7 +155,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
         mLastInvoker = unit->GetGUID();
 
     if (Unit* tempInvoker = GetLastInvoker())
-        sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction: Invoker: %s (guidlow: %u)", tempInvoker->GetName(), tempInvoker->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction: Invoker: %s (guidlow: %u)", tempInvoker->GetName().c_str(), tempInvoker->GetGUIDLow());
 
     switch (e.GetActionType())
     {
@@ -201,7 +199,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
             mUseTextTimer = true;
             sCreatureTextMgr->SendChat(talker, uint8(e.action.talk.textGroupID), mTextGUID);
             sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction: SMART_ACTION_TALK: talker: %s (GuidLow: %u), textGuid: %u",
-                talker->GetName(), talker->GetGUIDLow(), GUID_LOPART(mTextGUID));
+                talker->GetName().c_str(), talker->GetGUIDLow(), GUID_LOPART(mTextGUID));
             break;
         }
         case SMART_ACTION_SIMPLE_TALK:
@@ -219,7 +217,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                         sCreatureTextMgr->SendChat(me, uint8(e.action.talk.textGroupID), IsPlayer(templastInvoker) ? templastInvoker->GetGUID() : 0, CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_NORMAL, 0, TEAM_OTHER, false, (*itr)->ToPlayer());
                     }
                     sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction:: SMART_ACTION_SIMPLE_TALK: talker: %s (GuidLow: %u), textGroupId: %u",
-                        (*itr)->GetName(), (*itr)->GetGUIDLow(), uint8(e.action.talk.textGroupID));
+                        (*itr)->GetName().c_str(), (*itr)->GetGUIDLow(), uint8(e.action.talk.textGroupID));
                 }
 
                 delete targets;
@@ -237,7 +235,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                     {
                         (*itr)->ToUnit()->HandleEmoteCommand(e.action.emote.emote);
                         sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction:: SMART_ACTION_PLAY_EMOTE: target: %s (GuidLow: %u), emote: %u",
-                            (*itr)->GetName(), (*itr)->GetGUIDLow(), e.action.emote.emote);
+                            (*itr)->GetName().c_str(), (*itr)->GetGUIDLow(), e.action.emote.emote);
                     }
                 }
 
@@ -256,7 +254,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                     {
                         (*itr)->SendPlaySound(e.action.sound.sound, e.action.sound.range > 0 ? true : false);
                         sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction:: SMART_ACTION_SOUND: target: %s (GuidLow: %u), sound: %u, onlyself: %u",
-                            (*itr)->GetName(), (*itr)->GetGUIDLow(), e.action.sound.sound, e.action.sound.range);
+                            (*itr)->GetName().c_str(), (*itr)->GetGUIDLow(), e.action.sound.sound, e.action.sound.range);
                     }
                 }
 
@@ -369,14 +367,12 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
             for (ObjectList::const_iterator itr = targets->begin(); itr != targets->end(); ++itr)
             {
                 if (IsPlayer(*itr))
-                {
                     if (Quest const* q = sObjectMgr->GetQuestTemplate(e.action.quest.quest))
                     {
                         (*itr)->ToPlayer()->AddQuest(q, NULL);
                         sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction:: SMART_ACTION_ADD_QUEST: Player guidLow %u add quest %u",
                             (*itr)->GetGUIDLow(), e.action.quest.quest);
                     }
-                }
             }
 
             delete targets;
@@ -435,8 +431,8 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
             if (!me)
                 break;
 
-            std::list<HostileReference*> const& threatList = me->getThreatManager().getThreatList();
-            for (std::list<HostileReference*>::const_iterator i = threatList.begin(); i != threatList.end(); ++i)
+            ThreatContainer::StorageType threatList = me->getThreatManager().getThreatList();
+            for (ThreatContainer::StorageType::const_iterator i = threatList.begin(); i != threatList.end(); ++i)
             {
                 if (Unit* target = Unit::GetUnit(*me, (*i)->getUnitGuid()))
                 {
@@ -477,6 +473,13 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
 
             for (ObjectList::const_iterator itr = targets->begin(); itr != targets->end(); ++itr)
             {
+                // Special handling for vehicles
+                if (IsUnit(*itr))
+                    if (Vehicle* vehicle = (*itr)->ToUnit()->GetVehicleKit())
+                        for (SeatMap::iterator it = vehicle->Seats.begin(); it != vehicle->Seats.end(); ++it)
+                            if (Player* player = ObjectAccessor::FindPlayer(it->second.Passenger))
+                                player->AreaExploredOrEventHappens(e.action.quest.quest);
+
                 if (IsPlayer(*itr))
                 {
                     (*itr)->ToPlayer()->AreaExploredOrEventHappens(e.action.quest.quest);
@@ -751,12 +754,21 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
         }
         case SMART_ACTION_CALL_GROUPEVENTHAPPENS:
         {
+            if (!unit)
+                break;
+
             if (IsPlayer(unit) && GetBaseObject())
             {
                 unit->ToPlayer()->GroupEventHappens(e.action.quest.quest, GetBaseObject());
                 sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction: SMART_ACTION_CALL_GROUPEVENTHAPPENS: Player %u, group credit for quest %u",
                     unit->GetGUIDLow(), e.action.quest.quest);
             }
+
+            // Special handling for vehicles
+            if (Vehicle* vehicle = unit->GetVehicleKit())
+                for (SeatMap::iterator it = vehicle->Seats.begin(); it != vehicle->Seats.end(); ++it)
+                    if (Player* player = ObjectAccessor::FindPlayer(it->second.Passenger))
+                        player->GroupEventHappens(e.action.quest.quest, GetBaseObject());
             break;
         }
         case SMART_ACTION_CALL_CASTEDCREATUREORGO:
@@ -883,6 +895,13 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
 
                 for (ObjectList::const_iterator itr = targets->begin(); itr != targets->end(); ++itr)
                 {
+                    // Special handling for vehicles
+                    if (IsUnit(*itr))
+                        if (Vehicle* vehicle = (*itr)->ToUnit()->GetVehicleKit())
+                            for (SeatMap::iterator it = vehicle->Seats.begin(); it != vehicle->Seats.end(); ++it)
+                                if (Player* player = ObjectAccessor::FindPlayer(it->second.Passenger))
+                                    player->RewardPlayerAndGroupAtEvent(e.action.killedMonster.creature, player);
+
                     if (!IsPlayer(*itr))
                         continue;
 
@@ -982,6 +1001,11 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
             if (me)
             {
                 me->CallForHelp((float)e.action.callHelp.range);
+                if (e.action.callHelp.withEmote)
+                {
+                    TrinityStringTextBuilder builder(me, CHAT_MSG_MONSTER_EMOTE, LANG_CALL_FOR_HELP, LANG_UNIVERSAL, 0);
+                    sCreatureTextMgr->SendChatPacket(me, builder, CHAT_MSG_MONSTER_EMOTE);
+                }
                 sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction: SMART_ACTION_CALL_FOR_HELP: Creature %u", me->GetGUIDLow());
             }
             break;
@@ -1966,6 +1990,13 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
 
            break;
         }
+        case SMART_ACTION_SET_HEALTH_REGEN:
+        {
+            if (!me || me->GetTypeId() != TYPEID_UNIT)
+                break;
+            me->setRegeneratingHealth(e.action.setHealthRegen.regenHealth ? true : false);
+            break;
+        }
         default:
             sLog->outError(LOG_FILTER_SQL, "SmartScript::ProcessAction: Entry %d SourceType %u, Event %u, Unhandled Action type %u", e.entryOrGuid, e.GetScriptType(), e.event_id, e.GetActionType());
             break;
@@ -2235,46 +2266,30 @@ ObjectList* SmartScript::GetTargets(SmartScriptHolder const& e, Unit* invoker /*
         case SMART_TARGET_CREATURE_GUID:
         {
             Creature* target = NULL;
-            if (e.target.unitGUID.entry)
+            if (!trigger && !GetBaseObject())
             {
-                uint64 guid = MAKE_NEW_GUID(e.target.unitGUID.guid, e.target.unitGUID.entry, HIGHGUID_UNIT);
-                target = HashMapHolder<Creature>::Find(guid);
-            }
-            else
-            {
-                if (!trigger && !GetBaseObject())
-                {
-                    sLog->outError(LOG_FILTER_SQL, "SMART_TARGET_CREATURE_GUID can not be used without invoker and without entry");
-                    break;
-                }
-
-                target = FindCreatureNear(trigger ? trigger : GetBaseObject(), e.target.unitGUID.guid);
+                sLog->outError(LOG_FILTER_SQL, "SMART_TARGET_CREATURE_GUID can not be used without invoker");
+                break;
             }
 
-            if (target)
+            target = FindCreatureNear(trigger ? trigger : GetBaseObject(), e.target.unitGUID.dbGuid);
+
+            if (target && (!e.target.unitGUID.entry || target->GetEntry() == e.target.unitGUID.entry))
                 l->push_back(target);
             break;
         }
         case SMART_TARGET_GAMEOBJECT_GUID:
         {
             GameObject* target = NULL;
-            if (e.target.unitGUID.entry)
+            if (!trigger && !GetBaseObject())
             {
-                uint64 guid = MAKE_NEW_GUID(e.target.goGUID.guid, e.target.goGUID.entry, HIGHGUID_GAMEOBJECT);
-                target = HashMapHolder<GameObject>::Find(guid);
-            }
-            else
-            {
-                if (!trigger && !GetBaseObject())
-                {
-                    sLog->outError(LOG_FILTER_SQL, "SMART_TARGET_GAMEOBJECT_GUID can not be used without invoker and without entry");
-                    break;
-                }
-
-                target = FindGameObjectNear(trigger ? trigger : GetBaseObject(), e.target.goGUID.guid);
+                sLog->outError(LOG_FILTER_SQL, "SMART_TARGET_GAMEOBJECT_GUID can not be used without invoker");
+                break;
             }
 
-            if (target)
+            target = FindGameObjectNear(trigger ? trigger : GetBaseObject(), e.target.goGUID.dbGuid);
+
+            if (target && (!e.target.goGUID.entry || target->GetEntry() == e.target.goGUID.entry))
                 l->push_back(target);
             break;
         }
@@ -2344,8 +2359,8 @@ ObjectList* SmartScript::GetTargets(SmartScriptHolder const& e, Unit* invoker /*
         {
             if (me)
             {
-                std::list<HostileReference*> const& threatList = me->getThreatManager().getThreatList();
-                for (std::list<HostileReference*>::const_iterator i = threatList.begin(); i != threatList.end(); ++i)
+                ThreatContainer::StorageType threatList = me->getThreatManager().getThreatList();
+                for (ThreatContainer::StorageType::const_iterator i = threatList.begin(); i != threatList.end(); ++i)
                     if (Unit* temp = Unit::GetUnit(*me, (*i)->getUnitGuid()))
                         l->push_back(temp);
             }
@@ -2817,9 +2832,11 @@ void SmartScript::InitTimer(SmartScriptHolder& e)
         case SMART_EVENT_UPDATE:
         case SMART_EVENT_UPDATE_IC:
         case SMART_EVENT_UPDATE_OOC:
-        case SMART_EVENT_OOC_LOS:
-        case SMART_EVENT_IC_LOS:
             RecalcTimer(e, e.event.minMaxRepeat.min, e.event.minMaxRepeat.max);
+            break;
+        case SMART_EVENT_IC_LOS:
+        case SMART_EVENT_OOC_LOS:
+            RecalcTimer(e, e.event.los.cooldownMin, e.event.los.cooldownMax);
             break;
         default:
             e.active = true;

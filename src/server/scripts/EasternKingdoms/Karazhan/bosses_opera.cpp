@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,68 +28,75 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "karazhan.h"
+#include "Player.h"
+#include "SpellInfo.h"
 
 /***********************************/
 /*** OPERA WIZARD OF OZ EVENT *****/
 /*********************************/
+enum Says
+{
+    SAY_DOROTHEE_DEATH          = 0,
+    SAY_DOROTHEE_SUMMON         = 1,
+    SAY_DOROTHEE_TITO_DEATH     = 2,
+    SAY_DOROTHEE_AGGRO          = 3,
 
-#define SAY_DOROTHEE_DEATH          -1532025
-#define SAY_DOROTHEE_SUMMON         -1532026
-#define SAY_DOROTHEE_TITO_DEATH     -1532027
-#define SAY_DOROTHEE_AGGRO          -1532028
+    SAY_ROAR_AGGRO              = 0,
+    SAY_ROAR_DEATH              = 1,
+    SAY_ROAR_SLAY               = 2,
 
-#define SAY_ROAR_AGGRO              -1532029
-#define SAY_ROAR_DEATH              -1532030
-#define SAY_ROAR_SLAY               -1532031
+    SAY_STRAWMAN_AGGRO          = 0,
+    SAY_STRAWMAN_DEATH          = 1,
+    SAY_STRAWMAN_SLAY           = 2,
 
-#define SAY_STRAWMAN_AGGRO          -1532032
-#define SAY_STRAWMAN_DEATH          -1532033
-#define SAY_STRAWMAN_SLAY           -1532034
+    SAY_TINHEAD_AGGRO           = 0,
+    SAY_TINHEAD_DEATH           = 1,
+    SAY_TINHEAD_SLAY            = 2,
+    EMOTE_RUST                  = 3,
 
-#define SAY_TINHEAD_AGGRO           -1532035
-#define SAY_TINHEAD_DEATH           -1532036
-#define SAY_TINHEAD_SLAY            -1532037
-#define EMOTE_RUST                  -1532038
+    SAY_CRONE_AGGRO             = 0,
+    SAY_CRONE_DEATH             = 1,
+    SAY_CRONE_SLAY              = 2,
+};
 
-#define SAY_CRONE_AGGRO             -1532039
-#define SAY_CRONE_AGGRO2            -1532040
-#define SAY_CRONE_DEATH             -1532041
-#define SAY_CRONE_SLAY              -1532042
+enum Spells
+{
+    // Dorothee
+    SPELL_WATERBOLT         = 31012,
+    SPELL_SCREAM            = 31013,
+    SPELL_SUMMONTITO        = 31014,
 
-/**** Spells ****/
-// Dorothee
-#define SPELL_WATERBOLT         31012
-#define SPELL_SCREAM            31013
-#define SPELL_SUMMONTITO        31014
+    // Tito
+    SPELL_YIPPING           = 31015,
 
-// Tito
-#define SPELL_YIPPING           31015
+    // Strawman
+    SPELL_BRAIN_BASH        = 31046,
+    SPELL_BRAIN_WIPE        = 31069,
+    SPELL_BURNING_STRAW     = 31075,
 
-// Strawman
-#define SPELL_BRAIN_BASH        31046
-#define SPELL_BRAIN_WIPE        31069
-#define SPELL_BURNING_STRAW     31075
+    // Tinhead
+    SPELL_CLEAVE            = 31043,
+    SPELL_RUST              = 31086,
 
-// Tinhead
-#define SPELL_CLEAVE            31043
-#define SPELL_RUST              31086
+    // Roar
+    SPELL_MANGLE            = 31041,
+    SPELL_SHRED             = 31042,
+    SPELL_FRIGHTENED_SCREAM = 31013,
 
-// Roar
-#define SPELL_MANGLE            31041
-#define SPELL_SHRED             31042
-#define SPELL_FRIGHTENED_SCREAM 31013
+    // Crone
+    SPELL_CHAIN_LIGHTNING   = 32337,
 
-// Crone
-#define SPELL_CHAIN_LIGHTNING   32337
+    // Cyclone
+    SPELL_KNOCKBACK         = 32334,
+    SPELL_CYCLONE_VISUAL    = 32332,
+};
 
-// Cyclone
-#define SPELL_KNOCKBACK         32334
-#define SPELL_CYCLONE_VISUAL    32332
-
-/** Creature Entries **/
-#define CREATURE_TITO           17548
-#define CREATURE_CYCLONE        18412
-#define CREATURE_CRONE          18168
+enum Creatures
+{
+    CREATURE_TITO           = 17548,
+    CREATURE_CYCLONE        = 18412,
+    CREATURE_CRONE          = 18168,
+};
 
 void SummonCroneIfReady(InstanceScript* instance, Creature* creature)
 {
@@ -147,7 +154,7 @@ public:
 
         void EnterCombat(Unit* /*who*/)
         {
-            DoScriptText(SAY_DOROTHEE_AGGRO, me);
+            Talk(SAY_DOROTHEE_AGGRO);
         }
 
         void JustReachedHome()
@@ -159,7 +166,7 @@ public:
 
         void JustDied(Unit* /*killer*/)
         {
-            DoScriptText(SAY_DOROTHEE_DEATH, me);
+            Talk(SAY_DOROTHEE_DEATH);
 
             if (instance)
                 SummonCroneIfReady(instance, me);
@@ -217,7 +224,6 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 class mob_tito : public CreatureScript
@@ -253,7 +259,7 @@ public:
                 if (Dorothee && Dorothee->isAlive())
                 {
                     CAST_AI(boss_dorothee::boss_dorotheeAI, Dorothee->AI())->TitoDied = true;
-                    DoScriptText(SAY_DOROTHEE_TITO_DEATH, Dorothee);
+                    Talk(SAY_DOROTHEE_TITO_DEATH, Dorothee->GetGUID());
                 }
             }
         }
@@ -272,14 +278,13 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 void boss_dorothee::boss_dorotheeAI::SummonTito()
 {
     if (Creature* pTito = me->SummonCreature(CREATURE_TITO, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000))
     {
-        DoScriptText(SAY_DOROTHEE_SUMMON, me);
+        Talk(SAY_DOROTHEE_SUMMON);
         CAST_AI(mob_tito::mob_titoAI, pTito->AI())->DorotheeGUID = me->GetGUID();
         pTito->AI()->AttackStart(me->getVictim());
         SummonedTito = true;
@@ -335,7 +340,7 @@ public:
 
         void EnterCombat(Unit* /*who*/)
         {
-            DoScriptText(SAY_STRAWMAN_AGGRO, me);
+            Talk(SAY_STRAWMAN_AGGRO);
         }
 
         void JustReachedHome()
@@ -358,7 +363,7 @@ public:
 
         void JustDied(Unit* /*killer*/)
         {
-            DoScriptText(SAY_STRAWMAN_DEATH, me);
+            Talk(SAY_STRAWMAN_DEATH);
 
             if (instance)
                 SummonCroneIfReady(instance, me);
@@ -366,7 +371,7 @@ public:
 
         void KilledUnit(Unit* /*victim*/)
         {
-            DoScriptText(SAY_STRAWMAN_SLAY, me);
+            Talk(SAY_STRAWMAN_SLAY);
         }
 
         void UpdateAI(const uint32 diff)
@@ -399,7 +404,6 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 class boss_tinhead : public CreatureScript
@@ -438,7 +442,7 @@ public:
 
         void EnterCombat(Unit* /*who*/)
         {
-            DoScriptText(SAY_TINHEAD_AGGRO, me);
+            Talk(SAY_TINHEAD_AGGRO);
         }
 
         void JustReachedHome()
@@ -464,7 +468,7 @@ public:
 
         void JustDied(Unit* /*killer*/)
         {
-            DoScriptText(SAY_TINHEAD_DEATH, me);
+            Talk(SAY_TINHEAD_DEATH);
 
             if (instance)
                 SummonCroneIfReady(instance, me);
@@ -472,7 +476,7 @@ public:
 
         void KilledUnit(Unit* /*victim*/)
         {
-            DoScriptText(SAY_TINHEAD_SLAY, me);
+            Talk(SAY_TINHEAD_SLAY);
         }
 
         void UpdateAI(const uint32 diff)
@@ -500,7 +504,7 @@ public:
                 if (RustTimer <= diff)
                 {
                     ++RustCount;
-                    DoScriptText(EMOTE_RUST, me);
+                    Talk(EMOTE_RUST);
                     DoCast(me, SPELL_RUST);
                     RustTimer = 6000;
                 } else RustTimer -= diff;
@@ -509,7 +513,6 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 class boss_roar : public CreatureScript
@@ -562,7 +565,7 @@ public:
 
         void EnterCombat(Unit* /*who*/)
         {
-            DoScriptText(SAY_ROAR_AGGRO, me);
+            Talk(SAY_ROAR_AGGRO);
         }
 
         void JustReachedHome()
@@ -572,7 +575,7 @@ public:
 
         void JustDied(Unit* /*killer*/)
         {
-            DoScriptText(SAY_ROAR_DEATH, me);
+            Talk(SAY_ROAR_DEATH);
 
             if (instance)
                 SummonCroneIfReady(instance, me);
@@ -580,7 +583,7 @@ public:
 
         void KilledUnit(Unit* /*victim*/)
         {
-            DoScriptText(SAY_ROAR_SLAY, me);
+            Talk(SAY_ROAR_SLAY);
         }
 
         void UpdateAI(const uint32 diff)
@@ -618,7 +621,6 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 class boss_crone : public CreatureScript
@@ -654,16 +656,21 @@ public:
             me->DespawnOrUnsummon();
         }
 
+        void KilledUnit(Unit* /*victim*/)
+        {
+           Talk(SAY_CRONE_SLAY);
+        }
+
         void EnterCombat(Unit* /*who*/)
         {
-            DoScriptText(RAND(SAY_CRONE_AGGRO, SAY_CRONE_AGGRO2), me);
+            Talk(SAY_CRONE_AGGRO);
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
         }
 
         void JustDied(Unit* /*killer*/)
         {
-            DoScriptText(SAY_CRONE_DEATH, me);
+            Talk(SAY_CRONE_DEATH);
 
             if (instance)
             {
@@ -700,7 +707,6 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 class mob_cyclone : public CreatureScript
@@ -744,28 +750,29 @@ public:
             } else MoveTimer -= diff;
         }
     };
-
 };
 
 /**************************************/
 /**** Opera Red Riding Hood Event* ***/
 /************************************/
+enum RedRidingHood
+{
+    SAY_WOLF_AGGRO                  = 0,
+    SAY_WOLF_SLAY                   = 1,
+    SAY_WOLF_HOOD                   = 2,
+    SOUND_WOLF_DEATH                = 9275,
 
-/**** Yells for the Wolf ****/
-#define SAY_WOLF_AGGRO                  -1532043
-#define SAY_WOLF_SLAY                   -1532044
-#define SAY_WOLF_HOOD                   -1532045
-#define SOUND_WOLF_DEATH                9275                //Only sound on death, no text.
+    SPELL_LITTLE_RED_RIDING_HOOD    = 30768,
+    SPELL_TERRIFYING_HOWL           = 30752,
+    SPELL_WIDE_SWIPE                = 30761,
 
-/**** Spells For The Wolf ****/
-#define SPELL_LITTLE_RED_RIDING_HOOD    30768
-#define SPELL_TERRIFYING_HOWL           30752
-#define SPELL_WIDE_SWIPE                30761
+    CREATURE_BIG_BAD_WOLF           = 17521,
+};
+
 
 #define GOSSIP_GRANDMA          "What phat lewtz you have grandmother?"
 
-/**** The Wolf's Entry* ***/
-#define CREATURE_BIG_BAD_WOLF           17521
+
 
 class npc_grandmother : public CreatureScript
 {
@@ -793,7 +800,6 @@ public:
 
         return true;
     }
-
 };
 
 class boss_bigbadwolf : public CreatureScript
@@ -838,7 +844,12 @@ public:
 
         void EnterCombat(Unit* /*who*/)
         {
-            DoScriptText(SAY_WOLF_AGGRO, me);
+            Talk(SAY_WOLF_AGGRO);
+        }
+
+        void KilledUnit(Unit* /*victim*/)
+        {
+            Talk(SAY_WOLF_SLAY);
         }
 
         void JustReachedHome()
@@ -874,7 +885,7 @@ public:
                 {
                     if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
                     {
-                        DoScriptText(SAY_WOLF_HOOD, me);
+                        Talk(SAY_WOLF_HOOD);
                         DoCast(target, SPELL_LITTLE_RED_RIDING_HOOD, true);
                         TempThreat = DoGetThreat(target);
                         if (TempThreat)
@@ -916,51 +927,49 @@ public:
                 DoCast(me->getVictim(), SPELL_WIDE_SWIPE);
                 SwipeTimer = urand(25000, 30000);
             } else SwipeTimer -= diff;
-
         }
     };
-
 };
 
 /**********************************************/
 /******** Opera Romeo and Juliet Event* ******/
 /********************************************/
 
-/**** Speech *****/
-#define SAY_JULIANNE_AGGRO              -1532046
-#define SAY_JULIANNE_ENTER              -1532047
-#define SAY_JULIANNE_DEATH01            -1532048
-#define SAY_JULIANNE_DEATH02            -1532049
-#define SAY_JULIANNE_RESURRECT          -1532050
-#define SAY_JULIANNE_SLAY               -1532051
+enum JulianneRomulo
+{
+    /**** Speech *****/
+    SAY_JULIANNE_AGGRO              = 0,
+    SAY_JULIANNE_ENTER              = 1,
+    SAY_JULIANNE_DEATH01            = 2,
+    SAY_JULIANNE_DEATH02            = 3,
+    SAY_JULIANNE_RESURRECT          = 4,
+    SAY_JULIANNE_SLAY               = 5,
 
-#define SAY_ROMULO_AGGRO                -1532052
-#define SAY_ROMULO_DEATH                -1532053
-#define SAY_ROMULO_ENTER                -1532054
-#define SAY_ROMULO_RESURRECT            -1532055
-#define SAY_ROMULO_SLAY                 -1532056
+    SAY_ROMULO_AGGRO                = 0,
+    SAY_ROMULO_DEATH                = 1,
+    SAY_ROMULO_ENTER                = 2,
+    SAY_ROMULO_RESURRECT            = 3,
+    SAY_ROMULO_SLAY                 = 4,
 
-/***** Spells For Julianne *****/
-#define SPELL_BLINDING_PASSION          30890
-#define SPELL_DEVOTION                  30887
-#define SPELL_ETERNAL_AFFECTION         30878
-#define SPELL_POWERFUL_ATTRACTION       30889
-#define SPELL_DRINK_POISON              30907
+    SPELL_BLINDING_PASSION          = 30890,
+    SPELL_DEVOTION                  = 30887,
+    SPELL_ETERNAL_AFFECTION         = 30878,
+    SPELL_POWERFUL_ATTRACTION       = 30889,
+    SPELL_DRINK_POISON              = 30907,
 
-/***** Spells For Romulo ****/
-#define SPELL_BACKWARD_LUNGE            30815
-#define SPELL_DARING                    30841
-#define SPELL_DEADLY_SWATHE             30817
-#define SPELL_POISON_THRUST             30822
+    SPELL_BACKWARD_LUNGE            = 30815,
+    SPELL_DARING                    = 30841,
+    SPELL_DEADLY_SWATHE             = 30817,
+    SPELL_POISON_THRUST             = 30822,
 
-/**** Other Misc. Spells ****/
-#define SPELL_UNDYING_LOVE              30951
-#define SPELL_RES_VISUAL                24171
+    SPELL_UNDYING_LOVE              = 30951,
+    SPELL_RES_VISUAL                = 24171,
 
-/*** Misc. Information ****/
-#define CREATURE_ROMULO                 17533
-#define ROMULO_X                        -10900
-#define ROMULO_Y                        -1758
+    CREATURE_ROMULO                 = 17533,
+    ROMULO_X                        = -10900,
+    ROMULO_Y                        = -1758,
+};
+
 
 enum RAJPhase
 {
@@ -978,7 +987,7 @@ void PretendToDie(Creature* creature)
     creature->GetMotionMaster()->MovementExpired(false);
     creature->GetMotionMaster()->MoveIdle();
     creature->SetStandState(UNIT_STAND_STATE_DEAD);
-};
+}
 
 void Resurrect(Creature* target)
 {
@@ -993,7 +1002,7 @@ void Resurrect(Creature* target)
     }
         else
             target->GetMotionMaster()->Initialize();
-};
+}
 
 class boss_julianne : public CreatureScript
 {
@@ -1087,7 +1096,7 @@ public:
         {
             if (Spell->Id == SPELL_DRINK_POISON)
             {
-                DoScriptText(SAY_JULIANNE_DEATH01, me);
+                Talk(SAY_JULIANNE_DEATH01);
                 DrinkPoisonTimer = 2500;
             }
         }
@@ -1096,7 +1105,7 @@ public:
 
         void JustDied(Unit* /*killer*/)
         {
-            DoScriptText(SAY_JULIANNE_DEATH02, me);
+            Talk(SAY_JULIANNE_DEATH02);
 
             if (instance)
             {
@@ -1110,12 +1119,11 @@ public:
 
         void KilledUnit(Unit* /*victim*/)
         {
-           DoScriptText(SAY_JULIANNE_SLAY, me);
+           Talk(SAY_JULIANNE_SLAY);
         }
 
         void UpdateAI(const uint32 diff);
     };
-
 };
 
 class boss_romulo : public CreatureScript
@@ -1182,7 +1190,7 @@ public:
 
             if (Phase == PHASE_ROMULO)
             {
-                DoScriptText(SAY_ROMULO_DEATH, me);
+                Talk(SAY_ROMULO_DEATH);
                 PretendToDie(me);
                 IsFakingDeath = true;
                 Phase = PHASE_BOTH;
@@ -1229,7 +1237,7 @@ public:
 
         void EnterCombat(Unit* /*who*/)
         {
-            DoScriptText(SAY_ROMULO_AGGRO, me);
+            Talk(SAY_ROMULO_AGGRO);
             if (JulianneGUID)
             {
                 Creature* Julianne = (Unit::GetCreature((*me), JulianneGUID));
@@ -1251,7 +1259,7 @@ public:
 
         void JustDied(Unit* /*killer*/)
         {
-            DoScriptText(SAY_ROMULO_DEATH, me);
+            Talk(SAY_ROMULO_DEATH);
 
             if (instance)
             {
@@ -1266,7 +1274,7 @@ public:
 
         void KilledUnit(Unit* /*victim*/)
         {
-            DoScriptText(SAY_ROMULO_SLAY, me);
+            Talk(SAY_ROMULO_SLAY);
         }
 
         void UpdateAI(const uint32 diff)
@@ -1281,7 +1289,7 @@ public:
                     Creature* Julianne = (Unit::GetCreature((*me), JulianneGUID));
                     if (Julianne && CAST_AI(boss_julianne::boss_julianneAI, Julianne->AI())->IsFakingDeath)
                     {
-                        DoScriptText(SAY_ROMULO_RESURRECT, me);
+                        Talk(SAY_ROMULO_RESURRECT);
                         Resurrect(Julianne);
                         CAST_AI(boss_julianne::boss_julianneAI, Julianne->AI())->IsFakingDeath = false;
                         JulianneDead = false;
@@ -1322,7 +1330,6 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 void boss_julianne::boss_julianneAI::UpdateAI(const uint32 diff)
@@ -1331,7 +1338,7 @@ void boss_julianne::boss_julianneAI::UpdateAI(const uint32 diff)
     {
         if (EntryYellTimer <= diff)
         {
-            DoScriptText(SAY_JULIANNE_ENTER, me);
+            Talk(SAY_JULIANNE_ENTER);
             EntryYellTimer = 0;
         } else EntryYellTimer -= diff;
     }
@@ -1340,7 +1347,7 @@ void boss_julianne::boss_julianneAI::UpdateAI(const uint32 diff)
     {
         if (AggroYellTimer <= diff)
         {
-            DoScriptText(SAY_JULIANNE_AGGRO, me);
+            Talk(SAY_JULIANNE_AGGRO);
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             me->setFaction(16);
             AggroYellTimer = 0;
@@ -1402,7 +1409,7 @@ void boss_julianne::boss_julianneAI::UpdateAI(const uint32 diff)
             Creature* Romulo = (Unit::GetCreature((*me), RomuloGUID));
             if (Romulo && CAST_AI(boss_romulo::boss_romuloAI, Romulo->AI())->IsFakingDeath)
             {
-                DoScriptText(SAY_JULIANNE_RESURRECT, me);
+                Talk(SAY_JULIANNE_RESURRECT);
                 Resurrect(Romulo);
                 CAST_AI(boss_romulo::boss_romuloAI, Romulo->AI())->IsFakingDeath = false;
                 RomuloDead = false;

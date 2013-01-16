@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -255,7 +255,7 @@ int Master::Run()
     }
 
     ///- Launch the world listener socket
-    uint16 wsport = sWorld->getIntConfig(CONFIG_PORT_WORLD);
+    uint16 wsport = uint16(sWorld->getIntConfig(CONFIG_PORT_WORLD));
     std::string bind_ip = ConfigMgr::GetStringDefault("BindIP", "0.0.0.0");
 
     if (sWorldSocketMgr->StartNetwork(wsport, bind_ip.c_str()) == -1)
@@ -365,7 +365,7 @@ bool Master::_StartDB()
         return false;
     }
 
-    async_threads = ConfigMgr::GetIntDefault("WorldDatabase.WorkerThreads", 1);
+    async_threads = uint8(ConfigMgr::GetIntDefault("WorldDatabase.WorkerThreads", 1));
     if (async_threads < 1 || async_threads > 32)
     {
         sLog->outError(LOG_FILTER_WORLDSERVER, "World database: invalid number of worker threads specified. "
@@ -373,7 +373,7 @@ bool Master::_StartDB()
         return false;
     }
 
-    synch_threads = ConfigMgr::GetIntDefault("WorldDatabase.SynchThreads", 1);
+    synch_threads = uint8(ConfigMgr::GetIntDefault("WorldDatabase.SynchThreads", 1));
     ///- Initialise the world database
     if (!WorldDatabase.Open(dbstring, async_threads, synch_threads))
     {
@@ -389,7 +389,7 @@ bool Master::_StartDB()
         return false;
     }
 
-    async_threads = ConfigMgr::GetIntDefault("CharacterDatabase.WorkerThreads", 1);
+    async_threads = uint8(ConfigMgr::GetIntDefault("CharacterDatabase.WorkerThreads", 1));
     if (async_threads < 1 || async_threads > 32)
     {
         sLog->outError(LOG_FILTER_WORLDSERVER, "Character database: invalid number of worker threads specified. "
@@ -397,7 +397,7 @@ bool Master::_StartDB()
         return false;
     }
 
-    synch_threads = ConfigMgr::GetIntDefault("CharacterDatabase.SynchThreads", 2);
+    synch_threads = uint8(ConfigMgr::GetIntDefault("CharacterDatabase.SynchThreads", 2));
 
     ///- Initialise the Character database
     if (!CharacterDatabase.Open(dbstring, async_threads, synch_threads))
@@ -414,7 +414,7 @@ bool Master::_StartDB()
         return false;
     }
 
-    async_threads = ConfigMgr::GetIntDefault("LoginDatabase.WorkerThreads", 1);
+    async_threads = uint8(ConfigMgr::GetIntDefault("LoginDatabase.WorkerThreads", 1));
     if (async_threads < 1 || async_threads > 32)
     {
         sLog->outError(LOG_FILTER_WORLDSERVER, "Login database: invalid number of worker threads specified. "
@@ -422,7 +422,7 @@ bool Master::_StartDB()
         return false;
     }
 
-    synch_threads = ConfigMgr::GetIntDefault("LoginDatabase.SynchThreads", 1);
+    synch_threads = uint8(ConfigMgr::GetIntDefault("LoginDatabase.SynchThreads", 1));
     ///- Initialise the login database
     if (!LoginDatabase.Open(dbstring, async_threads, synch_threads))
     {

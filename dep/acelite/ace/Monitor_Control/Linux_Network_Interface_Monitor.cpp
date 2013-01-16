@@ -1,8 +1,8 @@
-// $Id: Linux_Network_Interface_Monitor.cpp 82115 2008-06-20 20:43:13Z parsons $
+// $Id: Linux_Network_Interface_Monitor.cpp 95533 2012-02-14 22:59:17Z wotte $
 
 #include "ace/Monitor_Control/Linux_Network_Interface_Monitor.h"
 
-#if defined (linux) || defined (AIX)
+#if defined (ACE_LINUX) || defined (AIX)
 
 #include "ace/Log_Msg.h"
 #include "ace/OS_NS_stdio.h"
@@ -40,7 +40,9 @@ namespace ACE
       /// Ignore the first 2 lines of the file, which are file
       /// and column headers.
       void* dummy = ACE_OS::fgets (buf, sizeof (buf), fp);
+      ACE_UNUSED_ARG (dummy);
       dummy = ACE_OS::fgets (buf, sizeof (buf), fp);
+      ACE_UNUSED_ARG (dummy);
 
       unsigned long iface_value = 0UL;
       ACE_UINT32 iface_index = 0UL;
@@ -70,7 +72,7 @@ namespace ACE
     {
       this->init ();
     }
-    
+
     void
     Linux_Network_Interface_Monitor::init (void)
     {
@@ -97,7 +99,9 @@ namespace ACE
       /// Ignore the first 2 lines of the file, which are file
       /// and column headers.
       void* dummy = ACE_OS::fgets (buf, sizeof (buf), fp);
+      ACE_UNUSED_ARG (dummy);
       dummy = ACE_OS::fgets (buf, sizeof (buf), fp);
+      ACE_UNUSED_ARG (dummy);
 
       unsigned long iface_value = 0UL;
       ACE_UINT32 iface_index = 0UL;
@@ -117,4 +121,4 @@ namespace ACE
 
 ACE_END_VERSIONED_NAMESPACE_DECL
 
-#endif /* defined (linux) || defined (AIX) */
+#endif /* defined (ACE_LINUX) || defined (AIX) */

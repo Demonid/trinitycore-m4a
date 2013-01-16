@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,14 +28,14 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "zulgurub.h"
 
-enum eYells
+enum Says
 {
-    SAY_AGGRO                   = -1309011,
-    SAY_FEAST_PANTHER           = -1309012,
-    SAY_DEATH                   = -1309013,
+    SAY_AGGRO                   = 0,
+    SAY_FEAST_PANTHER           = 1,
+    SAY_DEATH                   = 2
 };
 
-enum eSpells
+enum Spells
 {
     SPELL_SHADOWWORDPAIN        = 23952,
     SPELL_GOUGE                 = 24698,
@@ -52,21 +52,11 @@ enum eSpells
 
 class boss_arlokk : public CreatureScript
 {
-    public:
+    public: boss_arlokk() : CreatureScript("boss_arlokk") {}
 
-        boss_arlokk()
-            : CreatureScript("boss_arlokk")
+        struct boss_arlokkAI : public BossAI
         {
-        }
-
-        struct boss_arlokkAI : public ScriptedAI
-        {
-            boss_arlokkAI(Creature* creature) : ScriptedAI(creature)
-            {
-                instance = creature->GetInstanceScript();
-            }
-
-            InstanceScript* instance;
+            boss_arlokkAI(Creature* creature) : BossAI(creature, DATA_ARLOKK) {}
 
             uint32 m_uiShadowWordPain_Timer;
             uint32 m_uiGouge_Timer;
@@ -105,9 +95,18 @@ class boss_arlokk : public CreatureScript
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             }
 
+            void JustDied(Unit* /*killer*/)
+            {
+                _JustDied();
+                Talk(SAY_DEATH);
+                me->SetDisplayId(MODEL_ID_NORMAL);
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            }
+
             void EnterCombat(Unit* /*who*/)
             {
-                DoScriptText(SAY_AGGRO, me);
+                _EnterCombat();
+                Talk(SAY_AGGRO);
             }
 
             void JustReachedHome()
@@ -119,21 +118,10 @@ class boss_arlokk : public CreatureScript
                 me->DespawnOrUnsummon();
             }
 
-            void JustDied(Unit* /*killer*/)
-            {
-                DoScriptText(SAY_DEATH, me);
-
-                me->SetDisplayId(MODEL_ID_NORMAL);
-                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-
-                if (instance)
-                    instance->SetData(DATA_ARLOKK, DONE);
-            }
-
             void DoSummonPhanters()
             {
-                if (Unit* pMarkedTarget = Unit::GetUnit(*me, MarkedTargetGUID))
-                    DoScriptText(SAY_FEAST_PANTHER, me, pMarkedTarget);
+                if (MarkedTargetGUID)
+                    Talk(SAY_FEAST_PANTHER, MarkedTargetGUID);
 
                 me->SummonCreature(NPC_ZULIAN_PROWLER, -11532.7998f, -1649.6734f, 41.4800f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
                 me->SummonCreature(NPC_ZULIAN_PROWLER, -11532.9970f, -1606.4840f, 41.2979f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);

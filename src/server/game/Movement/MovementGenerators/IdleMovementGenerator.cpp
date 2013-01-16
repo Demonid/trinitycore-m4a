@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ void RotateMovementGenerator::Initialize(Unit& owner)
     owner.AttackStop();
 }
 
-bool RotateMovementGenerator::Update(Unit& owner, const uint32& diff)
+bool RotateMovementGenerator::Update(Unit& owner, uint32 diff)
 {
     float angle = owner.GetOrientation();
     if (m_direction == ROTATE_DIRECTION_LEFT)
@@ -90,7 +90,7 @@ void DistractMovementGenerator::Finalize(Unit& owner)
     owner.ClearUnitState(UNIT_STATE_DISTRACTED);
 }
 
-bool DistractMovementGenerator::Update(Unit& /*owner*/, const uint32& time_diff)
+bool DistractMovementGenerator::Update(Unit& /*owner*/, uint32 time_diff)
 {
     if (time_diff > m_timer)
         return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -29,9 +29,9 @@ EndScriptData */
 
 enum eEnums
 {
-    SAY_AGGRO               = -1189016,
-    SAY_HEALTH              = -1189017,
-    SAY_KILL                = -1189018,
+    SAY_AGGRO               = 0,
+    SAY_HEALTH              = 1,
+    SAY_KILL                = 2,
 
     SPELL_FLAMESHOCK        = 8053,
     SPELL_SHADOWBOLT        = 1106,
@@ -70,12 +70,12 @@ public:
 
         void EnterCombat(Unit* /*who*/)
         {
-            DoScriptText(SAY_AGGRO, me);
+            Talk(SAY_AGGRO);
         }
 
         void KilledUnit(Unit* /*Victim*/)
         {
-            DoScriptText(SAY_KILL, me);
+            Talk(SAY_KILL);
         }
 
         void UpdateAI(const uint32 diff)
@@ -86,7 +86,7 @@ public:
             //If we are <35% hp
             if (!HpYell && !HealthAbovePct(35))
             {
-                DoScriptText(SAY_HEALTH, me);
+                Talk(SAY_HEALTH);
                 HpYell = true;
             }
 

@@ -1,5 +1,5 @@
  /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,8 @@
 #include "ScriptMgr.h"
 #include "InstanceScript.h"
 #include "zulfarrak.h"
+#include "Player.h"
+#include "TemporarySummon.h"
 
 #define NPC_GAHZRILLA 7273
 #define PATH_ADDS 81553
@@ -180,7 +182,7 @@ public:
             }
         }
 
-        uint32 GetData(uint32 type)
+        uint32 GetData(uint32 type) const
         {
             switch (type)
             {
@@ -190,7 +192,7 @@ public:
             return 0;
         }
 
-        uint64 GetData64(uint32 data)
+        uint64 GetData64(uint32 data) const
         {
             switch (data)
             {
