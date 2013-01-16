@@ -60,65 +60,68 @@ enum Texts
     EMOTE_WARN_LASER                   = 0, // The orbiting spheres pulse with dark energy!
 };
 
-enum Spells
+namespace
 {
-    // Halion
-    SPELL_FLAME_BREATH                  = 74525,
-    SPELL_CLEAVE                        = 74524,
-    SPELL_METEOR_STRIKE                 = 74637,
-    SPELL_TAIL_LASH                     = 74531,
+    enum Spells
+    {
+        // Halion
+        SPELL_FLAME_BREATH                  = 74525,
+        SPELL_CLEAVE                        = 74524,
+        SPELL_METEOR_STRIKE                 = 74637,
+        SPELL_TAIL_LASH                     = 74531,
 
-    SPELL_FIERY_COMBUSTION              = 74562,
-    SPELL_MARK_OF_COMBUSTION            = 74567,
-    SPELL_FIERY_COMBUSTION_EXPLOSION    = 74607,
-    SPELL_FIERY_COMBUSTION_SUMMON       = 74610,
+        SPELL_FIERY_COMBUSTION              = 74562,
+        SPELL_MARK_OF_COMBUSTION            = 74567,
+        SPELL_FIERY_COMBUSTION_EXPLOSION    = 74607,
+        SPELL_FIERY_COMBUSTION_SUMMON       = 74610,
 
-    // Combustion & Consumption
-    SPELL_SCALE_AURA                    = 70507, // Aura created in spell_dbc.
-    SPELL_COMBUSTION_DAMAGE_AURA        = 74629,
-    SPELL_CONSUMPTION_DAMAGE_AURA       = 74803,
+        // Combustion & Consumption
+        SPELL_SCALE_AURA                    = 70507, // Aura created in spell_dbc.
+        SPELL_COMBUSTION_DAMAGE_AURA        = 74629,
+        SPELL_CONSUMPTION_DAMAGE_AURA       = 74803,
 
-    // Twilight Halion
-    SPELL_DARK_BREATH                   = 74806,
+        // Twilight Halion
+        SPELL_DARK_BREATH                   = 74806,
 
-    SPELL_MARK_OF_CONSUMPTION           = 74795,
-    SPELL_SOUL_CONSUMPTION              = 74792,
-    SPELL_SOUL_CONSUMPTION_EXPLOSION    = 74799,
-    SPELL_SOUL_CONSUMPTION_SUMMON       = 74800,
+        SPELL_MARK_OF_CONSUMPTION           = 74795,
+        SPELL_SOUL_CONSUMPTION              = 74792,
+        SPELL_SOUL_CONSUMPTION_EXPLOSION    = 74799,
+        SPELL_SOUL_CONSUMPTION_SUMMON       = 74800,
 
-    // Living Inferno
-    SPELL_BLAZING_AURA                  = 75885,
+        // Living Inferno
+        SPELL_BLAZING_AURA                  = 75885,
 
-    // Halion Controller
-    SPELL_COSMETIC_FIRE_PILLAR          = 76006,
-    SPELL_FIERY_EXPLOSION               = 76010,
-    SPELL_CLEAR_DEBUFFS                 = 75396,
+        // Halion Controller
+        SPELL_COSMETIC_FIRE_PILLAR          = 76006,
+        SPELL_FIERY_EXPLOSION               = 76010,
+        SPELL_CLEAR_DEBUFFS                 = 75396,
 
-    // Meteor Strike
-    SPELL_METEOR_STRIKE_COUNTDOWN       = 74641,
-    SPELL_METEOR_STRIKE_AOE_DAMAGE      = 74648,
-    SPELL_METEOR_STRIKE_FIRE_AURA_1     = 74713,
-    SPELL_METEOR_STRIKE_FIRE_AURA_2     = 74718,
-    SPELL_BIRTH_NO_VISUAL               = 40031,
+        // Meteor Strike
+        SPELL_METEOR_STRIKE_COUNTDOWN       = 74641,
+        SPELL_METEOR_STRIKE_AOE_DAMAGE      = 74648,
+        SPELL_METEOR_STRIKE_FIRE_AURA_1     = 74713,
+        SPELL_METEOR_STRIKE_FIRE_AURA_2     = 74718,
+        SPELL_BIRTH_NO_VISUAL               = 40031,
 
-    // Shadow Orb
-    SPELL_TWILIGHT_CUTTER               = 74768, // Unknown dummy effect (EFFECT_0)
-    SPELL_TWILIGHT_CUTTER_TRIGGERED     = 74769,
-    SPELL_TWILIGHT_PULSE_PERIODIC       = 78861,
-    SPELL_TRACK_ROTATION                = 74758,
+        // Shadow Orb
+        SPELL_TWILIGHT_CUTTER               = 74768, // Unknown dummy effect (EFFECT_0)
+        SPELL_TWILIGHT_CUTTER_TRIGGERED     = 74769,
+        SPELL_TWILIGHT_PULSE_PERIODIC       = 78861,
+        SPELL_TRACK_ROTATION                = 74758,
 
-    // Misc
-    SPELL_TWILIGHT_DIVISION             = 75063, // Phase spell from phase 2 to phase 3
-    SPELL_LEAVE_TWILIGHT_REALM          = 74812,
-    SPELL_TWILIGHT_PHASING              = 74808, // Phase spell from phase 1 to phase 2
-    SPELL_SUMMON_TWILIGHT_PORTAL        = 74809, // Summons go 202794
-    SPELL_SUMMON_EXIT_PORTALS           = 74805, // Custom spell created in spell_dbc.
-    SPELL_TWILIGHT_MENDING              = 75509,
-    SPELL_TWILIGHT_REALM                = 74807,
-    SPELL_DUSK_SHROUD                   = 75476,
-    SPELL_TWILIGHT_PRECISION            = 78243,
-    SPELL_COPY_DAMAGE                   = 74810  // Aura not found in DBCs.
-};
+        // Misc
+        SPELL_TWILIGHT_DIVISION             = 75063, // Phase spell from phase 2 to phase 3
+        SPELL_LEAVE_TWILIGHT_REALM          = 74812,
+        SPELL_TWILIGHT_PHASING              = 74808, // Phase spell from phase 1 to phase 2
+        SPELL_SUMMON_TWILIGHT_PORTAL        = 74809, // Summons go 202794
+        SPELL_SUMMON_EXIT_PORTALS           = 74805, // Custom spell created in spell_dbc.
+        SPELL_TWILIGHT_MENDING              = 75509,
+        SPELL_TWILIGHT_REALM                = 74807,
+        SPELL_DUSK_SHROUD                   = 75476,
+        SPELL_TWILIGHT_PRECISION            = 78243,
+        SPELL_COPY_DAMAGE                   = 74810  // Aura not found in DBCs.
+    };
+}
 
 enum Events
 {
@@ -571,9 +574,6 @@ class boss_twilight_halion : public CreatureScript
                         break;
                 }
             }
-
-        private:
-            EventMap events;
         };
 
         CreatureAI* GetAI(Creature* creature) const
