@@ -3643,6 +3643,13 @@ void SpellMgr::LoadDbcDataCorrections()
             //
             // RUBY SANCTUM SPELLS
             //
+            case 74630 /* Combustion */:
+            case 75882 /* Combustion */:
+            case 75883 /* Combustion */:
+            case 75884 /* Combustion */:
+                if (spellInfo->Effect[1])
+                    spellInfo->EffectRadiusIndex[1] = spellInfo->EffectRadiusIndex[0];
+                break;
             case 74769: // Twilight Cutter
             case 77844: // Twilight Cutter
             case 77845: // Twilight Cutter
@@ -3651,6 +3658,13 @@ void SpellMgr::LoadDbcDataCorrections()
                 break;
             case 74799 /* Soul Consumption */:
                 spellInfo->EffectRadiusIndex[1] = spellInfo->EffectRadiusIndex[0];
+                break;
+            case 74802 /* Consumption */:
+            case 75874 /* Consumption */:
+            case 75875 /* Consumption */:
+            case 75876 /* Consumption */:
+                if (spellInfo->Effect[1])
+                    spellInfo->EffectRadiusIndex[1] = spellInfo->EffectRadiusIndex[0];
                 break;
             case 75509: // Twilight Mending
                 spellInfo->AttributesEx6 |= SPELL_ATTR6_CAN_TARGET_INVISIBLE;
