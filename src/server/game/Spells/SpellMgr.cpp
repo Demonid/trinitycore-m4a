@@ -3649,6 +3649,9 @@ void SpellMgr::LoadDbcDataCorrections()
             case 77846: // Twilight Cutter
                 spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_100_YARDS; // 100yd
                 break;
+            case 74799 /* Soul Consumption */:
+                spellInfo->EffectRadiusIndex[1] = spellInfo->EffectRadiusIndex[0];
+                break;
             case 75509: // Twilight Mending
                 spellInfo->AttributesEx6 |= SPELL_ATTR6_CAN_TARGET_INVISIBLE;
                 spellInfo->AttributesEx2 |= SPELL_ATTR2_CAN_TARGET_NOT_IN_LOS;
