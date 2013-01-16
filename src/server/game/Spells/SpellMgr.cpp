@@ -2950,6 +2950,18 @@ void SpellMgr::LoadSpellCustomAttr()
             case 72293: // Mark of the Fallen Champion (Deathbringer Saurfang)
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_NEGATIVE_EFF0;
                 break;
+            case 74630 /* Combustion */:
+            case 75882 /* Combustion */:
+            case 75883 /* Combustion */:
+            case 75884 /* Combustion */:
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_STACK_DIFF_CASTERS;
+                break;
+            case 74802 /* Consumption */:
+            case 75874 /* Consumption */:
+            case 75875 /* Consumption */:
+            case 75876 /* Consumption */:
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_STACK_DIFF_CASTERS;
+                break;
             default:
                 break;
         }
