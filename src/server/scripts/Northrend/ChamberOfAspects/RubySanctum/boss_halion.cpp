@@ -783,11 +783,11 @@ class npc_halion_controller : public CreatureScript
 
         private:
             /// TODO: Find out a better scaling, if any.
-            // [0   , 0.98[: Corporeality goes down
+            // [0   , 0.98[: Corporeality goes up
             // [0.98, 0.99]: Do nothing
             // ]0.99, 1.01[: Twilight Mending
             // [1.01, 1.02]: Do nothing
-            // ]1.02, +oo [: Corporeality goes up
+            // ]1.02, +oo [: Corporeality goes down
             void UpdateCorporeality()
             {
                 uint8 oldValue = _materialCorporealityValue;
@@ -802,12 +802,12 @@ class npc_halion_controller : public CreatureScript
                 float damageRatio = float(_materialDamageTaken) / float(_twilightDamageTaken);
 
                 CorporealityEvent action = CORPOREALITY_NONE;
-                if (damageRatio < 0.98f)                             // [0   , 0.98[: Corporeality goes down
-                    action = CORPOREALITY_DECREASE;
+                if (damageRatio < 0.98f)                             // [0   , 0.98[: Corporeality goes up
+                    action = CORPOREALITY_INCREASE;
                 else if (0.99f < damageRatio && damageRatio < 1.01f) // ]0.99, 1.01[: Twilight Mending
                     action = CORPOREALITY_TWILIGHT_MENDING;
-                else if (1.02f < damageRatio)                        // ]1.02, +oo [: Corporeality goes up
-                    action = CORPOREALITY_INCREASE;
+                else if (1.02f < damageRatio)                        // ]1.02, +oo [: Corporeality goes down
+                    action = CORPOREALITY_DECREASE;
 
                 switch (action)
                 {
