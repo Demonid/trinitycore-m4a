@@ -733,6 +733,7 @@ class Creature : public Unit, public GridObject<Creature>, public MapCreature
 
     protected:
         bool CreateFromProto(uint32 guidlow, uint32 Entry, uint32 vehId, uint32 team, const CreatureData* data = NULL);
+        const CreatureTemplate *get_difficulty_entry(const CreatureTemplate *normalInfo) const;
         bool InitEntry(uint32 entry, uint32 team=ALLIANCE, const CreatureData* data=NULL);
 
         // vendor items

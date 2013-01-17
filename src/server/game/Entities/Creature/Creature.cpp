@@ -257,18 +257,8 @@ void Creature::RemoveCorpse(bool setSpawnTime)
     GetMap()->CreatureRelocation(this, x, y, z, o);
 }
 
-/**
- * change the entry of creature until respawn
- */
-bool Creature::InitEntry(uint32 Entry, uint32 /*team*/, const CreatureData* data)
+const CreatureTemplate *Creature::get_difficulty_entry(const CreatureTemplate *normalInfo) const
 {
-    CreatureTemplate const* normalInfo = sObjectMgr->GetCreatureTemplate(Entry);
-    if (!normalInfo)
-    {
-        sLog->outError(LOG_FILTER_SQL, "Creature::InitEntry creature entry %u does not exist.", Entry);
-        return false;
-    }
-
     // get difficulty 1 mode entry
     CreatureTemplate const* cinfo = normalInfo;
     for (uint8 diff = uint8(GetMap()->GetSpawnMode()); diff > 0;)
@@ -290,6 +280,22 @@ bool Creature::InitEntry(uint32 Entry, uint32 /*team*/, const CreatureData* data
         else
             --diff;
     }
+    return cinfo;
+}
+
+/**
+ * change the entry of creature until respawn
+ */
+bool Creature::InitEntry(uint32 Entry, uint32 /*team*/, const CreatureData* data)
+{
+    CreatureTemplate const* normalInfo = sObjectMgr->GetCreatureTemplate(Entry);
+    if (!normalInfo)
+    {
+        sLog->outError(LOG_FILTER_SQL, "Creature::InitEntry creature entry %u does not exist.", Entry);
+        return false;
+    }
+
+    const CreatureTemplate *cinfo = get_difficulty_entry(normalInfo);
 
     SetEntry(Entry);                                        // normal entry always
     m_creatureInfo = cinfo;                                 // map mode related always
@@ -1268,9 +1274,9 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 vehId, uint3
     SetOriginalEntry(Entry);
 
     if (!vehId)
-        vehId = cinfo->VehicleId;
+        vehId = get_difficulty_entry(cinfo)->VehicleId;
 
-    if (vehId && !CreateVehicleKit(vehId, Entry))
+    if (vehId && !CreateVehicleKit(vehId, get_difficulty_entry(cinfo)->Entry))
         vehId = 0;
     auto guidhigh = vehId ? HIGHGUID_VEHICLE : HIGHGUID_UNIT;
     if (!GetMap()->GetCreature(MAKE_NEW_GUID(guidlow, Entry, guidhigh)))
