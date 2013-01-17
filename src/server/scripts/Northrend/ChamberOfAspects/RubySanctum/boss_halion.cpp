@@ -321,7 +321,6 @@ class boss_halion : public CreatureScript
             void Reset()
             {
                 generic_halionAI::Reset();
-                me->SetReactState(REACT_DEFENSIVE);
                 me->RemoveAurasDueToSpell(SPELL_TWILIGHT_PHASING);
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             }
