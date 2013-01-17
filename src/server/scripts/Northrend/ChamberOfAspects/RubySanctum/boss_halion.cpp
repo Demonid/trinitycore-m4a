@@ -16,6 +16,8 @@
  */
 
 #include "stdafx.hpp"
+#include <limits>
+#include <utility>
 #include "ScriptMgr.h"
 #include "SpellScript.h"
 #include "SpellAuraEffects.h"
@@ -1157,12 +1159,13 @@ class npc_combustion_consumption : public CreatureScript
                 if (type != DATA_STACKS_DISPELLED || !_damageSpell || !_explosionSpell || !summoner)
                     return;
 
-                me->CastCustomSpell(SPELL_SCALE_AURA, SPELLVALUE_AURA_STACK, stackAmount * (me->GetMap()->IsHeroic() ? 3 : 2), me);
+                auto count = std::min(stackAmount * (me->GetMap()->IsHeroic() ? 3 : 2), uint32() + std::numeric_limits<uint8>::max());
+                me->CastCustomSpell(SPELL_SCALE_AURA, SPELLVALUE_AURA_STACK, count, me);
                 DoCast(me, _damageSpell);
 
                 CustomSpellValues values;
                 values.AddSpellMod(SPELLVALUE_BASE_POINT0, 1200 + (stackAmount * 1290)); // Needs more researches.
-                values.AddSpellMod(SPELLVALUE_RADIUS_MOD, 10000 * 1 + 10000 * stackAmount * (me->GetMap()->IsHeroic() ? 3 : 2) / 2 / 10);
+                values.AddSpellMod(SPELLVALUE_RADIUS_MOD, 10000 * 1 + 10000 * count / 2 / 10);
                 summoner->CastCustomSpell(_explosionSpell, values, summoner);
             }
 
