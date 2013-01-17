@@ -567,7 +567,7 @@ void World::LoadConfigSettings(bool reload)
     rate_values[RATE_TRAINING_COST] = ConfigMgr::GetFloatDefault("Rate.TrainingCost", 1.0f);
     if (rate_values[RATE_TRAINING_COST] < 0.0f)
     {
-        sLog->outError("DurabilityLossChance.Block (%f) must be >=0. Using 0.0 instead.", rate_values[RATE_TRAINING_COST]);
+        sLog->outError(LOG_FILTER_SERVER_LOADING, "Training cost rate (%f) must be >=0. Using 0.0 instead.", rate_values[RATE_TRAINING_COST]);
         rate_values[RATE_TRAINING_COST] = 0.0f;
     }
     ///- Read other configuration items from the config file
