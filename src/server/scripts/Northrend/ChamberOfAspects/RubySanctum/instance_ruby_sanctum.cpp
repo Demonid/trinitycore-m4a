@@ -60,9 +60,6 @@ class instance_ruby_sanctum : public InstanceMapScript
 
             void OnPlayerEnter(Player* /*player*/)
             {
-                if (!GetData64(DATA_HALION_CONTROLLER) && GetBossState(DATA_HALION) != DONE && GetBossState(DATA_GENERAL_ZARITHRIAN) == DONE)
-                    if (Creature* halionController = instance->SummonCreature(NPC_HALION_CONTROLLER, HalionControllerSpawnPos))
-                        halionController->AI()->DoAction(ACTION_INTRO_HALION);
             }
 
             void OnCreatureCreate(Creature* creature)
@@ -74,6 +71,9 @@ class instance_ruby_sanctum : public InstanceMapScript
                         break;
                     case NPC_GENERAL_ZARITHRIAN:
                         GeneralZarithrianGUID = creature->GetGUID();
+                        if (!instance->GetCreature(GetData64(DATA_HALION_CONTROLLER)) && GetBossState(DATA_HALION) != DONE && GetBossState(DATA_GENERAL_ZARITHRIAN) == DONE)
+                            if (Creature* halionController = instance->SummonCreature(NPC_HALION_CONTROLLER, HalionControllerSpawnPos))
+                                halionController->AI()->DoAction(ACTION_INTRO_HALION);
                         break;
                     case NPC_SAVIANA_RAGEFIRE:
                         SavianaRagefireGUID = creature->GetGUID();

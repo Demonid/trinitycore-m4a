@@ -102,7 +102,7 @@ enum CreaturesIds
     NPC_XERESTRASZA                         = 40429,
 };
 
-enum GameObjectsIds
+enum
 {
     GO_HALION_PORTAL_1                      = 202794,   // Unknown spell 75074, should be somehow be linked to 74807
     GO_HALION_PORTAL_2                      = 202795,   // Also spell 75074
