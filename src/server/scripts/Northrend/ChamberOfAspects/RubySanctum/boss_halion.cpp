@@ -1158,7 +1158,7 @@ class npc_combustion_consumption : public CreatureScript
                 if (type != DATA_STACKS_DISPELLED || !_damageSpell || !_explosionSpell || !summoner)
                     return;
 
-                me->CastCustomSpell(SPELL_SCALE_AURA, SPELLVALUE_AURA_STACK, stackAmount, me);
+                me->CastCustomSpell(SPELL_SCALE_AURA, SPELLVALUE_AURA_STACK, stackAmount * 2, me);
                 DoCast(me, _damageSpell);
 
                 int32 damage = 1200 + (stackAmount * 1290); // Needs more researches.
@@ -1416,6 +1416,25 @@ class spell_halion_combustion_consumption : public SpellScriptLoader
     private:
         uint32 _spellID;
 };
+
+namespace
+{
+    struct radius_scale_spell
+    : SpellScript
+    {
+        PrepareSpellScript(radius_scale_spell)
+
+        void Register() override
+        {
+            BeforeCast += SpellCastFn(radius_scale_spell::before_cast);
+        }
+
+        void before_cast()
+        {
+            GetSpell()->SetSpellValue(SPELLVALUE_RADIUS_MOD, GetCaster()->GetFloatValue(OBJECT_FIELD_SCALE_X) * 10000);
+        }
+    };
+}
 
 class spell_halion_marks : public SpellScriptLoader
 {
@@ -1752,6 +1771,8 @@ void AddSC_boss_halion()
     new spell_halion_meteor_strike_marker();
     new spell_halion_combustion_consumption("spell_halion_soul_consumption", SPELL_MARK_OF_CONSUMPTION);
     new spell_halion_combustion_consumption("spell_halion_fiery_combustion", SPELL_MARK_OF_COMBUSTION);
+    load_spell_script<radius_scale_spell>("spell_halion_combustion");
+    load_spell_script<radius_scale_spell>("spell_halion_consumption");
     new spell_halion_marks("spell_halion_mark_of_combustion", SPELL_FIERY_COMBUSTION_SUMMON, SPELL_FIERY_COMBUSTION);
     new spell_halion_marks("spell_halion_mark_of_consumption", SPELL_SOUL_CONSUMPTION_SUMMON, SPELL_SOUL_CONSUMPTION);
     new spell_halion_damage_aoe_summon();

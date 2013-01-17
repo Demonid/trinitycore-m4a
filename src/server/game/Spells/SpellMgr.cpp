@@ -3659,8 +3659,9 @@ void SpellMgr::LoadDbcDataCorrections()
             case 75882 /* Combustion */:
             case 75883 /* Combustion */:
             case 75884 /* Combustion */:
+                spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_6_YARDS;
                 if (spellInfo->Effect[1])
-                    spellInfo->EffectRadiusIndex[1] = spellInfo->EffectRadiusIndex[0];
+                    spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_6_YARDS;
                 break;
             case 74769: // Twilight Cutter
             case 77844: // Twilight Cutter
