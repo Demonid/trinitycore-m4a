@@ -1161,8 +1161,10 @@ class npc_combustion_consumption : public CreatureScript
                 me->CastCustomSpell(SPELL_SCALE_AURA, SPELLVALUE_AURA_STACK, stackAmount * 2, me);
                 DoCast(me, _damageSpell);
 
-                int32 damage = 1200 + (stackAmount * 1290); // Needs more researches.
-                summoner->CastCustomSpell(_explosionSpell, SPELLVALUE_BASE_POINT0, damage, summoner);
+                CustomSpellValues values;
+                values.AddSpellMod(SPELLVALUE_BASE_POINT0, 1200 + (stackAmount * 1290)); // Needs more researches.
+                values.AddSpellMod(SPELLVALUE_RADIUS_MOD, 10000 * 1 + 10000 * stackAmount / 10);
+                summoner->CastCustomSpell(_explosionSpell, values, summoner);
             }
 
             void UpdateAI(uint32 const /*diff*/) { }
