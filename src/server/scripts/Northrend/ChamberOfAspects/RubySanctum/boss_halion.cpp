@@ -480,6 +480,15 @@ class boss_twilight_halion : public CreatureScript
                 me->SetReactState(REACT_AGGRESSIVE);
             }
 
+            ~boss_twilight_halionAI()
+            {
+                try {
+                    instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
+                }
+                catch (...) {
+                }
+            }
+
             void InitializeAI() override
             {
                 me->SetInCombatState(false, me);
