@@ -2950,6 +2950,18 @@ void SpellMgr::LoadSpellCustomAttr()
             case 72293: // Mark of the Fallen Champion (Deathbringer Saurfang)
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_NEGATIVE_EFF0;
                 break;
+            case 74630 /* Combustion */:
+            case 75882 /* Combustion */:
+            case 75883 /* Combustion */:
+            case 75884 /* Combustion */:
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_STACK_DIFF_CASTERS;
+                break;
+            case 74802 /* Consumption */:
+            case 75874 /* Consumption */:
+            case 75875 /* Consumption */:
+            case 75876 /* Consumption */:
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_STACK_DIFF_CASTERS;
+                break;
             default:
                 break;
         }
@@ -3643,11 +3655,29 @@ void SpellMgr::LoadDbcDataCorrections()
             //
             // RUBY SANCTUM SPELLS
             //
+            case 74630 /* Combustion */:
+            case 75882 /* Combustion */:
+            case 75883 /* Combustion */:
+            case 75884 /* Combustion */:
+                spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_6_YARDS;
+                if (spellInfo->Effect[1])
+                    spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_6_YARDS;
+                break;
             case 74769: // Twilight Cutter
             case 77844: // Twilight Cutter
             case 77845: // Twilight Cutter
             case 77846: // Twilight Cutter
                 spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_100_YARDS; // 100yd
+                break;
+            case 74799 /* Soul Consumption */:
+                spellInfo->EffectRadiusIndex[1] = spellInfo->EffectRadiusIndex[0];
+                break;
+            case 74802 /* Consumption */:
+            case 75874 /* Consumption */:
+            case 75875 /* Consumption */:
+            case 75876 /* Consumption */:
+                if (spellInfo->Effect[1])
+                    spellInfo->EffectRadiusIndex[1] = spellInfo->EffectRadiusIndex[0];
                 break;
             case 75509: // Twilight Mending
                 spellInfo->AttributesEx6 |= SPELL_ATTR6_CAN_TARGET_INVISIBLE;
