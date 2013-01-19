@@ -234,8 +234,8 @@ struct generic_halionAI : public BossAI
         me->AddAura(SPELL_TWILIGHT_PRECISION, me);
         _canEvade = false;
         events.ScheduleEvent(EVENT_CLEAVE, urand(8000, 10000));
-        events.ScheduleEvent(EVENT_TAIL_LASH, 10000);
-        events.ScheduleEvent(EVENT_BREATH, urand(10000, 15000));
+        events.ScheduleEvent(EVENT_TAIL_LASH, 13000);
+        events.ScheduleEvent(EVENT_BREATH, 15000);
     }
 
     void Reset()
@@ -260,11 +260,11 @@ struct generic_halionAI : public BossAI
                 break;
             case EVENT_TAIL_LASH:
                 DoCastAOE(SPELL_TAIL_LASH);
-                events.ScheduleEvent(EVENT_TAIL_LASH, 10000);
+                events.ScheduleEvent(EVENT_TAIL_LASH, 13000);
                 break;
             case EVENT_BREATH:
                 DoCast(me, me->GetEntry() == NPC_HALION ? SPELL_FLAME_BREATH : SPELL_DARK_BREATH);
-                events.ScheduleEvent(EVENT_BREATH, urand(10000, 12000));
+                events.ScheduleEvent(EVENT_BREATH, 15000);
                 break;
         }
     }
@@ -343,8 +343,8 @@ class boss_halion : public CreatureScript
                 instance->SetBossState(DATA_HALION, IN_PROGRESS);
 
                 events.ScheduleEvent(EVENT_ACTIVATE_FIREWALL, 5000);
-                events.ScheduleEvent(EVENT_METEOR_STRIKE, urand(20000, 25000));
-                events.ScheduleEvent(EVENT_FIERY_COMBUSTION, urand(15000, 18000));
+                events.ScheduleEvent(EVENT_METEOR_STRIKE, 40000);
+                events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 20000);
 
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                     controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_ONE);
@@ -423,7 +423,7 @@ class boss_halion : public CreatureScript
                     {
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, -SPELL_TWILIGHT_REALM))
                             DoCast(target, SPELL_FIERY_COMBUSTION);
-                        events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 25000);
+                        events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 20000);
                         break;
                     }
                     default:
