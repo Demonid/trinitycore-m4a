@@ -1213,6 +1213,12 @@ class npc_living_inferno : public CreatureScript
         {
             npc_living_infernoAI(Creature* creature) : ScriptedAI(creature) { }
 
+            void Reset()
+            {
+              _spawnTimer = 5000;
+              _spawned = false;
+            }
+
             void IsSummonedBy(Unit* /*summoner*/)
             {
                 me->SetInCombatWithZone();
@@ -1223,10 +1229,51 @@ class npc_living_inferno : public CreatureScript
                         controller->AI()->JustSummoned(me);
             }
 
+            void JustSummoned(Creature* summon)
+            {
+              if(summon->GetEntry() == NPC_LIVING_EMBER)
+                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true))
+                  summon->AI()->AttackStart(target);
+            }
+
             void JustDied(Unit* /*killer*/)
             {
                 me->DespawnOrUnsummon(1);
             }
+
+            void UpdateAI(uint32 const diff)
+            {
+                if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_CASTING))
+                    return;
+
+                if (_spawnTimer <= diff && !_spawned)
+                {
+                    std::list<Creature*> _triggersList;
+                    uint8 _embersCount = RAID_MODE<uint8>(0, 0, 0, 10);
+
+                    GetCreatureListWithEntryInGrid(_triggersList, me, NPC_METEOR_STRIKE_FLAME, 50.0f);
+                    _triggersList.sort(Trinity::ObjectDistanceOrderPred(me));
+
+                    for(uint8 i = 0; i < _embersCount &&  !_triggersList.empty(); ++i)
+                    {
+                      Position pos;
+                      std::list<Creature*>::iterator itr = _triggersList.begin();
+                      std::advance(itr, urand(0, _triggersList.size() - 1)); 
+                      (*itr)->GetPosition(&pos);
+                      me->SummonCreature(NPC_LIVING_EMBER,pos);
+                      _triggersList.erase(itr);
+                    }
+                    _spawned = true;
+                     
+                }
+                else _spawnTimer -= diff;
+
+                DoMeleeAttackIfReady();
+            }
+
+            private:
+            uint32 _spawnTimer;
+            bool _spawned;
         };
 
         CreatureAI* GetAI(Creature* creature) const
