@@ -814,8 +814,8 @@ class npc_halion_controller : public CreatureScript
                 CorporealityEvent action = CORPOREALITY_NONE;
                 if (damageRatio < 0.98f)                             // [0   , 0.98[: Corporeality goes up
                     action = CORPOREALITY_INCREASE;
-                else if (0.99f < damageRatio && damageRatio < 1.01f) // ]0.99, 1.01[: Twilight Mending
-                    action = CORPOREALITY_TWILIGHT_MENDING;
+                else if (0.99f < damageRatio && damageRatio < 1.01f) // ]0.99, 1.01[: Corporeality none
+                    action = CORPOREALITY_NONE;
                 else if (1.02f < damageRatio)                        // ]1.02, +oo [: Corporeality goes down
                     action = CORPOREALITY_DECREASE;
 
