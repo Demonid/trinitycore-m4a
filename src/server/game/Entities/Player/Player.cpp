@@ -19793,12 +19793,6 @@ bool Player::CanSpeak() const
     return  GetSession()->m_muteTime <= time (NULL);
 }
 
-uint8 Player::GetRequiredChatLevel()
-{
-  uint8 requiredLevel = sWorld->getIntConfig(CONFIG_CHAT_LEV_REQUIRED);
-  return requiredLevel < getLevel() ? 0 : requiredLevel; 
-}
-
 /*********************************************************/
 /***              LOW LEVEL FUNCTIONS:Notifiers        ***/
 /*********************************************************/

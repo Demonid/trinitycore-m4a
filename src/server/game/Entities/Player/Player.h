@@ -2279,8 +2279,6 @@ class Player : public Unit, public GridObject<Player>
         bool CanSpeak() const;
         void ChangeSpeakTime(int utime);
 
-        uint8 GetRequiredChatLevel();
-
         /*********************************************************/
         /***                 VARIOUS SYSTEMS                   ***/
         /*********************************************************/

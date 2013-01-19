@@ -161,15 +161,6 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 lang = ModLangAuras.front()->GetMiscValue();
         }
 
-        if(uint8 requiredLevel = sender->GetRequiredChatLevel())
-          if(!sender->isGameMaster())
-          {
-            //SendNotification("Level %u required", requiredLevel);
-            ChatHandler(this).PSendSysMessage("Level %u required", requiredLevel);
-            recvData.rfinish(); // Prevent warnings
-            return;
-          }
-
         if (!sender->CanSpeak())
         {
             std::string timeStr = secsToTimeString(m_muteTime - time(NULL));

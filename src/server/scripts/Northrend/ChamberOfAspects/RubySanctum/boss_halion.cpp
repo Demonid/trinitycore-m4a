@@ -744,10 +744,7 @@ class npc_halion_controller : public CreatureScript
                         case EVENT_TRIGGER_BERSERK:
                             for (uint8 i = DATA_HALION; i <= DATA_TWILIGHT_HALION; i++)
                                 if (Creature* halion = ObjectAccessor::GetCreature(*me, _instance->GetData64(i)))
-                                {
                                     halion->CastSpell(halion, SPELL_BERSERK, true);
-                                    halion->AI()->Talk(SAY_BERSERK);
-                                }
                             break;
                         case EVENT_SHADOW_PULSARS_WARN:
                             if (Creature* twilightHalion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_TWILIGHT_HALION)))
