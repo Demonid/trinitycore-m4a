@@ -1229,19 +1229,12 @@ class npc_living_inferno : public CreatureScript
                         controller->AI()->JustSummoned(me);
             }
 
-            void JustSummoned(Creature* summon)
-            {
-              if(summon->GetEntry() == NPC_LIVING_EMBER)
-                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true))
-                  summon->AI()->AttackStart(target);
-            }
-
             void JustDied(Unit* /*killer*/)
             {
                 me->DespawnOrUnsummon(1);
             }
 
-            void UpdateAI(uint32 const diff)
+            void UpdateAI(uint32 const diff) override
             {
                 if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_CASTING))
                     return;
@@ -1292,7 +1285,7 @@ class npc_living_ember : public CreatureScript
         {
             npc_living_emberAI(Creature* creature) : ScriptedAI(creature) { }
 
-            void Reset()
+            void Reset() override
             {
                 _hasEnraged = false;
             }
@@ -1308,6 +1301,10 @@ class npc_living_ember : public CreatureScript
                 if (InstanceScript* instance = me->GetInstanceScript())
                     if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                         controller->AI()->JustSummoned(me);
+
+                 me->SetInCombatWithZone();
+                 if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true))
+                  me->AI()->AttackStart(target);
             }
 
             void JustDied(Unit* /*killer*/)
