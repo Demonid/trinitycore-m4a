@@ -140,6 +140,7 @@ class boss_ick : public CreatureScript
         {
             boss_ickAI(Creature* creature) : BossAI(creature, DATA_ICK), _vehicle(creature->GetVehicleKit())
             {
+                ASSERT(_vehicle);
             }
 
             void InitializeAI()
@@ -184,8 +185,7 @@ class boss_ick : public CreatureScript
             {
                 if (Creature* krick = GetKrick())
                 {
-                    if (_vehicle)
-                        _vehicle->RemoveAllPassengers();
+                    _vehicle->RemoveAllPassengers();
                     if (krick->AI())
                         krick->AI()->DoAction(ACTION_OUTRO);
                 }
