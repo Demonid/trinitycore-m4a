@@ -3676,8 +3676,12 @@ void SpellMgr::LoadDbcDataCorrections()
             case 75874 /* Consumption */:
             case 75875 /* Consumption */:
             case 75876 /* Consumption */:
+                spellInfo->EffectMechanic[0] = MECHANIC_NONE;
                 if (spellInfo->Effect[1])
-                    spellInfo->EffectRadiusIndex[1] = spellInfo->EffectRadiusIndex[0];
+                {
+                    spellInfo->EffectMechanic[1] = MECHANIC_SNARE;
+                    spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_6_YARDS;
+                }
                 break;
             case 75509: // Twilight Mending
                 spellInfo->AttributesEx6 |= SPELL_ATTR6_CAN_TARGET_INVISIBLE;
