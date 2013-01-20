@@ -940,7 +940,7 @@ class npc_orb_carrier : public CreatureScript
                 /// According to sniffs this spell is cast every 1 or 2 seconds.
                 /// However, refreshing it looks bad, so just cast the spell if
                 /// we are not channeling it.
-                if (!me->HasUnitState(UNIT_STATE_CASTING))
+                if (!me->GetUInt64Value(UNIT_FIELD_CHANNEL_OBJECT))
                     me->CastSpell((Unit*)NULL, SPELL_TRACK_ROTATION, false);
             }
 
