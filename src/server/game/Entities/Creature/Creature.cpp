@@ -1274,10 +1274,19 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 vehId, uint3
 
     SetOriginalEntry(Entry);
 
+    auto vehicle_difficulty_entry = cinfo;
     if (!vehId)
-        vehId = get_difficulty_entry(cinfo)->VehicleId;
+    {
+        vehicle_difficulty_entry = get_difficulty_entry(cinfo);
+        vehId = vehicle_difficulty_entry->VehicleId;
+        if (!vehId)
+        {
+            vehicle_difficulty_entry = cinfo;
+            vehId = cinfo->VehicleId;
+        }
+    }
 
-    if (vehId && !CreateVehicleKit(vehId, get_difficulty_entry(cinfo)->Entry))
+    if (vehId && !CreateVehicleKit(vehId, vehicle_difficulty_entry->Entry))
         vehId = 0;
     auto guidhigh = vehId ? HIGHGUID_VEHICLE : HIGHGUID_UNIT;
     if (!GetMap()->GetCreature(MAKE_NEW_GUID(guidlow, Entry, guidhigh)))
