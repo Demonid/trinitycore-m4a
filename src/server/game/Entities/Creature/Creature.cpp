@@ -470,7 +470,8 @@ void Creature::Update(uint32 diff)
     if (movespline->Finalized())
         if (auto target = HasUnitState(UNIT_STATE_TRACKING_CHANNEL_OBJECT) ? GetUInt64Value(UNIT_FIELD_CHANNEL_OBJECT) : GetUInt64Value(UNIT_FIELD_TARGET))
             if (auto unit = ObjectAccessor::GetUnit(*this, target))
-                SetInFront(unit);
+                if (!HasUnitState(UNIT_STATE_CANNOT_TURN))
+                    UpdateOrientation(GetAngle(unit));
     if (IsAIEnabled && TriggerJustRespawned)
     {
         TriggerJustRespawned = false;
