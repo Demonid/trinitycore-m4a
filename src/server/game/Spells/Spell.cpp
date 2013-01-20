@@ -3109,7 +3109,8 @@ void Spell::prepare(SpellCastTargets const* targets, AuraEffect const* triggered
 
         // set target for proper facing
         if ((m_casttime || m_spellInfo->IsChanneled()) && !(_triggeredCastFlags & TRIGGERED_IGNORE_SET_FACING))
-            if (m_caster->GetGUID() != m_targets.GetObjectTargetGUID() && m_caster->GetTypeId() == TYPEID_UNIT)
+            if (m_targets.GetObjectTargetGUID() || m_spellInfo->AttributesEx5 & SPELL_ATTR5_DONT_TURN_DURING_CAST)
+                if (m_caster->GetGUID() != m_targets.GetObjectTargetGUID() && m_caster->GetTypeId() == TYPEID_UNIT)
                     m_caster->FocusTarget(this, m_targets.GetObjectTargetGUID());
 
         if (!(_triggeredCastFlags & TRIGGERED_IGNORE_GCD))
