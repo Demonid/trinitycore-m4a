@@ -322,6 +322,7 @@ class boss_halion : public CreatureScript
             void Reset()
             {
                 generic_halionAI::Reset();
+                me->SetReactState(REACT_AGGRESSIVE);
                 me->RemoveAurasDueToSpell(SPELL_TWILIGHT_PHASING);
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             }
@@ -351,6 +352,7 @@ class boss_halion : public CreatureScript
 
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                     controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_ONE);
+                me->SetReactState(REACT_DEFENSIVE);
             }
 
             void JustDied(Unit* killer)
@@ -479,7 +481,7 @@ class boss_twilight_halion : public CreatureScript
 
                 me->SetHealth(halion->GetHealth());
                 me->SetPhaseMask(0x20, true);
-                me->SetReactState(REACT_AGGRESSIVE);
+                me->SetReactState(REACT_DEFENSIVE);
             }
 
             ~boss_twilight_halionAI()
