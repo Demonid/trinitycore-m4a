@@ -942,13 +942,6 @@ class npc_orb_carrier : public CreatureScript
                 /// we are not channeling it.
                 if (!me->HasUnitState(UNIT_STATE_CASTING))
                     me->CastSpell((Unit*)NULL, SPELL_TRACK_ROTATION, false);
-
-                /// Workaround: This is here because even though the above spell has SPELL_ATTR1_CHANNEL_TRACK_TARGET,
-                /// we are having two creatures involded here. This attribute is handled clientside, meaning the client
-                /// sends orientation update itself. Here, no packet is sent, and the creature does not rotate. By
-                /// forcing the carrier to always be facing the rotation focus, we ensure everything works as it should.
-                if (Creature* rotationFocus = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_ORB_ROTATION_FOCUS)))
-                    me->SetFacingToObject(rotationFocus); // setInFront
             }
 
             void DoAction(int32 const action)
