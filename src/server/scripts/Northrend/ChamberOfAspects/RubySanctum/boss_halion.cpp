@@ -1190,15 +1190,18 @@ class npc_combustion_consumption : public CreatureScript
                 if (type != DATA_STACKS_DISPELLED || !_damageSpell || !_explosionSpell || !summoner)
                     return;
 
-                if (!IsHeroic())
-                    stackAmount = std::min(stackAmount, (uint32)8);
-                if (stackAmount > 1)
-                    me->CastCustomSpell(SPELL_SCALE_AURA, SPELLVALUE_AURA_STACK, stackAmount - 1, me);
+                auto points = IsHeroic() ? 40 : 20;
+                {
+                    CustomSpellValues values;
+                    values.AddSpellMod(SPELLVALUE_BASE_POINT0, points);
+                    values.AddSpellMod(SPELLVALUE_AURA_STACK, stackAmount);
+                    me->CastCustomSpell(SPELL_SCALE_AURA, values, me);
+                }
                 DoCast(me, _damageSpell);
 
                 CustomSpellValues values;
-                values.AddSpellMod(SPELLVALUE_BASE_POINT0, 3000 + (3000 * (stackAmount - 1) / 2)); // Needs more researches.
-                values.AddSpellMod(SPELLVALUE_RADIUS_MOD, 10000 * 1 + 10000 * (stackAmount - 1) / 2 / 2);
+                values.AddSpellMod(SPELLVALUE_BASE_POINT0, 3000 + 3000 * stackAmount * points / 100); // Needs more researches.
+                values.AddSpellMod(SPELLVALUE_RADIUS_MOD, 10000 + 10000 * stackAmount * points / 100 * (6.0F / 12.0F));
                 summoner->CastCustomSpell(_explosionSpell, values, summoner);
             }
 
