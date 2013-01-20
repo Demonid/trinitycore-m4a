@@ -695,7 +695,7 @@ void Channel::Invite(Player const* player, std::string const& newname)
     else
     {
         ChatHandler(player->GetSession()).PSendSysMessage(
-                "%s does not meet the level requirements of %s.", newp->GetName(),
+                "%s does not meet the level requirements of %s.", newp->GetName().c_str(),
                 _name.c_str());
         WorldPacket data;
         MakePlayerInviteBanned(&data, newp->GetName());
