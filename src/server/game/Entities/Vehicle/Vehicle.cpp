@@ -52,8 +52,12 @@ _me(unit), _vehicleInfo(vehInfo), _usableSeatNum(0), _creatureEntry(creatureEntr
 
 Vehicle::~Vehicle()
 {
-    /// @Uninstall must be called before this.
-    ASSERT(_status == STATUS_UNINSTALLING);
+    if (_status != STATUS_UNINSTALLING)
+    try {
+        Uninstall();
+    }
+    catch (...) {
+    }
     for (SeatMap::const_iterator itr = Seats.begin(); itr != Seats.end(); ++itr)
         ASSERT(!itr->second.Passenger);
 }
