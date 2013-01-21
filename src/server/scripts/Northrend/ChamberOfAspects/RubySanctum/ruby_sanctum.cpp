@@ -22,7 +22,7 @@
 #include "ruby_sanctum.h"
 #include "Player.h"
 
-enum Texts
+enum
 {
     SAY_XERESTRASZA_EVENT       = 0,
     SAY_XERESTRASZA_EVENT_1     = 1,
@@ -35,7 +35,7 @@ enum Texts
     SAY_XERESTRASZA_INTRO       = 8,
 };
 
-enum Events
+enum
 {
     EVENT_XERESTRASZA_EVENT_1   = 1,
     EVENT_XERESTRASZA_EVENT_2   = 2,

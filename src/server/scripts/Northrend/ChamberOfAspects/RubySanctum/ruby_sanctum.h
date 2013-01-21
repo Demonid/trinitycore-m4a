@@ -28,7 +28,7 @@ uint32 const EncounterCount = 4;
 
 Position const HalionControllerSpawnPos = {3156.037f, 533.2656f, 72.97205f, 0.0f};
 
-enum DataTypes
+enum
 {
     // Encounter States/Boss GUIDs
     DATA_BALTHARUS_THE_WARBORN              = 0,
@@ -54,14 +54,14 @@ enum DataTypes
     DATA_TWILIGHT_FLAME_RING                = 18,
 };
 
-enum SharedActions
+enum
 {
     ACTION_INTRO_BALTHARUS                  = -3975101,
     ACTION_BALTHARUS_DEATH                  = -3975102,
     ACTION_INTRO_HALION                     = -4014601,
 };
 
-enum CreaturesIds
+enum
 {
     // Baltharus the Warborn
     NPC_BALTHARUS_THE_WARBORN               = 39751,

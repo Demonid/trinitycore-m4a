@@ -702,14 +702,8 @@ class npc_halion_controller : public CreatureScript
 
             void UpdateAI(uint32 const diff)
             {
-                // The isInCombat() check is needed because that check should be false when Halion is
-                // not engaged, while it would return true without as UpdateVictim() checks for
-                // combat state.
-                if (!(_events.GetPhaseMask() & PHASE_INTRO_MASK) && me->isInCombat() && !UpdateVictim())
-                {
-                    EnterEvadeMode();
-                    return;
-                }
+                if (me->isInCombat())
+                    me->SelectVictim();
 
                 _events.Update(diff);
 
