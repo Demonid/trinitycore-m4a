@@ -71,6 +71,8 @@ class instance_ruby_sanctum : public InstanceMapScript
                         break;
                     case NPC_GENERAL_ZARITHRIAN:
                         GeneralZarithrianGUID = creature->GetGUID();
+                        if(GetBossState(DATA_SAVIANA_RAGEFIRE) == DONE && GetBossState(DATA_BALTHARUS_THE_WARBORN) == DONE)
+                          creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_NOT_SELECTABLE);
                         if (!instance->GetCreature(GetData64(DATA_HALION_CONTROLLER)) && GetBossState(DATA_HALION) != DONE && GetBossState(DATA_GENERAL_ZARITHRIAN) == DONE)
                             if (Creature* halionController = instance->SummonCreature(NPC_HALION_CONTROLLER, HalionControllerSpawnPos))
                                 halionController->AI()->DoAction(ACTION_INTRO_HALION);
@@ -81,7 +83,7 @@ class instance_ruby_sanctum : public InstanceMapScript
                     case NPC_HALION:
                         HalionGUID = creature->GetGUID();
                         break;
-                    case NPC_TWILIGHT_HALION:
+                    case NPC_TWILIGHT_HALION:   
                         TwilightHalionGUID = creature->GetGUID();
                         break;
                     case NPC_HALION_CONTROLLER:
