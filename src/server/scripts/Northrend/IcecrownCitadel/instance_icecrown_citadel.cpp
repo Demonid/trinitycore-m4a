@@ -329,6 +329,11 @@ class instance_icecrown_citadel : public InstanceMapScript
             {
                 if (creature->GetEntry() == NPC_SINDRAGOSA)
                     SindragosaGUID = 0;
+                else if (creature->GetEntry() == NPC_DEATHBRINGER_SAURFANG)
+                {
+                    if (GetBossState(DATA_DEATHBRINGER_SAURFANG) == DONE)
+                        creature->DespawnOrUnsummon();
+                }
             }
 
             // Weekly quest spawn prevention
