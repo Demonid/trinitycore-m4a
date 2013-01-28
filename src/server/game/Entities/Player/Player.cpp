@@ -1951,7 +1951,7 @@ bool Player::BuildEnumData(PreparedQueryResult result, WorldPacket* data)
         charFlags |= CHARACTER_FLAG_GHOST;
     if (atLoginFlags & AT_LOGIN_RENAME)
         charFlags |= CHARACTER_FLAG_RENAME;
-    if (!fields[20].is_null())
+    if (!fields[20].IsNull())
     {
         if (!fields[21].GetInt64())
             charFlags |= CHARACTER_FLAG_LOCKED_BY_BILLING;

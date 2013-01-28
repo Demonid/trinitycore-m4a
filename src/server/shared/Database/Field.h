@@ -29,10 +29,6 @@ class Field
     friend class PreparedResultSet;
 
     public:
-        bool is_null() const
-        {
-            return !data.value ? true : false;
-        }
 
         bool GetBool() const // Wrapper, actually gets integer
         {
