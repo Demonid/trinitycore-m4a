@@ -18,6 +18,7 @@
 #ifndef _FIELD_H
 #define _FIELD_H
 
+#include <cstdlib>
 #include "Common.h"
 #include "Log.h"
 
@@ -264,6 +265,7 @@ class Field
         {
             uint32 length;          // Length (prepared strings only)
             void* value;            // Actual data in memory
+            std::size_t capacity;
             enum_field_types type;  // Field type
             bool raw;               // Raw bytes? (Prepared statement or ad hoc)
          } data;
@@ -278,8 +280,9 @@ class Field
 
         void CleanUp()
         {
-            delete[] ((char*)data.value);
+            std::free(data.value);
             data.value = NULL;
+            data.capacity = 0;
         }
 
         static size_t SizeForType(MYSQL_FIELD* field)

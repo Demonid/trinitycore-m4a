@@ -17,10 +17,12 @@
 
 #include "stdafx.hpp"
 #include "Field.h"
+#include <new>
 
 Field::Field()
 {
     data.value = NULL;
+    data.capacity = 0;
     data.type = MYSQL_TYPE_NULL;
     data.length = 0;
 }
@@ -32,33 +34,45 @@ Field::~Field()
 
 void Field::SetByteValue(const void* newValue, const size_t newSize, enum_field_types newType, uint32 length)
 {
-    if (data.value)
-        CleanUp();
-
     // This value stores raw bytes that have to be explicitly casted later
     if (newValue)
     {
-        data.value = new char[newSize];
+        if (data.capacity < newSize)
+        {
+            if (auto ptr = std::realloc(data.value, newSize))
+                data.value = ptr;
+            else
+                throw std::bad_alloc();
+            data.capacity = newSize;
+        }
         memcpy(data.value, newValue, newSize);
         data.length = length;
     }
+    else
+        CleanUp();
     data.type = newType;
     data.raw = true;
 }
 
 void Field::SetStructuredValue(char* newValue, enum_field_types newType)
 {
-    if (data.value)
-        CleanUp();
-
     // This value stores somewhat structured data that needs function style casting
     if (newValue)
     {
         size_t size = strlen(newValue);
-        data.value = new char [size+1];
-        strcpy((char*)data.value, newValue);
+        if (data.capacity < size+1)
+        {
+            if (auto ptr = std::realloc(data.value, size+1))
+                data.value = ptr;
+            else
+                throw std::bad_alloc();
+            data.capacity = size+1;
+        }
+        memcpy(data.value, newValue, size+1);
         data.length = size;
     }
+    else
+        CleanUp();
 
     data.type = newType;
     data.raw = false;
