@@ -274,13 +274,15 @@ struct generic_halionAI : public BossAI
 
     void UpdateAI(uint32 const diff)
     {
-        if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_CASTING))
+        if (!UpdateVictim())
             return;
 
         events.Update(diff);
 
-        while (uint32 eventId = events.ExecuteEvent())
+        while(!me->HasUnitState(UNIT_STATE_CASTING))       
+          if(uint32 eventId = events.ExecuteEvent())
             ExecuteEvent(eventId);
+          else break;
 
         DoMeleeAttackIfReady();
     }
@@ -347,8 +349,8 @@ class boss_halion : public CreatureScript
                 instance->SetBossState(DATA_HALION, IN_PROGRESS);
 
                 events.ScheduleEvent(EVENT_ACTIVATE_FIREWALL, 5000);
-                events.ScheduleEvent(EVENT_METEOR_STRIKE, 40000);
-                events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 20000);
+                events.ScheduleEvent(EVENT_METEOR_STRIKE, 20000);
+                events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 15000);
 
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                     controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_ONE);
@@ -505,7 +507,7 @@ class boss_twilight_halion : public CreatureScript
 
                 generic_halionAI::EnterCombat(who);
 
-                events.ScheduleEvent(EVENT_SOUL_CONSUMPTION, 20000);
+                events.ScheduleEvent(EVENT_SOUL_CONSUMPTION, 15000);
 
                 instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me, 2);
             }
