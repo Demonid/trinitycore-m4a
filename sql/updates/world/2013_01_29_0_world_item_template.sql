@@ -1,0 +1,1 @@
+UPDATE world.item_template SET ScriptName = "" WHERE entry = 33226;

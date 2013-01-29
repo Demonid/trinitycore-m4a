@@ -44,6 +44,9 @@ enum SharedSpells
     SPELL_BERSERK                       = 26662,
     SPELL_BERSERK2                      = 47008,
 
+    // Deathbound Ward
+    SPELL_STONEFORM                     = 70733,
+
     // Residue Rendezvous
     SPELL_ORANGE_BLIGHT_RESIDUE         = 72144,
     SPELL_GREEN_BLIGHT_RESIDUE          = 72145,
