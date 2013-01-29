@@ -49,7 +49,12 @@ enum Spells
     SPELL_LEVEL_UP            = 24312,
     SPELL_SWIFT_ORANGE_RAPTOR = 23243,
     // Ohgans Spell
-    SPELL_SUNDERARMOR         = 24317
+    SPELL_SUNDERARMOR         = 24317,
+
+    //Vilebranch Speaker
+    SPELL_SPEAKER_DEM_SHOUT   = 13730,
+    SPELL_SPEAKER_CLEAVE      = 15284
+    
 };
 
 enum CreatureId
@@ -57,10 +62,11 @@ enum CreatureId
     NPC_SPEAKER               = 11391
 };
 
-#define SPELL_SPEAKER_DEM_SHOUT 13730
-#define SPELL_SPEAKER_CLEAVE    15284
-
-#define ACTION_RAPTOR_DEAD      1
+enum Actions
+{
+    ACTION_SPEAKER_DEAD       = 0,
+    ACTION_RAPTOR_DEAD        = 1
+};
 
 class boss_mandokir : public CreatureScript
 {
@@ -155,10 +161,28 @@ class boss_mandokir : public CreatureScript
                 Talk(SAY_AGGRO);
             }
 
+            void MovementInform(uint32 type, uint32 point)
+            {
+                if (type != POINT_MOTION_TYPE || point != 0)
+                    return;
+
+               me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
+               me->SetHomePosition(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation());
+            }
+
+            void JustReachedHome()
+            {
+              if (!me->FindNearestCreature(NPC_SPEAKER, 100.0f, true))
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
+            }
+
              void DoAction(int32 const action)
             {
                 switch (action)
                 {
+                  case ACTION_SPEAKER_DEAD:
+                    me->GetMotionMaster()->MovePoint(0, -12196.3f, -1948.37f, 130.36f);
+                    break;
                   case ACTION_RAPTOR_DEAD:
                     DoCast(me, SPELL_ENRAGE);
                     break;
@@ -166,18 +190,7 @@ class boss_mandokir : public CreatureScript
             }
 
             void UpdateAI(const uint32 diff)
-            {
-                if (!SpeakerDead)
-                {
-                    if (!me->FindNearestCreature(NPC_SPEAKER, 100.0f, true))
-                    {
-                        me->GetMotionMaster()->MovePoint(0, -12196.3f, -1948.37f, 130.36f);
-                        SpeakerDead = true;
-                    }
-                }
-
-                if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() != POINT_MOTION_TYPE && SpeakerDead)
-                    me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
+            {         
 
                 if (!UpdateVictim())
                     return;
@@ -190,7 +203,7 @@ class boss_mandokir : public CreatureScript
                         me->Dismount();
 
                         //And summon his raptor
-                        me->SummonCreature(14988, me->getVictim()->GetPositionX(), me->getVictim()->GetPositionY(), me->getVictim()->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 35000);
+                        me->SummonCreature(14988, me->getVictim()->GetPositionX(), me->getVictim()->GetPositionY(), me->getVictim()->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 3500);
                         CombatStart = true;
                     }
 
@@ -383,13 +396,13 @@ class npc_vilebranch_speaker : public CreatureScript
                 DoCast(me->getVictim(),SPELL_SPEAKER_DEM_SHOUT);
             }
 
-            void JustDied(Unit* /*killer*/)
+            void JustDied(Unit* /*killer*/) override
             {
-              if (auto mandokir = Unit::GetCreature(*me, instance->GetData64(DATA_MANDOKIR)))
-                mandokir->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
+               if (auto mandokir = Unit::GetCreature(*me, instance->GetData64(DATA_MANDOKIR)))
+                    mandokir->AI()->DoAction(ACTION_SPEAKER_DEAD);
             }
 
-            void UpdateAI(uint32 const diff)
+            void UpdateAI(uint32 const diff) override
             {
                 if (!UpdateVictim())
                     return;
