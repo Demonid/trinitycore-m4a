@@ -379,7 +379,6 @@ class boss_halion : public CreatureScript
                     Talk(SAY_PHASE_TWO);
 
                     me->CastStop();
-                    me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     DoCast(me, SPELL_TWILIGHT_PHASING);
 
                     if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
@@ -684,6 +683,7 @@ class npc_halion_controller : public CreatureScript
                             if (itr == DATA_TWILIGHT_HALION)
                                 continue;
 
+                            halion->DeleteThreatList();
                             halion->RemoveAurasDueToSpell(SPELL_TWILIGHT_PHASING);
                             halion->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                         }
@@ -1780,6 +1780,8 @@ class spell_halion_twilight_phasing : public SpellScriptLoader
                 Unit* caster = GetCaster();
                 caster->CastSpell(caster->GetPositionX(), caster->GetPositionY(), caster->GetPositionZ(), SPELL_SUMMON_TWILIGHT_PORTAL, true);
                 caster->GetMap()->SummonCreature(NPC_TWILIGHT_HALION, HalionSpawnPos);
+                caster->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                caster->AttackStop();
             }
 
             void Register()
