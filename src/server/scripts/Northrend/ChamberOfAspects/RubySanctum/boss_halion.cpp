@@ -274,8 +274,9 @@ struct generic_halionAI : public BossAI
 
     void UpdateAI(uint32 const diff)
     {
-        if (!UpdateVictim())
+        if (!me->isInCombat())
             return;
+        UpdateVictim();
 
         events.Update(diff);
 
