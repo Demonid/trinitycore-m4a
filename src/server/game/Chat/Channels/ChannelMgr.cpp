@@ -57,6 +57,8 @@ Channel* ChannelMgr::GetJoinChannel(std::string const& name, uint32 channelId)
         bool custom = false;
         if (wname == L"global")
             name_ = "Global";
+        else if (wname == L"latinos")
+            name_ = "Latinos";
         else
             custom = true;
         Channel* nchan = new Channel(name_, channelId, team, custom);
