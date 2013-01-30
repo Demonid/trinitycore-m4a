@@ -102,7 +102,8 @@ class instance_icecrown_citadel : public InstanceMapScript
 
         struct instance_icecrown_citadel_InstanceMapScript : public InstanceScript
         {
-            instance_icecrown_citadel_InstanceMapScript(InstanceMap* map) : InstanceScript(map)
+            instance_icecrown_citadel_InstanceMapScript(InstanceMap* map) : InstanceScript(map),
+                heroic_lk_ineligible()
             {
                 SetBossNumber(EncounterCount);
                 LoadDoorData(doorData);
@@ -537,7 +538,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                         break;
                     case GO_SCOURGE_TRANSPORTER_LK:
                         TheLichKingTeleportGUID = go->GetGUID();
-                        if (GetBossState(DATA_PROFESSOR_PUTRICIDE) == DONE && GetBossState(DATA_BLOOD_QUEEN_LANA_THEL) == DONE && GetBossState(DATA_SINDRAGOSA) == DONE)
+                        if (GetBossState(DATA_PROFESSOR_PUTRICIDE) == DONE && GetBossState(DATA_BLOOD_QUEEN_LANA_THEL) == DONE && GetBossState(DATA_SINDRAGOSA) == DONE && !(instance->IsHeroic() && heroic_lk_ineligible))
                             go->SetGoState(GO_STATE_ACTIVE);
                         break;
                     case GO_ARTHAS_PLATFORM:
@@ -631,6 +632,8 @@ class instance_icecrown_citadel : public InstanceMapScript
                         return BloodQuickeningState;
                     case DATA_HEROIC_ATTEMPTS:
                         return HeroicAttempts;
+                    case DATA_heroic_lk_ineligible:
+                        return heroic_lk_ineligible;
                     default:
                         break;
                 }
@@ -807,7 +810,11 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case DATA_PROFESSOR_PUTRICIDE:
                         HandleGameObject(PlagueSigilGUID, state != DONE);
                         if (state == DONE)
+                        {
+                            if (!instance->IsHeroic())
+                                SetData(DATA_heroic_lk_ineligible, true);
                             CheckLichKingAvailability();
+                        }
                         if (instance->IsHeroic())
                         {
                             if (state == FAIL && HeroicAttempts)
@@ -823,7 +830,11 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case DATA_BLOOD_QUEEN_LANA_THEL:
                         HandleGameObject(BloodwingSigilGUID, state != DONE);
                         if (state == DONE)
+                        {
+                            if (!instance->IsHeroic())
+                                SetData(DATA_heroic_lk_ineligible, true);
                             CheckLichKingAvailability();
+                        }
                         if (instance->IsHeroic())
                         {
                             if (state == FAIL && HeroicAttempts)
@@ -843,7 +854,11 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case DATA_SINDRAGOSA:
                         HandleGameObject(FrostwingSigilGUID, state != DONE);
                         if (state == DONE)
+                        {
+                            if (!instance->IsHeroic())
+                                SetData(DATA_heroic_lk_ineligible, true);
                             CheckLichKingAvailability();
+                        }
                         if (instance->IsHeroic())
                         {
                             if (state == FAIL && HeroicAttempts)
@@ -956,6 +971,13 @@ class instance_icecrown_citadel : public InstanceMapScript
                         SaveToDB();
                         break;
                     }
+                    case DATA_heroic_lk_ineligible:
+                        if (heroic_lk_ineligible != static_cast<bool>(data))
+                        {
+                            heroic_lk_ineligible = static_cast<bool>(data);
+                            SaveToDB();
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -1014,6 +1036,8 @@ class instance_icecrown_citadel : public InstanceMapScript
                         if (!CheckCrimsonHalls(bossId))
                             return false;
                         if (!CheckFrostwingHalls(bossId))
+                            return false;
+                        if (instance->IsHeroic() && heroic_lk_ineligible)
                             return false;
                         break;
                     case DATA_SINDRAGOSA:
@@ -1136,7 +1160,7 @@ class instance_icecrown_citadel : public InstanceMapScript
 
             void CheckLichKingAvailability()
             {
-                if (GetBossState(DATA_PROFESSOR_PUTRICIDE) == DONE && GetBossState(DATA_BLOOD_QUEEN_LANA_THEL) == DONE && GetBossState(DATA_SINDRAGOSA) == DONE)
+                if (GetBossState(DATA_PROFESSOR_PUTRICIDE) == DONE && GetBossState(DATA_BLOOD_QUEEN_LANA_THEL) == DONE && GetBossState(DATA_SINDRAGOSA) == DONE && !(instance->IsHeroic() && heroic_lk_ineligible))
                 {
                     if (GameObject* teleporter = instance->GetGameObject(TheLichKingTeleportGUID))
                     {
@@ -1162,7 +1186,7 @@ class instance_icecrown_citadel : public InstanceMapScript
 
                 std::ostringstream saveStream;
                 saveStream << "I C " << GetBossSaveData() << HeroicAttempts << ' '
-                    << ColdflameJetsState << ' ' << BloodQuickeningState << ' ' << BloodQuickeningMinutes;
+                    << ColdflameJetsState << ' ' << BloodQuickeningState << ' ' << BloodQuickeningMinutes << ' ' << heroic_lk_ineligible;
 
                 OUT_SAVE_INST_DATA_COMPLETE;
                 return saveStream.str();
@@ -1203,6 +1227,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                     loadStream >> temp;
                     BloodQuickeningState = temp ? DONE : NOT_STARTED;   // DONE means finished (not success/fail)
                     loadStream >> BloodQuickeningMinutes;
+                    loadStream >> heroic_lk_ineligible;
                 }
                 else
                     OUT_LOAD_INST_DATA_FAIL;
@@ -1361,6 +1386,7 @@ class instance_icecrown_citadel : public InstanceMapScript
             bool IsOozeDanceEligible;
             bool IsNauseaEligible;
             bool IsOrbWhispererEligible;
+            bool heroic_lk_ineligible;
         };
 
         InstanceScript* GetInstanceScript(InstanceMap* map) const
