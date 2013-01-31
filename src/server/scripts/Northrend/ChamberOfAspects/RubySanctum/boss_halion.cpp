@@ -269,6 +269,10 @@ struct generic_halionAI : public BossAI
                 DoCast(me, me->GetEntry() == NPC_HALION ? SPELL_FLAME_BREATH : SPELL_DARK_BREATH);
                 events.ScheduleEvent(EVENT_BREATH, 15000);
                 break;
+            case EVENT_TWILIGHT_MENDING:
+                me->CastSpell((Unit*)NULL, SPELL_TWILIGHT_MENDING, true);
+                events.ScheduleEvent(EVENT_TWILIGHT_MENDING, 5000);
+                break;
         }
     }
 
@@ -394,6 +398,7 @@ class boss_halion : public CreatureScript
 
                     if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                         controller->AI()->SetData(DATA_MATERIAL_DAMAGE_TAKEN, damage);
+                    events.RescheduleEvent(EVENT_TWILIGHT_MENDING, 5000);
                 }
             }
 
@@ -445,6 +450,8 @@ class boss_halion : public CreatureScript
                 {
                     case DATA_FIGHT_PHASE:
                         events.SetPhase(value);
+                        if (value == PHASE_THREE)
+                            events.ScheduleEvent(EVENT_TWILIGHT_MENDING, 7500);
                         break;
                     default:
                         generic_halionAI::SetData(index, value);
@@ -550,6 +557,7 @@ class boss_twilight_halion : public CreatureScript
                     me->CastStop();
                     DoCast(me, SPELL_TWILIGHT_DIVISION);
                     Talk(SAY_PHASE_THREE);
+                    events.ScheduleEvent(EVENT_TWILIGHT_MENDING, 5000);
                     return;
                 }
 
@@ -561,6 +569,7 @@ class boss_twilight_halion : public CreatureScript
 
                     if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                         controller->AI()->SetData(DATA_TWILIGHT_DAMAGE_TAKEN, damage);
+                    events.RescheduleEvent(EVENT_TWILIGHT_MENDING, 5000);
                 }
             }
 
@@ -696,7 +705,7 @@ class npc_halion_controller : public CreatureScript
                         _instance->DoUpdateWorldState(WORLDSTATE_CORPOREALITY_MATERIAL, 50);
                         _instance->DoUpdateWorldState(WORLDSTATE_CORPOREALITY_TWILIGHT, 50);
 
-                        _events.ScheduleEvent(EVENT_CHECK_CORPOREALITY, 7500);
+                        _events.ScheduleEvent(EVENT_CHECK_CORPOREALITY, 15000);
                     }
                     default:
                         break;
@@ -735,11 +744,6 @@ class npc_halion_controller : public CreatureScript
                             if (Creature* halion = me->GetMap()->SummonCreature(NPC_HALION, HalionSpawnPos))
                                 halion->AI()->Talk(SAY_INTRO);
                             break;
-                        case EVENT_TWILIGHT_MENDING:
-                            if (ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_HALION))) // Just check if physical Halion is spawned
-                                if (Creature* twilightHalion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_TWILIGHT_HALION)))
-                                    twilightHalion->CastSpell((Unit*)NULL, SPELL_TWILIGHT_MENDING, true);
-                            break;
                         case EVENT_TRIGGER_BERSERK:
                             for (uint8 i = DATA_HALION; i <= DATA_TWILIGHT_HALION; i++)
                                 if (Creature* halion = ObjectAccessor::GetCreature(*me, _instance->GetData64(i)))
@@ -763,7 +767,7 @@ class npc_halion_controller : public CreatureScript
                             break;
                         case EVENT_CHECK_CORPOREALITY:
                             UpdateCorporeality();
-                            _events.ScheduleEvent(EVENT_CHECK_CORPOREALITY, 5000);
+                            _events.ScheduleEvent(EVENT_CHECK_CORPOREALITY, 15000);
                             break;
                         default:
                             break;
@@ -802,41 +806,21 @@ class npc_halion_controller : public CreatureScript
             }
 
         private:
-            /// TODO: Find out a better scaling, if any.
-            // [0   , 0.98[: Corporeality goes up
-            // [0.98, 0.99]: Do nothing
-            // ]0.99, 1.01[: Twilight Mending
-            // [1.01, 1.02]: Do nothing
-            // ]1.02, +oo [: Corporeality goes down
             void UpdateCorporeality()
             {
                 uint8 oldValue = _materialCorporealityValue;
-                if (_twilightDamageTaken == 0 || _materialDamageTaken == 0)
-                {
-                    _events.ScheduleEvent(EVENT_TWILIGHT_MENDING, 100);
-                    _twilightDamageTaken = 0;
-                    _materialDamageTaken = 0;
-                    return;
-                }
 
-                float damageRatio = float(_materialDamageTaken) / float(_twilightDamageTaken);
-
-                CorporealityEvent action = CORPOREALITY_NONE;
-                if (damageRatio < 0.98f)                             // [0   , 0.98[: Corporeality goes up
+                CorporealityEvent action;
+                if (_twilightDamageTaken > _materialDamageTaken)
                     action = CORPOREALITY_INCREASE;
-                else if (0.99f < damageRatio && damageRatio < 1.01f) // ]0.99, 1.01[: Corporeality none
-                    action = CORPOREALITY_NONE;
-                else if (1.02f < damageRatio)                        // ]1.02, +oo [: Corporeality goes down
+                else
                     action = CORPOREALITY_DECREASE;
+
+                _materialDamageTaken = 0;
+                _twilightDamageTaken = 0;
 
                 switch (action)
                 {
-                    case CORPOREALITY_NONE:
-                    {
-                        _materialDamageTaken = 0;
-                        _twilightDamageTaken = 0;
-                        return;
-                    }
                     case CORPOREALITY_INCREASE:
                     {
                         if (_materialCorporealityValue >= (MAX_CORPOREALITY_STATE - 1))
@@ -851,19 +835,9 @@ class npc_halion_controller : public CreatureScript
                         --_materialCorporealityValue;
                         break;
                     }
-                    case CORPOREALITY_TWILIGHT_MENDING:
-                    {
-                        _events.ScheduleEvent(EVENT_TWILIGHT_MENDING, 100);
-                        _materialDamageTaken = 0;
-                        _twilightDamageTaken = 0;
-                        return;
-                    }
                     default:
                         break;
                 }
-
-                _materialDamageTaken = 0;
-                _twilightDamageTaken = 0;
 
                 _instance->DoUpdateWorldState(WORLDSTATE_CORPOREALITY_MATERIAL, _materialCorporealityValue * 10);
                 _instance->DoUpdateWorldState(WORLDSTATE_CORPOREALITY_TWILIGHT, 100 - _materialCorporealityValue * 10);
