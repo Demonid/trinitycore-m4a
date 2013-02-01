@@ -339,6 +339,11 @@ class boss_halion : public CreatureScript
                 // Phase 1: We always can evade. Phase 2 & 3: We can evade if and only if the controller tells us to.
                 if ((events.GetPhaseMask() & PHASE_ONE_MASK) || _canEvade)
                     generic_halionAI::EnterEvadeMode();
+                else
+                {
+                    me->DeleteThreatList();
+                    me->AttackStop();
+                }
             }
 
             void EnterCombat(Unit* who)
@@ -520,7 +525,11 @@ class boss_twilight_halion : public CreatureScript
             }
 
             // Never evade
-            void EnterEvadeMode() { }
+            void EnterEvadeMode()
+            {
+                me->DeleteThreatList();
+                me->AttackStop();
+            }
 
             void KilledUnit(Unit* victim)
             {
