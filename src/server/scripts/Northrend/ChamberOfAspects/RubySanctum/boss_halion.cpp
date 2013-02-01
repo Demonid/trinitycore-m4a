@@ -229,8 +229,7 @@ CorporealityEntry const _corporealityReference[MAX_CORPOREALITY_STATE] = {
 
 struct generic_halionAI : public BossAI
 {
-    generic_halionAI(Creature* creature, uint32 bossId) : BossAI(creature, bossId), _canEvade(false), 
-      _instance(creature->GetInstanceScript()) { }
+    generic_halionAI(Creature* creature, uint32 bossId) : BossAI(creature, bossId), _canEvade(false) { }
 
     void EnterCombat(Unit* who)
     {
@@ -313,7 +312,6 @@ struct generic_halionAI : public BossAI
 
 protected:
     bool _canEvade;
-    InstanceScript* _instance;
 };
 
 class boss_halion : public CreatureScript
@@ -486,16 +484,16 @@ class boss_halion : public CreatureScript
 
           Unit* GetMeteorTarget()
           {
-            Map::PlayerList const& players = _instance->instance->GetPlayers();
+            Map::PlayerList const& players = instance->instance->GetPlayers();
             std::list<Player*> _players;
 
             if (!players.isEmpty())
             {
                 for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
                 {
-                    if (Player* player = itr->getSource())
-                      if(!player->HasAura(SPELL_TWILIGHT_REALM))
-                        _players.push_back(player);
+                  if (Player* player = itr->getSource())
+                    if(player->InSamePhase(me) && player->isAlive() && !player->isGameMaster())
+                      _players.push_back(player);
                 }
 
                 std::list<Player*>::iterator itr = _players.begin();
