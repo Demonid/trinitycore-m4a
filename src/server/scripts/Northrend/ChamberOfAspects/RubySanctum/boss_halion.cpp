@@ -332,7 +332,7 @@ class boss_halion : public CreatureScript
                 me->SetReactState(REACT_AGGRESSIVE);
                 me->RemoveAurasDueToSpell(SPELL_TWILIGHT_PHASING);
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                _phaseThreeEvents = true;
+                _phaseThreeEvents = false;
             }
 
             void EnterEvadeMode()
@@ -417,16 +417,16 @@ class boss_halion : public CreatureScript
             {
                 if (events.GetPhaseMask() & PHASE_TWO_MASK)
                     return;
-                else if ((events.GetPhaseMask() & PHASE_THREE_MASK) && _phaseThreeEvents && me->getVictim())
+
+                generic_halionAI::UpdateAI(diff);
+                if (_phaseThreeEvents && me->getVictim())
                 {
-                  events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 20000);
                   events.ScheduleEvent(EVENT_CLEAVE, urand(8000, 10000));
                   events.ScheduleEvent(EVENT_TAIL_LASH, 13000);
+                  events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 15000);
                   events.ScheduleEvent(EVENT_BREATH, 15000);
                   _phaseThreeEvents = false;
                 }
-
-                generic_halionAI::UpdateAI(diff);
             }
 
             void ExecuteEvent(uint32 const eventId)
@@ -471,8 +471,9 @@ class boss_halion : public CreatureScript
                         events.SetPhase(value);
                         if (value == PHASE_THREE)
                         {
-                            events.ScheduleEvent(EVENT_TWILIGHT_MENDING, 7500);
-                            events.RescheduleEvent(EVENT_METEOR_STRIKE, 20000);
+                            _phaseThreeEvents = true;
+                            events.ScheduleEvent(EVENT_TWILIGHT_MENDING, 10000);
+                            events.ScheduleEvent(EVENT_METEOR_STRIKE, 30000);
                         }
                         break;
                     default:
@@ -608,6 +609,8 @@ class boss_twilight_halion : public CreatureScript
                     DoCast(me, SPELL_TWILIGHT_DIVISION);
                     Talk(SAY_PHASE_THREE);
                     events.ScheduleEvent(EVENT_TWILIGHT_MENDING, 5000);
+                    if (auto halion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION)))
+                        halion->AI()->SetData(DATA_FIGHT_PHASE, PHASE_THREE);
                     return;
                 }
 
@@ -737,7 +740,6 @@ class npc_halion_controller : public CreatureScript
                                 continue;
 
                             halion->CastSpell(halion, GetSpell(_materialCorporealityValue, itr == DATA_TWILIGHT_HALION), false);
-                            halion->AI()->SetData(DATA_FIGHT_PHASE, PHASE_THREE);
 
                             if (itr == DATA_TWILIGHT_HALION)
                                 continue;
