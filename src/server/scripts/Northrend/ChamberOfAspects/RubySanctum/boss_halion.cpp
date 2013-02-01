@@ -229,7 +229,8 @@ CorporealityEntry const _corporealityReference[MAX_CORPOREALITY_STATE] = {
 
 struct generic_halionAI : public BossAI
 {
-    generic_halionAI(Creature* creature, uint32 bossId) : BossAI(creature, bossId), _canEvade(false) { }
+    generic_halionAI(Creature* creature, uint32 bossId) : BossAI(creature, bossId), _canEvade(false), 
+      _instance(creature->GetInstanceScript()) { }
 
     void EnterCombat(Unit* who)
     {
@@ -312,6 +313,7 @@ struct generic_halionAI : public BossAI
 
 protected:
     bool _canEvade;
+    InstanceScript* _instance;
 };
 
 class boss_halion : public CreatureScript
@@ -332,6 +334,7 @@ class boss_halion : public CreatureScript
                 me->SetReactState(REACT_AGGRESSIVE);
                 me->RemoveAurasDueToSpell(SPELL_TWILIGHT_PHASING);
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                _phaseThreeEvents = true;
             }
 
             void EnterEvadeMode()
@@ -390,6 +393,11 @@ class boss_halion : public CreatureScript
                     me->CastStop();
                     DoCast(me, SPELL_TWILIGHT_PHASING);
 
+                    events.CancelEvent(EVENT_FIERY_COMBUSTION);
+                    events.CancelEvent(EVENT_CLEAVE);
+                    events.CancelEvent(EVENT_TAIL_LASH);
+                    events.CancelEvent(EVENT_BREATH);
+
                     if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                         controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_TWO);
                     return;
@@ -411,6 +419,14 @@ class boss_halion : public CreatureScript
             {
                 if (events.GetPhaseMask() & PHASE_TWO_MASK)
                     return;
+                else if ((events.GetPhaseMask() & PHASE_THREE_MASK) && _phaseThreeEvents && me->getVictim())
+                {
+                  events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 20000);
+                  events.ScheduleEvent(EVENT_CLEAVE, urand(8000, 10000));
+                  events.ScheduleEvent(EVENT_TAIL_LASH, 13000);
+                  events.ScheduleEvent(EVENT_BREATH, 15000);
+                  _phaseThreeEvents = false;
+                }
 
                 generic_halionAI::UpdateAI(diff);
             }
@@ -427,7 +443,7 @@ class boss_halion : public CreatureScript
                         break;
                     case EVENT_METEOR_STRIKE:
                     {
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true, -SPELL_TWILIGHT_REALM))
+                        if (Unit* target = GetMeteorTarget())
                         {
                             target->GetPosition(&_meteorStrikePos);
                             me->CastSpell(_meteorStrikePos.GetPositionX(), _meteorStrikePos.GetPositionY(), _meteorStrikePos.GetPositionZ(), SPELL_METEOR_STRIKE, true, NULL, NULL, me->GetGUID());
@@ -456,7 +472,10 @@ class boss_halion : public CreatureScript
                     case DATA_FIGHT_PHASE:
                         events.SetPhase(value);
                         if (value == PHASE_THREE)
+                        {
                             events.ScheduleEvent(EVENT_TWILIGHT_MENDING, 7500);
+                            events.RescheduleEvent(EVENT_METEOR_STRIKE, 20000);
+                        }
                         break;
                     default:
                         generic_halionAI::SetData(index, value);
@@ -464,7 +483,31 @@ class boss_halion : public CreatureScript
             }
 
         private:
-            Position _meteorStrikePos;
+
+          Unit* GetMeteorTarget()
+          {
+            Map::PlayerList const& players = _instance->instance->GetPlayers();
+            std::list<Player*> _players;
+
+            if (!players.isEmpty())
+            {
+                for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                {
+                    if (Player* player = itr->getSource())
+                      if(!player->HasAura(SPELL_TWILIGHT_REALM))
+                        _players.push_back(player);
+                }
+
+                std::list<Player*>::iterator itr = _players.begin();
+                std::advance(itr, urand(0, _players.size() - 1)); 
+                return dynamic_cast<Unit*>(*itr);
+            }
+
+            return NULL;
+          }
+
+          Position _meteorStrikePos;
+          bool _phaseThreeEvents;
         };
 
         CreatureAI* GetAI(Creature* creature) const
