@@ -3659,6 +3659,9 @@ void SpellMgr::LoadDbcDataCorrections()
                 spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_6_YARDS;
                 spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_6_YARDS;
                 break;
+            case 74629 /* Combustion Periodic */:
+                spellInfo->DurationIndex = 64 /* 40000 */;
+                break;
             case 74630 /* Combustion */:
             case 75882 /* Combustion */:
             case 75883 /* Combustion */:
@@ -3687,6 +3690,9 @@ void SpellMgr::LoadDbcDataCorrections()
                     spellInfo->EffectMechanic[1] = MECHANIC_SNARE;
                     spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_6_YARDS;
                 }
+                break;
+            case 74803 /* Consumption Periodic */:
+                spellInfo->DurationIndex = 64 /* 40000 */;
                 break;
             case 75509: // Twilight Mending
                 spellInfo->AttributesEx6 |= SPELL_ATTR6_CAN_TARGET_INVISIBLE;
