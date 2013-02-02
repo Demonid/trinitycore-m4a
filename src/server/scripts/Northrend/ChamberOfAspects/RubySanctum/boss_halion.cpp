@@ -236,9 +236,6 @@ struct generic_halionAI : public BossAI
         BossAI::EnterCombat(who);
         me->AddAura(SPELL_TWILIGHT_PRECISION, me);
         _canEvade = false;
-        events.ScheduleEvent(EVENT_CLEAVE, urand(8000, 10000));
-        events.ScheduleEvent(EVENT_TAIL_LASH, 13000);
-        events.ScheduleEvent(EVENT_BREATH, 15000);
     }
 
     void Reset()
@@ -311,6 +308,20 @@ struct generic_halionAI : public BossAI
     }
 
 protected:
+    void init_events()
+    {
+        events.ScheduleEvent(EVENT_CLEAVE, urand(8000, 10000));
+        events.ScheduleEvent(EVENT_TAIL_LASH, 13000);
+        events.ScheduleEvent(EVENT_BREATH, 15000);
+    }
+
+    void tidy_events()
+    {
+        events.CancelEvent(EVENT_CLEAVE);
+        events.CancelEvent(EVENT_TAIL_LASH);
+        events.CancelEvent(EVENT_BREATH);
+    }
+
     bool _canEvade;
 };
 
@@ -360,8 +371,8 @@ class boss_halion : public CreatureScript
                 instance->SetBossState(DATA_HALION, IN_PROGRESS);
 
                 events.ScheduleEvent(EVENT_ACTIVATE_FIREWALL, 5000);
+                init_events();
                 events.ScheduleEvent(EVENT_METEOR_STRIKE, 20000);
-                events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 15000);
 
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                     controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_ONE);
@@ -391,10 +402,7 @@ class boss_halion : public CreatureScript
                     me->CastStop();
                     DoCast(me, SPELL_TWILIGHT_PHASING);
 
-                    events.CancelEvent(EVENT_FIERY_COMBUSTION);
-                    events.CancelEvent(EVENT_CLEAVE);
-                    events.CancelEvent(EVENT_TAIL_LASH);
-                    events.CancelEvent(EVENT_BREATH);
+                    tidy_events();
 
                     if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                         controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_TWO);
@@ -421,11 +429,8 @@ class boss_halion : public CreatureScript
                 generic_halionAI::UpdateAI(diff);
                 if (_phaseThreeEvents && me->getVictim())
                 {
-                  events.ScheduleEvent(EVENT_CLEAVE, urand(8000, 10000));
-                  events.ScheduleEvent(EVENT_TAIL_LASH, 13000);
-                  events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 15000);
-                  events.ScheduleEvent(EVENT_BREATH, 15000);
                   _phaseThreeEvents = false;
+                  init_events();
                 }
             }
 
@@ -481,6 +486,19 @@ class boss_halion : public CreatureScript
                 }
             }
 
+        protected:
+            void init_events()
+            {
+                generic_halionAI::init_events();
+                events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 15000);
+            }
+
+            void tidy_events()
+            {
+                generic_halionAI::tidy_events();
+                events.CancelEvent(EVENT_FIERY_COMBUSTION);
+            }
+
         private:
 
           Unit* GetMeteorTarget()
@@ -524,7 +542,8 @@ class boss_twilight_halion : public CreatureScript
 
         struct boss_twilight_halionAI : public generic_halionAI
         {
-            boss_twilight_halionAI(Creature* creature) : generic_halionAI(creature, DATA_TWILIGHT_HALION)
+            boss_twilight_halionAI(Creature* creature) : generic_halionAI(creature, DATA_TWILIGHT_HALION),
+                init_events_on_victim()
             {
                 Creature* halion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION));
                 if (!halion)
@@ -549,9 +568,25 @@ class boss_twilight_halion : public CreatureScript
                 }
             }
 
+            void UpdateAI(uint32 diff) override
+            {
+                generic_halionAI::UpdateAI(diff);
+                if (init_events_on_victim && me->getVictim())
+                {
+                    init_events_on_victim = false;
+                    init_events();
+                }
+            }
+
             void InitializeAI() override
             {
                 me->SetInCombatState(false, me);
+            }
+
+            void Reset() override
+            {
+                generic_halionAI::Reset();
+                init_events_on_victim = false;
             }
 
             void EnterCombat(Unit* who)
@@ -561,7 +596,7 @@ class boss_twilight_halion : public CreatureScript
 
                 generic_halionAI::EnterCombat(who);
 
-                events.ScheduleEvent(EVENT_SOUL_CONSUMPTION, 15000);
+                init_events_on_victim = true;
 
                 instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me, 2);
             }
@@ -654,6 +689,22 @@ class boss_twilight_halion : public CreatureScript
                         break;
                 }
             }
+
+        protected:
+            void init_events()
+            {
+                generic_halionAI::init_events();
+                events.ScheduleEvent(EVENT_SOUL_CONSUMPTION, 15000);
+            }
+
+            void tidy_events()
+            {
+                generic_halionAI::tidy_events();
+                events.CancelEvent(EVENT_SOUL_CONSUMPTION);
+            }
+
+        private:
+            bool init_events_on_victim;
         };
 
         CreatureAI* GetAI(Creature* creature) const
