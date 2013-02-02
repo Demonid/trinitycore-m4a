@@ -147,7 +147,7 @@ enum
     EVENT_SHADOW_PULSARS_SHOOT  = 15,
     EVENT_TRIGGER_BERSERK       = 16,
     EVENT_TWILIGHT_MENDING      = 17,
-    EVENT_SHADOW_PULSARS_WARN,
+    EVENT_SHADOW_PULSARS_PULSE,
 };
 
 enum
@@ -161,7 +161,7 @@ enum
 
     // Orb Carrier
     ACTION_SHOOT                = 4,
-    ACTION_WARN,
+    ACTION_PULSE,
 };
 
 enum Phases
@@ -844,18 +844,18 @@ class npc_halion_controller : public CreatureScript
                                     halion->AI()->Talk(SAY_BERSERK);
                                 }
                             break;
-                        case EVENT_SHADOW_PULSARS_WARN:
+                        case EVENT_SHADOW_PULSARS_PULSE:
                             if (Creature* twilightHalion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_TWILIGHT_HALION)))
                                 twilightHalion->AI()->Talk(SAY_SPHERE_PULSE);
                             if (auto orbCarrier = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_ORB_CARRIER)))
-                                orbCarrier->AI()->DoAction(ACTION_WARN);
+                                orbCarrier->AI()->DoAction(ACTION_PULSE);
+
+                            _events.ScheduleEvent(EVENT_SHADOW_PULSARS_SHOOT, 5000);
+                            _events.ScheduleEvent(EVENT_SHADOW_PULSARS_PULSE, 30000);
                             break;
                         case EVENT_SHADOW_PULSARS_SHOOT:
                             if (Creature* orbCarrier = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_ORB_CARRIER)))
                                 orbCarrier->AI()->DoAction(ACTION_SHOOT);
-
-                            _events.ScheduleEvent(EVENT_SHADOW_PULSARS_WARN, 30000 - 4000);
-                            _events.ScheduleEvent(EVENT_SHADOW_PULSARS_SHOOT, 30000);
                             break;
                         case EVENT_CHECK_CORPOREALITY:
                             UpdateCorporeality();
@@ -885,8 +885,7 @@ class npc_halion_controller : public CreatureScript
                                 DoZoneInCombat();
                                 break;
                             case PHASE_TWO:
-                                _events.ScheduleEvent(EVENT_SHADOW_PULSARS_WARN, 40000 - 4000);
-                                _events.ScheduleEvent(EVENT_SHADOW_PULSARS_SHOOT, 40000);
+                                _events.ScheduleEvent(EVENT_SHADOW_PULSARS_PULSE, 35000);
                                 break;
                             default:
                                 break;
@@ -1011,7 +1010,7 @@ class npc_orb_carrier : public CreatureScript
 
             void DoAction(int32 const action)
             {
-                if (action == ACTION_WARN)
+                if (action == ACTION_PULSE)
                 {
                     if (auto northOrb = me->GetVehicleKit()->GetPassenger(SEAT_NORTH))
                         if (northOrb->GetTypeId() == TYPEID_UNIT)
