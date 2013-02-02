@@ -1256,7 +1256,10 @@ class npc_combustion_consumption : public CreatureScript
                 DoCast(me, _damageSpell);
 
                 CustomSpellValues values;
-                values.AddSpellMod(SPELLVALUE_BASE_POINT0, 4000 * (100 + points * stackAmount) / 100); // Needs more researches.
+                if (auto periodic = sSpellMgr->GetSpellInfo(_damageSpell))
+                    if (auto trigger = sSpellMgr->GetSpellInfo(periodic->Effects[0].TriggerSpell))
+                        if (trigger = sSpellMgr->GetSpellForDifficultyFromSpell(trigger, me))
+                            values.AddSpellMod(SPELLVALUE_BASE_POINT0, trigger->Effects[0].BasePoints); // Needs more researches.
                 values.AddSpellMod(SPELLVALUE_RADIUS_MOD, (1.0F * (100 + points * stackAmount) / 100) * 10000);
                 summoner->CastCustomSpell(_explosionSpell, values, summoner, TRIGGERED_FULL_MASK);
             }
