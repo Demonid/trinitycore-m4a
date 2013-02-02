@@ -459,7 +459,9 @@ class boss_halion : public CreatureScript
                                     ))
                             {
                                 target->GetPosition(&_meteorStrikePos);
-                                me->CastSpell(_meteorStrikePos.GetPositionX(), _meteorStrikePos.GetPositionY(), _meteorStrikePos.GetPositionZ(), SPELL_METEOR_STRIKE, true, NULL, NULL, me->GetGUID());
+                                SpellCastTargets targets;
+                                targets.SetDst(_meteorStrikePos);
+                                me->CastSpell(targets, sSpellMgr->GetSpellInfo(SPELL_METEOR_STRIKE), nullptr, TRIGGERED_FULL_MASK, NULL, NULL, me->GetGUID());
                                 Talk(SAY_METEOR_STRIKE);
                             }
                         events.ScheduleEvent(EVENT_METEOR_STRIKE, 40000);
@@ -1058,9 +1060,7 @@ class npc_meteor_strike_initial : public CreatureScript
         {
             npc_meteor_strike_initialAI(Creature* creature) : Scripted_NoMovementAI(creature),
                 _instance(creature->GetInstanceScript())
-            {
-                me->SetOrientation(0);
-            }
+            { }
 
             void DoAction(int32 const action)
             {
