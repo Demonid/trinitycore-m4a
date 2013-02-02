@@ -469,7 +469,7 @@ class boss_halion : public CreatureScript
                     {
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, -SPELL_TWILIGHT_REALM))
                             DoCast(target, SPELL_FIERY_COMBUSTION);
-                        events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 20000);
+                        events.ScheduleEvent(EVENT_FIERY_COMBUSTION, IsHeroic() ? 20000 : 25000);
                         break;
                     }
                     default:
@@ -669,7 +669,7 @@ class boss_twilight_halion : public CreatureScript
                     case EVENT_SOUL_CONSUMPTION:
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, SPELL_TWILIGHT_REALM))
                             DoCast(target, SPELL_SOUL_CONSUMPTION);
-                        events.ScheduleEvent(EVENT_SOUL_CONSUMPTION, 20000);
+                        events.ScheduleEvent(EVENT_SOUL_CONSUMPTION, IsHeroic() ? 20000 : 25000);
                         break;
                     default:
                         generic_halionAI::ExecuteEvent(eventId);
