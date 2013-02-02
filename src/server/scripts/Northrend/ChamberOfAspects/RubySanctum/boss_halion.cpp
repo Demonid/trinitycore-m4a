@@ -403,6 +403,7 @@ class boss_halion : public CreatureScript
                     DoCast(me, SPELL_TWILIGHT_PHASING);
 
                     tidy_events();
+                    events.CancelEvent(EVENT_METEOR_STRIKE);
 
                     if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                         controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_TWO);
@@ -446,12 +447,21 @@ class boss_halion : public CreatureScript
                         break;
                     case EVENT_METEOR_STRIKE:
                     {
-                        if (Unit* target = GetMeteorTarget())
-                        {
-                            target->GetPosition(&_meteorStrikePos);
-                            me->CastSpell(_meteorStrikePos.GetPositionX(), _meteorStrikePos.GetPositionY(), _meteorStrikePos.GetPositionZ(), SPELL_METEOR_STRIKE, true, NULL, NULL, me->GetGUID());
-                            Talk(SAY_METEOR_STRIKE);
-                        }
+                        if (auto controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
+                            if (Unit* target = controller->AI()->SelectTarget(SELECT_TARGET_RANDOM, 0, [this](const Unit *target_)
+                                        {
+                                            if (!target_->InSamePhase(me))
+                                                return false;
+                                            if (target_->GetTypeId() != TYPEID_PLAYER)
+                                                return false;
+                                            return true;
+                                        }
+                                    ))
+                            {
+                                target->GetPosition(&_meteorStrikePos);
+                                me->CastSpell(_meteorStrikePos.GetPositionX(), _meteorStrikePos.GetPositionY(), _meteorStrikePos.GetPositionZ(), SPELL_METEOR_STRIKE, true, NULL, NULL, me->GetGUID());
+                                Talk(SAY_METEOR_STRIKE);
+                            }
                         events.ScheduleEvent(EVENT_METEOR_STRIKE, 40000);
                         break;
                     }
@@ -500,29 +510,6 @@ class boss_halion : public CreatureScript
             }
 
         private:
-
-          Unit* GetMeteorTarget()
-          {
-            Map::PlayerList const& players = instance->instance->GetPlayers();
-            std::list<Player*> _players;
-
-            if (!players.isEmpty())
-            {
-                for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                {
-                  if (Player* player = itr->getSource())
-                    if(player->InSamePhase(me) && player->isAlive() && !player->isGameMaster())
-                      _players.push_back(player);
-                }
-
-                std::list<Player*>::iterator itr = _players.begin();
-                std::advance(itr, urand(0, _players.size() - 1)); 
-                return dynamic_cast<Unit*>(*itr);
-            }
-
-            return NULL;
-          }
-
           Position _meteorStrikePos;
           bool _phaseThreeEvents;
         };
