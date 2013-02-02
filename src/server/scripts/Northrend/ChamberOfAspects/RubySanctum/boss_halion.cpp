@@ -312,7 +312,7 @@ protected:
     {
         events.ScheduleEvent(EVENT_CLEAVE, urand(8000, 10000));
         events.ScheduleEvent(EVENT_TAIL_LASH, 13000);
-        events.ScheduleEvent(EVENT_BREATH, 15000);
+        events.ScheduleEvent(EVENT_BREATH, urand(0, 25000));
     }
 
     void tidy_events()
