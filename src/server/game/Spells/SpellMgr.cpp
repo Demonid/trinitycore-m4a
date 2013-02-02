@@ -3655,6 +3655,10 @@ void SpellMgr::LoadDbcDataCorrections()
             //
             // RUBY SANCTUM SPELLS
             //
+            case 74607 /* Fiery Combustion */:
+                spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_6_YARDS;
+                spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_6_YARDS;
+                break;
             case 74630 /* Combustion */:
             case 75882 /* Combustion */:
             case 75883 /* Combustion */:
@@ -3670,7 +3674,8 @@ void SpellMgr::LoadDbcDataCorrections()
                 spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_100_YARDS; // 100yd
                 break;
             case 74799 /* Soul Consumption */:
-                spellInfo->EffectRadiusIndex[1] = spellInfo->EffectRadiusIndex[0];
+                spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_6_YARDS;
+                spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_6_YARDS;
                 break;
             case 74802 /* Consumption */:
             case 75874 /* Consumption */:

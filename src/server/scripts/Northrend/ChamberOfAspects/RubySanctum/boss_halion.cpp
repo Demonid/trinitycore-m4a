@@ -1226,8 +1226,7 @@ class npc_combustion_consumption : public CreatureScript
                         break;
                 }
 
-                if (IsHeroic())
-                    me->SetPhaseMask(0x01 | 0x20, true);
+                me->SetPhaseMask(0x0, false);
             }
 
             void IsSummonedBy(Unit* summoner)
@@ -1253,11 +1252,12 @@ class npc_combustion_consumption : public CreatureScript
                     values.AddSpellMod(SPELLVALUE_AURA_STACK, stackAmount);
                     me->CastCustomSpell(SPELL_SCALE_AURA, values, me);
                 }
+                me->SetPhaseMask(IsHeroic() ? 0x01 | 0x20 : 0x1, true);
                 DoCast(me, _damageSpell);
 
                 CustomSpellValues values;
-                values.AddSpellMod(SPELLVALUE_BASE_POINT0, 3000 + 3000 * stackAmount * points / 100); // Needs more researches.
-                values.AddSpellMod(SPELLVALUE_RADIUS_MOD, 10000 + 10000 * stackAmount * points / 100 * (6.0F / 12.0F));
+                values.AddSpellMod(SPELLVALUE_BASE_POINT0, 4000 * (100 + points * stackAmount) / 100); // Needs more researches.
+                values.AddSpellMod(SPELLVALUE_RADIUS_MOD, (1.0F * (100 + points * stackAmount) / 100) * 10000);
                 summoner->CastCustomSpell(_explosionSpell, values, summoner);
             }
 
