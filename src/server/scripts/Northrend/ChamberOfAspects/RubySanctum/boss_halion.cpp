@@ -1785,7 +1785,7 @@ class TwilightCutterSelector
 
         bool operator()(WorldObject* unit)
         {
-            return !unit->IsInBetween(_caster, _cutterCaster, 4.0f);
+            return !unit->IsInBetween(_caster, _cutterCaster, 1.5F + unit->GetObjectSize());
         }
 
     private:
