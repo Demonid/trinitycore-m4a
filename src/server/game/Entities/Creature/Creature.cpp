@@ -1644,9 +1644,13 @@ void Creature::Respawn(bool force)
 
         sLog->outDebug(LOG_FILTER_UNITS, "Respawning creature %s (GuidLow: %u, Full GUID: " UI64FMTD " Entry: %u)",
             GetName().c_str(), GetGUIDLow(), GetGUID(), GetEntry());
-        CleanupBeforeRemoveFromMap(false);
+        auto in_world = IsInWorld();
         auto map = GetMap();
-        map->RemoveFromMap(this, false);
+        if (in_world)
+        {
+            CleanupBeforeRemoveFromMap(false);
+            map->RemoveFromMap(this, false);
+        }
         m_respawnTime = 0;
         lootForPickPocketed = false;
         lootForBody         = false;
@@ -1680,7 +1684,8 @@ void Creature::Respawn(bool force)
 
         //Re-initialize reactstate that could be altered by movementgenerators
         InitializeReactState();
-        GetMap()->AddToMap(this);
+        if (in_world)
+            GetMap()->AddToMap(this);
     }
     else
         UpdateObjectVisibility();
