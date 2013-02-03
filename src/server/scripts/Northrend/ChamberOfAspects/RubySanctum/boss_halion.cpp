@@ -148,6 +148,7 @@ enum
     EVENT_TRIGGER_BERSERK       = 16,
     EVENT_TWILIGHT_MENDING      = 17,
     EVENT_SHADOW_PULSARS_PULSE,
+    EVENT_COMBAT_PULSE,
 };
 
 enum
@@ -375,7 +376,12 @@ class boss_halion : public CreatureScript
                 events.ScheduleEvent(EVENT_METEOR_STRIKE, 20000);
 
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
+                {
+                    controller->SetInCombatWith(who);
+                    who->SetInCombatWith(controller);
+                    controller->AddThreat(who, 0);
                     controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_ONE);
+                }
                 me->SetReactState(REACT_DEFENSIVE);
             }
 
@@ -745,6 +751,7 @@ class npc_halion_controller : public CreatureScript
                 _twilightDamageTaken = 0;
                 _materialDamageTaken = 0;
 
+                _events.ScheduleEvent(EVENT_COMBAT_PULSE, 1000);
                 _events.ScheduleEvent(EVENT_TRIGGER_BERSERK, 8 * MINUTE * IN_MILLISECONDS);
             }
 
@@ -861,6 +868,10 @@ class npc_halion_controller : public CreatureScript
                             UpdateCorporeality();
                             _events.ScheduleEvent(EVENT_CHECK_CORPOREALITY, 15000);
                             break;
+                        case EVENT_COMBAT_PULSE:
+                            DoZoneInCombat();
+                            _events.ScheduleEvent(EVENT_COMBAT_PULSE, 1000);
+                            break;
                         default:
                             break;
                     }
@@ -882,7 +893,6 @@ class npc_halion_controller : public CreatureScript
                         switch (value)
                         {
                             case PHASE_ONE:
-                                DoZoneInCombat();
                                 break;
                             case PHASE_TWO:
                                 _events.ScheduleEvent(EVENT_SHADOW_PULSARS_PULSE, 35000);
