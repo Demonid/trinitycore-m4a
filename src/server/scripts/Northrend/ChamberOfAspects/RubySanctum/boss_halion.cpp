@@ -1255,7 +1255,7 @@ class npc_combustion_consumption : public CreatureScript
                 DoCast(me, _damageSpell);
 
                 CustomSpellValues values;
-                values.AddSpellMod(SPELLVALUE_BASE_POINT0, 4000 * (100 + points * stackAmount) / 100); // Needs more researches.
+                values.AddSpellMod(SPELLVALUE_BASE_POINT0, 5000 * (100 + points * stackAmount) / 100); // Needs more researches.
                 values.AddSpellMod(SPELLVALUE_RADIUS_MOD, (1.0F * (100 + points * stackAmount) / 100) * 10000);
                 summoner->CastCustomSpell(_explosionSpell, values, summoner, TRIGGERED_FULL_MASK);
             }
