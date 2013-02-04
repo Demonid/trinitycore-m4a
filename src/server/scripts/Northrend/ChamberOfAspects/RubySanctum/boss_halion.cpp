@@ -279,6 +279,12 @@ struct generic_halionAI : public BossAI
         if (!me->isInCombat())
             return;
         UpdateVictim();
+        if (me->GetExactDist2dSq(3153.75F, 533.187988F) > 50.0F * 50.0F)
+            if (auto controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
+            {
+                controller->AI()->EnterEvadeMode();
+                return;
+            }
 
         events.Update(diff);
 
