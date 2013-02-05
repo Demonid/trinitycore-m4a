@@ -1255,6 +1255,7 @@ class npc_combustion_consumption : public CreatureScript
             npc_combustion_consumptionAI(Creature* creature) : Scripted_NoMovementAI(creature),
                    _instance(creature->GetInstanceScript()), _summonerGuid(0)
             {
+                me->SetVisible(false);
                 switch (me->GetEntry())
                 {
                     case NPC_COMBUSTION:
@@ -1273,7 +1274,8 @@ class npc_combustion_consumption : public CreatureScript
                         break;
                 }
 
-                me->SetPhaseMask(0x0, false);
+                if (IsHeroic())
+                    me->SetPhaseMask(0x01 | 0x20, true);
             }
 
             void IsSummonedBy(Unit* summoner)
@@ -1299,7 +1301,7 @@ class npc_combustion_consumption : public CreatureScript
                     values.AddSpellMod(SPELLVALUE_AURA_STACK, stackAmount);
                     me->CastCustomSpell(SPELL_SCALE_AURA, values, me);
                 }
-                me->SetPhaseMask(IsHeroic() ? 0x01 | 0x20 : 0x1, true);
+                me->SetVisible(true);
                 DoCast(me, _damageSpell);
 
                 CustomSpellValues values;
