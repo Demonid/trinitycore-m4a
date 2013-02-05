@@ -809,19 +809,14 @@ class npc_halion_controller : public CreatureScript
                         }
 
                         // Summon Twilight portals
+                        Position positions[] = {
+                                {me->GetPositionX() + 25.0F, me->GetPositionY() - 25.0F, me->GetPositionZ(), me->GetOrientation()},
+                                {me->GetPositionX() - 25.0F, me->GetPositionY() + 25.0F, me->GetPositionZ(), me->GetOrientation()},
+                            };
+                        for (auto &p : positions)
                         {
                             std::unique_ptr<GameObject> portal(new GameObject);
-                            if (portal->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT), GO_HALION_PORTAL_2, me->GetMap(), me->GetPhaseMask(), me->GetPositionX() + 25.0F, me->GetPositionY() - 25.0F, me->GetPositionZ(), me->GetOrientation(), 0.0F, 0.0F, 0.0F, 0.0F, 100, GO_STATE_READY))
-                            {
-                                portal->SetRespawnTime(0);
-                                portal->SetSpawnedByDefault(false);
-                                if (me->GetMap()->AddToMap(portal.get()))
-                                    portal.release();
-                            }
-                        }
-                        {
-                            std::unique_ptr<GameObject> portal(new GameObject);
-                            if (portal->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT), GO_HALION_PORTAL_2, me->GetMap(), me->GetPhaseMask(), me->GetPositionX() - 25.0F, me->GetPositionY() + 25.0F, me->GetPositionZ(), me->GetOrientation(), 0.0F, 0.0F, 0.0F, 0.0F, 100, GO_STATE_READY))
+                            if (portal->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT), GO_HALION_PORTAL_2, me->GetMap(), me->GetPhaseMask(), p.m_positionX, p.m_positionY, p.m_positionZ, p.m_orientation, 0.0F, 0.0F, 0.0F, 0.0F, 100, GO_STATE_READY))
                             {
                                 portal->SetRespawnTime(0);
                                 portal->SetSpawnedByDefault(false);
