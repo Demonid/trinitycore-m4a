@@ -3670,6 +3670,9 @@ void SpellMgr::LoadDbcDataCorrections()
                 if (spellInfo->Effect[1])
                     spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_6_YARDS;
                 break;
+            case 74637 /* Meteor Strike */:
+                spellInfo->speed = 0.0F;
+                break;
             case 74769: // Twilight Cutter
             case 77844: // Twilight Cutter
             case 77845: // Twilight Cutter

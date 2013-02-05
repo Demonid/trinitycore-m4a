@@ -473,7 +473,7 @@ class boss_halion : public CreatureScript
                                 target->GetPosition(&_meteorStrikePos);
                                 SpellCastTargets targets;
                                 targets.SetDst(_meteorStrikePos);
-                                me->CastSpell(targets, sSpellMgr->GetSpellInfo(SPELL_METEOR_STRIKE), nullptr, TRIGGERED_FULL_MASK, NULL, NULL, me->GetGUID());
+                                me->CastSpell(targets, sSpellMgr->GetSpellInfo(SPELL_METEOR_STRIKE), nullptr, TRIGGERED_NONE, NULL, NULL, me->GetGUID());
                                 Talk(SAY_METEOR_STRIKE);
                             }
                         events.ScheduleEvent(EVENT_METEOR_STRIKE, 40000);
@@ -1123,6 +1123,12 @@ class npc_meteor_strike_initial : public CreatureScript
                             _meteorList.push_back(meteor);
                     }
                 }
+                auto me_ = me;
+                add_simple_event(me->m_Events, [me_]()
+                        {
+                            me_->AI()->DoAction(ACTION_METEOR_STRIKE_AOE);
+                        },
+                    6500);
             }
 
             void UpdateAI(uint32 const /*diff*/) { }
@@ -1495,12 +1501,6 @@ class spell_halion_meteor_strike_marker : public SpellScriptLoader
 
             void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                if (!GetCaster())
-                    return;
-
-                if (GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_EXPIRE)
-                    if (Creature* creCaster = GetCaster()->ToCreature())
-                        creCaster->AI()->DoAction(ACTION_METEOR_STRIKE_AOE);
             }
 
             void Register()
