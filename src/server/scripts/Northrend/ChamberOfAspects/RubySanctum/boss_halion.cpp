@@ -1172,7 +1172,7 @@ class npc_meteor_strike : public CreatureScript
 
             void UpdateAI(uint32 const diff)
             {
-                if (_spawnCount > 5)
+                if (_spawnCount >= 8)
                     return;
 
                 _events.Update(diff);
@@ -1195,7 +1195,7 @@ class npc_meteor_strike : public CreatureScript
                             last_flame = flame->GetGUID();
                         }
                         _range += 5.0f;
-                        _events.ScheduleEvent(EVENT_SPAWN_METEOR_FLAME, 800);
+                        _events.ScheduleEvent(EVENT_SPAWN_METEOR_FLAME, 500);
                     }
             }
 
