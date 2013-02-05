@@ -16,8 +16,12 @@
  */
 
 #include "stdafx.hpp"
+#include <memory>
 #include <utility>
 #include <CreatureTextMgr.h>
+#include <GameObject.h>
+#include <Map.h>
+#include <ObjectMgr.h>
 #include "ScriptMgr.h"
 #include "SpellScript.h"
 #include "SpellAuraEffects.h"
@@ -797,12 +801,34 @@ class npc_halion_controller : public CreatureScript
                             if (itr == DATA_TWILIGHT_HALION)
                                 continue;
 
+                            if (auto portal = halion->FindNearestGameObject(GO_HALION_PORTAL_1, 0.0F))
+                                portal->Delete();
                             halion->DeleteThreatList();
                             halion->RemoveAurasDueToSpell(SPELL_TWILIGHT_PHASING);
                             halion->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                         }
 
                         // Summon Twilight portals
+                        {
+                            std::unique_ptr<GameObject> portal(new GameObject);
+                            if (portal->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT), GO_HALION_PORTAL_2, me->GetMap(), me->GetPhaseMask(), me->GetPositionX() + 25.0F, me->GetPositionY() - 25.0F, me->GetPositionZ(), me->GetOrientation(), 0.0F, 0.0F, 0.0F, 0.0F, 100, GO_STATE_READY))
+                            {
+                                portal->SetRespawnTime(0);
+                                portal->SetSpawnedByDefault(false);
+                                if (me->GetMap()->AddToMap(portal.get()))
+                                    portal.release();
+                            }
+                        }
+                        {
+                            std::unique_ptr<GameObject> portal(new GameObject);
+                            if (portal->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT), GO_HALION_PORTAL_2, me->GetMap(), me->GetPhaseMask(), me->GetPositionX() - 25.0F, me->GetPositionY() + 25.0F, me->GetPositionZ(), me->GetOrientation(), 0.0F, 0.0F, 0.0F, 0.0F, 100, GO_STATE_READY))
+                            {
+                                portal->SetRespawnTime(0);
+                                portal->SetSpawnedByDefault(false);
+                                if (me->GetMap()->AddToMap(portal.get()))
+                                    portal.release();
+                            }
+                        }
                         DoCast(me, SPELL_SUMMON_EXIT_PORTALS);
 
                         _instance->DoUpdateWorldState(WORLDSTATE_CORPOREALITY_TOGGLE, 1);
@@ -1887,9 +1913,12 @@ class spell_halion_summon_exit_portals : public SpellScriptLoader
             void OnSummon(SpellEffIndex effIndex)
             {
                 WorldLocation summonPos = *GetExplTargetDest();
-                Position offset = {0.0f, 20.0f, 0.0f, 0.0f};
+                Position offset = {25.0F, 25.0F, 0.0f, 0.0f};
                 if (effIndex == EFFECT_1)
-                    offset.m_positionY = -20.0f;
+                {
+                    offset.m_positionX = -25.0F;
+                    offset.m_positionY = -25.0F;
+                }
 
                 summonPos.RelocateOffset(offset);
 
