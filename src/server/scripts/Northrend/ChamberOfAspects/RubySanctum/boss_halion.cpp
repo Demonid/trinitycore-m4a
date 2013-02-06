@@ -233,13 +233,22 @@ CorporealityEntry const _corporealityReference[MAX_CORPOREALITY_STATE] = {
 
 struct generic_halionAI : public BossAI
 {
-    generic_halionAI(Creature* creature, uint32 bossId) : BossAI(creature, bossId), _canEvade(false) { }
+    generic_halionAI(Creature* creature, uint32 bossId, uint32 ring_id) : BossAI(creature, bossId), _canEvade(false),
+        has_ring(),
+        ring_id(ring_id)
+    { }
 
     void EnterCombat(Unit* who)
     {
         BossAI::EnterCombat(who);
         me->AddAura(SPELL_TWILIGHT_PRECISION, me);
         _canEvade = false;
+        if (auto ring = ObjectAccessor::GetGameObject(*me, instance->GetData64(ring_id)))
+        {
+            ring_x = ring->GetPositionX();
+            ring_y = ring->GetPositionY();
+            has_ring = true;
+        }
     }
 
     void Reset()
@@ -282,12 +291,13 @@ struct generic_halionAI : public BossAI
         if (!me->isInCombat())
             return;
         UpdateVictim();
-        if (me->GetExactDist2dSq(3153.75F, 533.187988F) > 50.0F * 50.0F)
-            if (auto controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
-            {
-                controller->AI()->EnterEvadeMode();
-                return;
-            }
+        if (has_ring)
+            if (me->GetExactDist2dSq(ring_x, ring_y) > 50.0F * 50.0F)
+                if (auto controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
+                {
+                    controller->AI()->EnterEvadeMode();
+                    return;
+                }
 
         events.Update(diff);
 
@@ -333,6 +343,10 @@ protected:
     }
 
     bool _canEvade;
+    bool has_ring;
+    float ring_x;
+    float ring_y;
+    uint32 ring_id;
 };
 
 class boss_halion : public CreatureScript
@@ -342,7 +356,7 @@ class boss_halion : public CreatureScript
 
         struct boss_halionAI : public generic_halionAI
         {
-            boss_halionAI(Creature* creature) : generic_halionAI(creature, DATA_HALION)
+            boss_halionAI(Creature* creature) : generic_halionAI(creature, DATA_HALION, DATA_FLAME_RING)
             {
                 me->SetHomePosition(HalionSpawnPos);
             }
@@ -559,7 +573,7 @@ class boss_twilight_halion : public CreatureScript
 
         struct boss_twilight_halionAI : public generic_halionAI
         {
-            boss_twilight_halionAI(Creature* creature) : generic_halionAI(creature, DATA_TWILIGHT_HALION),
+            boss_twilight_halionAI(Creature* creature) : generic_halionAI(creature, DATA_TWILIGHT_HALION, DATA_TWILIGHT_FLAME_RING),
                 init_events_on_victim()
             {
                 Creature* halion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION));
