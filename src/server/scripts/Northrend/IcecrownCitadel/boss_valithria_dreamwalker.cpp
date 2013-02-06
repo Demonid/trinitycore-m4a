@@ -108,7 +108,7 @@ enum Spells
 #define EMERALD_VIGOR RAID_MODE<uint32>(SPELL_EMERALD_VIGOR, SPELL_EMERALD_VIGOR, \
                                         SPELL_TWISTED_NIGHTMARE, SPELL_TWISTED_NIGHTMARE)
 
-enum Events
+enum
 {
     // Valithria Dreamwalker
     EVENT_INTRO_TALK                        = 1,
@@ -1014,9 +1014,10 @@ class npc_gluttonous_abomination : public CreatureScript
 
             void JustDied(Unit* /*killer*/)
             {
-                add_simple_event(me->m_Events, [this]()
+                auto me_ = me;
+                add_simple_event(me_->m_Events, [me_]()
                         {
-                            DoCast(me, SPELL_ROT_WORM_SPAWNER, true);
+                            me_->AI()->DoCast(me_, SPELL_ROT_WORM_SPAWNER, true);
                         },
                     3000U);
             }

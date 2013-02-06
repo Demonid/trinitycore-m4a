@@ -1186,7 +1186,7 @@ class npc_meteor_strike_initial : public CreatureScript
                     }
                 }
                 auto me_ = me;
-                add_simple_event(me->m_Events, [me_]()
+                add_simple_event(me_->m_Events, [me_]()
                         {
                             me_->AI()->DoAction(ACTION_METEOR_STRIKE_AOE);
                         },
