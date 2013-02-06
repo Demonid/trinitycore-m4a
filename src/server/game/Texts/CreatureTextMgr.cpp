@@ -328,8 +328,10 @@ float CreatureTextMgr::GetRangeForChatType(ChatMsg msgType) const
             dist = sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_YELL);
             break;
         case CHAT_MSG_MONSTER_EMOTE:
-        case CHAT_MSG_RAID_BOSS_EMOTE:
             dist = sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_TEXTEMOTE);
+            break;
+        case CHAT_MSG_RAID_BOSS_EMOTE:
+            dist = 50000;
             break;
         default:
             break;

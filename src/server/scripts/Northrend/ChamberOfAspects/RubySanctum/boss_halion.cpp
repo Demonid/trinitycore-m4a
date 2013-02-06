@@ -18,7 +18,6 @@
 #include "stdafx.hpp"
 #include <memory>
 #include <utility>
-#include <CreatureTextMgr.h>
 #include <GameObject.h>
 #include <Map.h>
 #include <ObjectMgr.h>
@@ -1079,7 +1078,7 @@ class npc_orb_carrier : public CreatureScript
                 {
                     if (auto northOrb = me->GetVehicleKit()->GetPassenger(SEAT_NORTH))
                         if (northOrb->GetTypeId() == TYPEID_UNIT)
-                            sCreatureTextMgr->SendChat(northOrb->ToCreature(), EMOTE_WARN_LASER, 0, CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_AREA);
+                            northOrb->ToCreature()->AI()->Talk(EMOTE_WARN_LASER);
                 }
                 else if (action == ACTION_SHOOT)
                 {
