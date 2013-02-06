@@ -485,8 +485,21 @@ class boss_halion : public CreatureScript
                     }
                     case EVENT_FIERY_COMBUSTION:
                     {
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, -SPELL_TWILIGHT_REALM))
-                            DoCast(target, SPELL_FIERY_COMBUSTION);
+                        if (auto controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
+                            if (Unit* target = controller->AI()->SelectTarget(SELECT_TARGET_RANDOM, 0, [this](const Unit *target_)
+                                        {
+                                            if (!target_->InSamePhase(me))
+                                                return false;
+                                            if (target_->GetTypeId() != TYPEID_PLAYER)
+                                                return false;
+                                            if (target_ == me->getVictim())
+                                                return false;
+                                            if (target_->HasAura(SPELL_FIERY_COMBUSTION))
+                                                return false;
+                                            return true;
+                                        }
+                                    ))
+                                DoCast(target, SPELL_FIERY_COMBUSTION);
                         events.ScheduleEvent(EVENT_FIERY_COMBUSTION, IsHeroic() ? 20000 : 25000);
                         break;
                     }
@@ -685,8 +698,23 @@ class boss_twilight_halion : public CreatureScript
                 switch (eventId)
                 {
                     case EVENT_SOUL_CONSUMPTION:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, SPELL_TWILIGHT_REALM))
-                            DoCast(target, SPELL_SOUL_CONSUMPTION);
+                        if (auto controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
+                            if (Unit* target = controller->AI()->SelectTarget(SELECT_TARGET_RANDOM, 0, [this](const Unit *target_)
+                                        {
+                                            if (!target_->InSamePhase(me))
+                                                return false;
+                                            if (target_->GetTypeId() != TYPEID_PLAYER)
+                                                return false;
+                                            if (target_ == me->getVictim())
+                                                return false;
+                                            if (target_->HasAura(SPELL_LEAVE_TWILIGHT_REALM))
+                                                return false;
+                                            if (target_->HasAura(SPELL_SOUL_CONSUMPTION))
+                                                return false;
+                                            return true;
+                                        }
+                                    ))
+                                DoCast(target, SPELL_SOUL_CONSUMPTION);
                         events.ScheduleEvent(EVENT_SOUL_CONSUMPTION, IsHeroic() ? 20000 : 25000);
                         break;
                     default:
