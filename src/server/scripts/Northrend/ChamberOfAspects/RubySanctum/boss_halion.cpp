@@ -1524,7 +1524,8 @@ class go_twilight_portal : public GameObjectScript
             bool GossipHello(Player* player)
             {
                 if (_spellId != 0)
-                    player->CastSpell(player, _spellId, true);
+                    if (!player->HasAura(_spellId))
+                        player->CastSpell(player, _spellId, true);
                 return true;
             }
 
