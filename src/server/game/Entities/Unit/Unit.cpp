@@ -3153,7 +3153,7 @@ void Unit::DeMorph()
 
 Aura* Unit::_TryStackingOrRefreshingExistingAura(SpellInfo const* newAura, uint8 effMask, Unit* caster, int32* baseAmount /*= NULL*/, Item* castItem /*= NULL*/, uint64 casterGUID /*= 0*/)
 {
-    if (newAura->AttributesCu & SPELL_ATTR0_CU_STACK_DIFF_CASTERS)
+    if (newAura->AttributesCu & SPELL_ATTR0_CU_MERGE_DIFF_CASTERS)
         casterGUID = 0U;
     else
     {

@@ -2939,13 +2939,13 @@ void SpellMgr::LoadSpellCustomAttr()
             case 71222 /* Blighted Spores */:
             case 73033 /* Blighted Spores */:
             case 73034 /* Blighted Spores */:
-                spellInfo->AttributesCu |= SPELL_ATTR0_CU_STACK_DIFF_CASTERS;
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_MERGE_DIFF_CASTERS;
                 break;
             case 70964: /* Icc- Shield Bash */
-                spellInfo->AttributesCu |= SPELL_ATTR0_CU_STACK_DIFF_CASTERS;
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_MERGE_DIFF_CASTERS;
                 break;
             case 71940 /* Twisted Nightmares */:
-                spellInfo->AttributesCu |= SPELL_ATTR0_CU_STACK_DIFF_CASTERS;
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_MERGE_DIFF_CASTERS;
                 break;
             case 72293: // Mark of the Fallen Champion (Deathbringer Saurfang)
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_NEGATIVE_EFF0;
@@ -2954,13 +2954,13 @@ void SpellMgr::LoadSpellCustomAttr()
             case 75882 /* Combustion */:
             case 75883 /* Combustion */:
             case 75884 /* Combustion */:
-                spellInfo->AttributesCu |= SPELL_ATTR0_CU_STACK_DIFF_CASTERS;
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_MERGE_DIFF_CASTERS;
                 break;
             case 74802 /* Consumption */:
             case 75874 /* Consumption */:
             case 75875 /* Consumption */:
             case 75876 /* Consumption */:
-                spellInfo->AttributesCu |= SPELL_ATTR0_CU_STACK_DIFF_CASTERS;
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_MERGE_DIFF_CASTERS;
                 break;
             default:
                 break;
