@@ -720,8 +720,6 @@ class boss_twilight_halion : public CreatureScript
                                                 return false;
                                             if (target_ == me->getVictim())
                                                 return false;
-                                            if (target_->HasAura(SPELL_LEAVE_TWILIGHT_REALM))
-                                                return false;
                                             if (target_->HasAura(SPELL_SOUL_CONSUMPTION))
                                                 return false;
                                             return true;
@@ -1777,9 +1775,13 @@ class spell_halion_twilight_realm_handlers : public SpellScriptLoader
 
             void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*handle*/)
             {
-                GetTarget()->RemoveAurasDueToSpell(SPELL_TWILIGHT_REALM);
-                if (InstanceScript* instance = GetTarget()->GetInstanceScript())
-                    instance->SendEncounterUnit(ENCOUNTER_FRAME_UNK7);
+                if (GetTarget()->HasAura(SPELL_TWILIGHT_REALM))
+                {
+                    GetTarget()->RemoveAurasDueToSpell(SPELL_TWILIGHT_REALM);
+                    if (InstanceScript* instance = GetTarget()->GetInstanceScript())
+                        instance->SendEncounterUnit(ENCOUNTER_FRAME_UNK7);
+                    GetTarget()->CastSpell(GetTarget(), GetId(), true);
+                }
             }
 
             void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*handle*/)
