@@ -1,0 +1,2 @@
+insert into conditions select SourceTypeOrReferenceId,SourceGroup,75887,SourceId,ElseGroup,ConditionTypeOrReference,ConditionTarget,ConditionValue1,ConditionValue2,ConditionValue3,NegativeCondition,ErrorType,ErrorTextId,ScriptName,Comment from conditions where SourceTypeOrReferenceId=13 and SourceEntry=75886;
+delete from conditions where SourceTypeOrReferenceId=13 and SourceGroup=0x1 and SourceEntry in (75886,75887);
