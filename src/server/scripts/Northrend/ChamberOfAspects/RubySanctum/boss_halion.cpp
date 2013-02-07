@@ -1374,10 +1374,15 @@ class npc_living_inferno : public CreatureScript
               _spawned = false;
             }
 
+            void EnterCombat(Unit *who) override
+            {
+                ScriptedAI::EnterCombat(who);
+                me->CastSpell(me, SPELL_BLAZING_AURA, true);
+            }
+
             void IsSummonedBy(Unit* /*summoner*/)
             {
                 me->SetInCombatWithZone();
-                me->CastSpell(me, SPELL_BLAZING_AURA, true);
 
                 if (InstanceScript* instance = me->GetInstanceScript())
                     if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
