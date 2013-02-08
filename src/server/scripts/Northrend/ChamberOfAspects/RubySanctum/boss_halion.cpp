@@ -1374,6 +1374,18 @@ class npc_living_inferno : public CreatureScript
               _spawned = false;
             }
 
+            void EnterEvadeMode() override
+            {
+                if (me->isAlive())
+                {
+                    me->DeleteThreatList();
+                    me->CombatStop(true);
+                    if (!me->IsInEvadeMode())
+                        if (!me->GetVehicle())
+                            me->GetMotionMaster()->MoveTargetedHome();
+                }
+            }
+
             void IsSummonedBy(Unit* /*summoner*/)
             {
                 me->SetInCombatWithZone();
@@ -1443,6 +1455,18 @@ class npc_living_ember : public CreatureScript
             void Reset() override
             {
                 _hasEnraged = false;
+            }
+
+            void EnterEvadeMode() override
+            {
+                if (me->isAlive())
+                {
+                    me->DeleteThreatList();
+                    me->CombatStop(true);
+                    if (!me->IsInEvadeMode())
+                        if (!me->GetVehicle())
+                            me->GetMotionMaster()->MoveTargetedHome();
+                }
             }
 
             void EnterCombat(Unit* /*who*/)
