@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.hpp"
+#include <algorithm>
 #include "Common.h"
 #include "Log.h"
 #include "Corpse.h"
@@ -335,7 +336,7 @@ void WorldSession::DoLootRelease(uint64 lguid)
             else if (go->GetGoType() == GAMEOBJECT_TYPE_FISHINGHOLE)
             {                                               // The fishing hole used once more
                 go->AddUse();                               // if the max usage is reached, will be despawned in next tick
-                if (go->GetUseCount() >= urand(go->GetGOInfo()->fishinghole.minSuccessOpens, go->GetGOInfo()->fishinghole.maxSuccessOpens))
+                if (go->GetUseCount() >= urand(go->GetGOInfo()->fishinghole.minSuccessOpens, std::max(go->GetGOInfo()->fishinghole.minSuccessOpens, go->GetGOInfo()->fishinghole.maxSuccessOpens)))
                 {
                     go->SetLootState(GO_JUST_DEACTIVATED);
                 }
