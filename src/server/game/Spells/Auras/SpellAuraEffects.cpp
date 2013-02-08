@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.hpp"
+#include <utility>
 #include <boost/math/special_functions/round.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include "Common.h"
@@ -4242,10 +4243,10 @@ void AuraEffect::HandleAuraModIncreaseHealthPercent(AuraApplication const* aurAp
     Unit* target = aurApp->GetTarget();
 
     // Unit will keep hp% after MaxHealth being modified if unit is alive.
-    float percent = target->GetHealthPct();
+    auto health_factor = target->GetMaxHealth() ? static_cast<double>(target->GetHealth()) / target->GetMaxHealth() : 0;
     target->HandleStatModifier(UNIT_MOD_HEALTH, TOTAL_PCT, float(GetAmount()), apply);
     if (target->isAlive())
-        target->SetHealth(target->CountPctFromMaxHealth(int32(percent)));
+        target->SetHealth(std::max<uint32>(1, numeric_cast<uint32>(lround(target->GetMaxHealth() * health_factor))));
 }
 
 void AuraEffect::HandleAuraIncreaseBaseHealthPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const
