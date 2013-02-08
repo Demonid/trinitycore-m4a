@@ -17,7 +17,7 @@
  */
 
 #include "stdafx.hpp"
-#include <utility>
+#include <algorithm>
 #include <boost/math/special_functions/round.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include "Common.h"
