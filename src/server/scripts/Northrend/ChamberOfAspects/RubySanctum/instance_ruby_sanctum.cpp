@@ -36,7 +36,10 @@ class instance_ruby_sanctum : public InstanceMapScript
 
         struct instance_ruby_sanctum_InstanceMapScript : public InstanceScript
         {
-            instance_ruby_sanctum_InstanceMapScript(InstanceMap* map) : InstanceScript(map)
+            instance_ruby_sanctum_InstanceMapScript(InstanceMap* map) : InstanceScript(map),
+                halion_corporeality_material(50),
+                halion_corporeality_twilight(50),
+                halion_corporeality_toggle(0)
             {
                 SetBossNumber(EncounterCount);
                 LoadDoorData(doorData);
@@ -250,9 +253,9 @@ class instance_ruby_sanctum : public InstanceMapScript
                     }
                     case DATA_HALION:
                     {
-                        DoUpdateWorldState(WORLDSTATE_CORPOREALITY_TOGGLE, 0);
-                        DoUpdateWorldState(WORLDSTATE_CORPOREALITY_TWILIGHT, 0);
-                        DoUpdateWorldState(WORLDSTATE_CORPOREALITY_MATERIAL, 0);
+                        SetData(DATA_HALION_CORPOREALITY_TOGGLE, 0);
+                        SetData(DATA_HALION_CORPOREALITY_TWILIGHT, 0);
+                        SetData(DATA_HALION_CORPOREALITY_MATERIAL, 0);
 
                         // Reopen rings on wipe or success
                         if (state == DONE || state == FAIL)
@@ -271,18 +274,39 @@ class instance_ruby_sanctum : public InstanceMapScript
 
             void SetData(uint32 type, uint32 data)
             {
-                if (type != DATA_BALTHARUS_SHARED_HEALTH)
-                    return;
-
-                BaltharusSharedHealth = data;
+                switch (type)
+                {
+                case DATA_BALTHARUS_SHARED_HEALTH:
+                    BaltharusSharedHealth = data;
+                    break;
+                case DATA_HALION_CORPOREALITY_MATERIAL:
+                    halion_corporeality_material = data;
+                    DoUpdateWorldState(WORLDSTATE_CORPOREALITY_MATERIAL, halion_corporeality_material);
+                    break;
+                case DATA_HALION_CORPOREALITY_TWILIGHT:
+                    halion_corporeality_twilight = data;
+                    DoUpdateWorldState(WORLDSTATE_CORPOREALITY_TWILIGHT, halion_corporeality_twilight);
+                    break;
+                case DATA_HALION_CORPOREALITY_TOGGLE:
+                    halion_corporeality_toggle = data;
+                    DoUpdateWorldState(WORLDSTATE_CORPOREALITY_TOGGLE, halion_corporeality_toggle);
+                    break;
+                }
             }
 
             uint32 GetData(uint32 type) const
             {
-                if (type != DATA_BALTHARUS_SHARED_HEALTH)
-                    return 0;
-
-                return BaltharusSharedHealth;
+                switch (type)
+                {
+                case DATA_BALTHARUS_SHARED_HEALTH:
+                    return BaltharusSharedHealth;
+                case DATA_HALION_CORPOREALITY_MATERIAL:
+                    return halion_corporeality_material;
+                case DATA_HALION_CORPOREALITY_TWILIGHT:
+                    return halion_corporeality_twilight;
+                case DATA_HALION_CORPOREALITY_TOGGLE:
+                    return halion_corporeality_toggle;
+                }
             }
 
             std::string GetSaveData()
@@ -298,9 +322,9 @@ class instance_ruby_sanctum : public InstanceMapScript
 
             void FillInitialWorldStates(WorldPacket& data)
             {
-                data << uint32(WORLDSTATE_CORPOREALITY_MATERIAL) << uint32(50);
-                data << uint32(WORLDSTATE_CORPOREALITY_TWILIGHT) << uint32(50);
-                data << uint32(WORLDSTATE_CORPOREALITY_TOGGLE) << uint32(0);
+                data << uint32(WORLDSTATE_CORPOREALITY_MATERIAL) << uint32(halion_corporeality_material);
+                data << uint32(WORLDSTATE_CORPOREALITY_TWILIGHT) << uint32(halion_corporeality_twilight);
+                data << uint32(WORLDSTATE_CORPOREALITY_TOGGLE) << uint32(halion_corporeality_toggle);
             }
 
             void Load(char const* str)
@@ -354,6 +378,11 @@ class instance_ruby_sanctum : public InstanceMapScript
             uint64 TwilightFlameRingGUID;
 
             uint32 BaltharusSharedHealth;
+
+        private:
+            int halion_corporeality_material;
+            int halion_corporeality_twilight;
+            int halion_corporeality_toggle;
         };
 
         InstanceScript* GetInstanceScript(InstanceMap* map) const

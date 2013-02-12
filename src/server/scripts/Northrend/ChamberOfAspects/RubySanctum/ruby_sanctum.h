@@ -52,6 +52,9 @@ enum
     DATA_BURNING_TREE_4                     = 16,
     DATA_FLAME_RING                         = 17,
     DATA_TWILIGHT_FLAME_RING                = 18,
+    DATA_HALION_CORPOREALITY_MATERIAL,
+    DATA_HALION_CORPOREALITY_TWILIGHT,
+    DATA_HALION_CORPOREALITY_TOGGLE,
 };
 
 enum
