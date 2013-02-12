@@ -67,6 +67,8 @@ enum GroupMemberOnlineStatus
     MEMBER_STATUS_DND       = 0x0080                        // Lua_UnitIsDND
 };
 
+unsigned int get_group_member_online_status(const Player *player);
+
 enum GroupMemberFlags
 {
     MEMBER_FLAG_ASSISTANT   = 0x01,

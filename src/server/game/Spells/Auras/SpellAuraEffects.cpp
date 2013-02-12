@@ -1821,14 +1821,14 @@ void AuraEffect::HandleAuraGhost(AuraApplication const* aurApp, uint8 mode, bool
     if (!(mode & AURA_EFFECT_HANDLE_SEND_FOR_CLIENT_MASK))
         return;
 
-    Unit* target = aurApp->GetTarget();
+    Player* target = dynamic_cast<Player *>(aurApp->GetTarget());
 
-    if (target->GetTypeId() != TYPEID_PLAYER)
+    if (!target)
         return;
 
     if (apply)
     {
-        target->SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST);
+        target->set_ghost(true);
         target->m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST);
         target->m_serverSideVisibilityDetect.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST);
     }
@@ -1837,7 +1837,7 @@ void AuraEffect::HandleAuraGhost(AuraApplication const* aurApp, uint8 mode, bool
         if (target->HasAuraType(SPELL_AURA_GHOST))
             return;
 
-        target->RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST);
+        target->set_ghost(false);
         target->m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_ALIVE);
         target->m_serverSideVisibilityDetect.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_ALIVE);
     }

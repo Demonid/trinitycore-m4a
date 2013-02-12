@@ -37,6 +37,28 @@
 #include "LFGMgr.h"
 #include "UpdateFieldFlags.h"
 
+unsigned int get_group_member_online_status(const Player *player)
+{
+    unsigned int status = 0x0;
+    if (player)
+    {
+        status |= MEMBER_STATUS_ONLINE;
+        if (player->IsPvP())
+            status |= MEMBER_STATUS_PVP;
+        if (player->GetHealth() == 0)
+            status |= MEMBER_STATUS_DEAD;
+        if (player->is_ghost())
+            status |= MEMBER_STATUS_GHOST;
+        if (player->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
+            status |= MEMBER_STATUS_PVP_FFA;
+        if (player->isAFK())
+            status |= MEMBER_STATUS_AFK;
+        if (player->isDND())
+            status |= MEMBER_STATUS_DND;
+    }
+    return status;
+}
+
 Roll::Roll(uint64 _guid, LootItem const& li) : itemGUID(_guid), itemid(li.itemid),
 itemRandomPropId(li.randomPropertyId), itemRandomSuffix(li.randomSuffix), itemCount(li.count),
 totalPlayersRolling(0), totalNeed(0), totalGreed(0), totalPass(0), itemSlot(0),
@@ -1509,14 +1531,11 @@ void Group::SendUpdateToPlayer(uint64 playerGUID, MemberSlot* slot)
         if (slot->guid == citr->guid)
             continue;
 
-        Player* member = ObjectAccessor::FindPlayer(citr->guid);
-
-        uint8 onlineState = member ? MEMBER_STATUS_ONLINE : MEMBER_STATUS_OFFLINE;
-        onlineState = onlineState | ((isBGGroup() || isBFGroup()) ? MEMBER_STATUS_PVP : 0);
+        Player* member = ObjectAccessor::GetObjectInOrOutOfWorld(citr->guid, static_cast<Player *>(nullptr));
 
         data << citr->name;
         data << uint64(citr->guid);                     // guid
-        data << uint8(onlineState);                     // online-state
+        data << uint8(member ? true : false);           // is online
         data << uint8(citr->group);                     // groupid
         data << uint8(citr->flags);                     // See enum GroupMemberFlags
         data << uint8(citr->roles);                     // Lfg Roles

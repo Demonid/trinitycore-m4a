@@ -730,17 +730,7 @@ void WorldSession::BuildPartyMemberStatsChangedPacket(Player* player, WorldPacke
     *data << (uint32) mask;
 
     if (mask & GROUP_UPDATE_FLAG_STATUS)
-    {
-        if (player)
-        {
-            if (player->IsPvP())
-                *data << (uint16) (MEMBER_STATUS_ONLINE | MEMBER_STATUS_PVP);
-            else
-                *data << (uint16) MEMBER_STATUS_ONLINE;
-        }
-        else
-            *data << (uint16) MEMBER_STATUS_OFFLINE;
-    }
+        *data << (uint16) get_group_member_online_status(player);
 
     if (mask & GROUP_UPDATE_FLAG_CUR_HP)
         *data << (uint32) player->GetHealth();
@@ -888,7 +878,7 @@ void WorldSession::HandleRequestPartyMemberStatsOpcode(WorldPacket &recvData)
         data << uint8(0);                                   // only for SMSG_PARTY_MEMBER_STATS_FULL, probably arena/bg related
         data.appendPackGUID(Guid);
         data << (uint32) GROUP_UPDATE_FLAG_STATUS;
-        data << (uint16) MEMBER_STATUS_OFFLINE;
+        data << (uint16) get_group_member_online_status(player);
         SendPacket(&data);
         return;
     }
@@ -905,7 +895,7 @@ void WorldSession::HandleRequestPartyMemberStatsOpcode(WorldPacket &recvData)
 
     Powers powerType = player->getPowerType();
     data << (uint32) mask1;                                 // group update mask
-    data << (uint16) MEMBER_STATUS_ONLINE;                  // member's online status
+    data << (uint16) get_group_member_online_status(player);    // GROUP_UPDATE_FLAG_STATUS
     data << (uint32) player->GetHealth();                   // GROUP_UPDATE_FLAG_CUR_HP
     data << (uint32) player->GetMaxHealth();                // GROUP_UPDATE_FLAG_MAX_HP
     data << (uint8)  powerType;                             // GROUP_UPDATE_FLAG_POWER_TYPE

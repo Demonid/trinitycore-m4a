@@ -1166,6 +1166,10 @@ class Player : public Unit, public GridObject<Player>
 
         void setDeathState(DeathState s);                   // overwrite Unit::setDeathState
 
+        bool is_ghost() const;
+
+        void set_ghost(bool val);
+
         void InnEnter (time_t time, uint32 mapid, float x, float y, float z)
         {
             inn_pos_mapid = mapid;

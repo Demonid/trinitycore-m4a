@@ -13813,21 +13813,30 @@ void Unit::SetHealth(uint32 val)
             val = maxHealth;
     }
 
-    SetUInt32Value(UNIT_FIELD_HEALTH, val);
+    auto old_val = GetUInt32Value(UNIT_FIELD_HEALTH);
+    if (old_val != val)
+    {
+        SetUInt32Value(UNIT_FIELD_HEALTH, val);
 
-    // group update
-    if (Player* player = ToPlayer())
-    {
-        if (player->GetGroup())
-            player->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_CUR_HP);
-    }
-    else if (Pet* pet = ToCreature()->ToPet())
-    {
-        if (pet->isControlled())
+        // group update
+        if (Player* player = ToPlayer())
         {
-            Unit* owner = GetOwner();
-            if (owner && (owner->GetTypeId() == TYPEID_PLAYER) && owner->ToPlayer()->GetGroup())
-                owner->ToPlayer()->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_HP);
+            if (player->GetGroup())
+            {
+                uint32 flags = GROUP_UPDATE_FLAG_CUR_HP;
+                if ((old_val == 0) != (val == 0))
+                    flags |= GROUP_UPDATE_FLAG_STATUS;
+                player->SetGroupUpdateFlag(flags);
+            }
+        }
+        else if (Pet* pet = ToCreature()->ToPet())
+        {
+            if (pet->isControlled())
+            {
+                Unit* owner = GetOwner();
+                if (owner && (owner->GetTypeId() == TYPEID_PLAYER) && owner->ToPlayer()->GetGroup())
+                    owner->ToPlayer()->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_HP);
+            }
         }
     }
 }
@@ -16558,6 +16567,21 @@ void Unit::GetPartyMembers(std::list<Unit*> &TagUnitMap)
         if (Guardian* pet = owner->GetGuardianPet())
             if (pet->isAlive() && (pet == this || IsInMap(pet)))
                 TagUnitMap.push_back(pet);
+    }
+}
+
+void Unit::SetPvP(bool state)
+{
+    auto old_state = HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP);
+    if (old_state != state)
+    {
+        if (state)
+            SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP);
+        else
+            RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP);
+        if (auto player = dynamic_cast<Player *>(this))
+            if (player->GetGroup())
+                player->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_STATUS);
     }
 }
 

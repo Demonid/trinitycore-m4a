@@ -1887,6 +1887,25 @@ void Player::setDeathState(DeathState s)
         SetUInt32Value(PLAYER_SELF_RES_SPELL, 0);
 }
 
+bool Player::is_ghost() const
+{
+    return HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST);
+}
+
+void Player::set_ghost(bool val)
+{
+    auto old_val = HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST);
+    if (old_val != val)
+    {
+        if (val)
+            SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST);
+        else
+            RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST);
+        if (GetGroup())
+            SetGroupUpdateFlag(GROUP_UPDATE_FLAG_STATUS);
+    }
+}
+
 bool Player::BuildEnumData(PreparedQueryResult result, WorldPacket* data)
 {
     //             0               1                2                3                 4                  5                       6                        7
@@ -2049,6 +2068,8 @@ bool Player::BuildEnumData(PreparedQueryResult result, WorldPacket* data)
 void Player::ToggleAFK()
 {
     ToggleFlag(PLAYER_FLAGS, PLAYER_FLAGS_AFK);
+    if (GetGroup())
+        SetGroupUpdateFlag(GROUP_UPDATE_FLAG_STATUS);
 
     // afk player not allowed in battleground
     if (isAFK() && InBattleground() && !InArena())
@@ -2058,6 +2079,8 @@ void Player::ToggleAFK()
 void Player::ToggleDND()
 {
     ToggleFlag(PLAYER_FLAGS, PLAYER_FLAGS_DND);
+    if (GetGroup())
+        SetGroupUpdateFlag(GROUP_UPDATE_FLAG_STATUS);
 }
 
 uint8 Player::GetChatTag() const
@@ -21482,6 +21505,8 @@ void Player::UpdatePvPState(bool onlyFFA)
         if (!HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
         {
             SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+            if (GetGroup())
+                SetGroupUpdateFlag(GROUP_UPDATE_FLAG_STATUS);
             for (ControlList::iterator itr = m_Controlled.begin(); itr != m_Controlled.end(); ++itr)
                 (*itr)->SetByteValue(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
         }
@@ -21489,6 +21514,8 @@ void Player::UpdatePvPState(bool onlyFFA)
     else if (HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
     {
         RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+        if (GetGroup())
+            SetGroupUpdateFlag(GROUP_UPDATE_FLAG_STATUS);
         for (ControlList::iterator itr = m_Controlled.begin(); itr != m_Controlled.end(); ++itr)
             (*itr)->RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
     }
