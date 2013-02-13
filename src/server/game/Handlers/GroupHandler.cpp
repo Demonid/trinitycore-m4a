@@ -766,7 +766,7 @@ void WorldSession::BuildPartyMemberStatsChangedPacket(Player* player, WorldPacke
             if (auramask & (uint64(1) << i))
             {
                 AuraApplication const* aurApp = player->GetVisibleAura(i);
-                *data << uint32(aurApp ? aurApp->GetBase()->GetId() : 0);
+                *data << uint32(aurApp ? aurApp->GetBase()->GetId() : -1);
                 *data << uint8(aurApp ? aurApp->GetFlags() : 0x0);
             }
         }
@@ -854,7 +854,7 @@ void WorldSession::BuildPartyMemberStatsChangedPacket(Player* player, WorldPacke
                 if (auramask & (uint64(1) << i))
                 {
                     AuraApplication const* aurApp = pet->GetVisibleAura(i);
-                    *data << uint32(aurApp ? aurApp->GetBase()->GetId() : 0);
+                    *data << uint32(aurApp ? aurApp->GetBase()->GetId() : -1);
                     *data << uint8(aurApp ? aurApp->GetFlags() : 0x0);
                 }
             }
@@ -909,13 +909,15 @@ void WorldSession::HandleRequestPartyMemberStatsOpcode(WorldPacket &recvData)
     uint64 auramask = 0;
     size_t maskPos = data.wpos();
     data << (uint64) auramask;                              // placeholder
-    for (uint8 i = 0; i < max_party_member_auras; ++i)
     {
-        if (AuraApplication * aurApp = player->GetVisibleAura(i))
+        auto it = player->GetVisibleAuras()->begin();
+        auto last = player->GetVisibleAuras()->end();
+        for (uint8 i = 0; it != last && i < max_party_member_auras; ++i)
         {
+            AuraApplication * aurApp = it->first == i ? it++->second : nullptr;
             auramask |= (uint64(1) << i);
-            data << (uint32) aurApp->GetBase()->GetId();
-            data << (uint8)  aurApp->GetFlags();
+            data << (uint32) (aurApp ? aurApp->GetBase()->GetId() : -1);
+            data << (uint8)  (aurApp ? aurApp->GetFlags() : 0x0);
         }
     }
     data.put<uint64>(maskPos, auramask);                     // GROUP_UPDATE_FLAG_AURAS
@@ -935,13 +937,15 @@ void WorldSession::HandleRequestPartyMemberStatsOpcode(WorldPacket &recvData)
         uint64 petauramask = 0;
         size_t petMaskPos = data.wpos();
         data << (uint64) petauramask;                       // placeholder
-        for (uint8 i = 0; i < max_party_member_auras; ++i)
         {
-            if (AuraApplication * auraApp = pet->GetVisibleAura(i))
+            auto it = pet->GetVisibleAuras()->begin();
+            auto last = pet->GetVisibleAuras()->end();
+            for (uint8 i = 0; it != last && i < max_party_member_auras; ++i)
             {
+                AuraApplication * auraApp = it->first == i ? it++->second : nullptr;
                 petauramask |= (uint64(1) << i);
-                data << (uint32) auraApp->GetBase()->GetId();
-                data << (uint8)  auraApp->GetFlags();
+                data << (uint32) (auraApp ? auraApp->GetBase()->GetId() : -1);
+                data << (uint8)  (auraApp ? auraApp->GetFlags() : 0x0);
             }
         }
         data.put<uint64>(petMaskPos, petauramask);           // GROUP_UPDATE_FLAG_PET_AURAS
