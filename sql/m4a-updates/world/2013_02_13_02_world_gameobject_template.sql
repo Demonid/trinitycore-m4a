@@ -1,0 +1,1 @@
+UPDATE world.gameobject_template SET AIName = 'SmartGameObjectAI' WHERE entry = 185928;
