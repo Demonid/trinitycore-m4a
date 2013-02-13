@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.hpp"
+#include <cmath>
 #include <stdexcept>
 #include "Player.h"
 #include "AccountMgr.h"
@@ -6855,6 +6856,8 @@ ActionButton const* Player::GetActionButton(uint8 button)
 
 bool Player::UpdatePosition(float x, float y, float z, float orientation, bool teleport)
 {
+    auto old_x = GetPositionX();
+    auto old_y = GetPositionY();
     if (!Unit::UpdatePosition(x, y, z, orientation, teleport))
         return false;
 
@@ -6866,7 +6869,8 @@ bool Player::UpdatePosition(float x, float y, float z, float orientation, bool t
 
     // group update
     if (GetGroup())
-        SetGroupUpdateFlag(GROUP_UPDATE_FLAG_POSITION);
+        if (static_cast<int16>(std::floor(old_x + 0.5F)) != static_cast<int16>(std::floor(GetPositionX() + 0.5F)) || static_cast<int16>(std::floor(old_y + 0.5F)) != static_cast<int16>(std::floor(GetPositionY() + 0.5F)))
+            SetGroupUpdateFlag(GROUP_UPDATE_FLAG_POSITION);
 
     if (GetTrader() && !IsWithinDistInMap(GetTrader(), INTERACTION_DISTANCE))
         GetSession()->SendCancelTrade();
