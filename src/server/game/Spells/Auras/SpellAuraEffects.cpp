@@ -6048,7 +6048,7 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
         switch (auraId)
         {
         case 66 /* Invisibility */:
-            target->CastCustomSpell(triggerSpellId, SPELLVALUE_BASE_POINT0, -100 / static_cast<int>(1 + GetTotalTicks() - m_tickNumber), target, true, nullptr, this, GetCasterGUID());
+            target->CastCustomSpell(triggerSpellId, SPELLVALUE_BASE_POINT0, -100 / static_cast<int>(GetTotalTicks() - (m_tickNumber - 1)), target, true, nullptr, this, GetCasterGUID());
             return;
             // Pursuing Spikes (Anub'arak)
             case 65920:
