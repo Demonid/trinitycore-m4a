@@ -1344,6 +1344,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                             break;
                         target->CastSpell(target, 32612, true, NULL, GetEffect(1));
                         target->CombatStop();
+                        target->getHostileRefManager().deleteReferences();
                         break;
                     case 11129 /* Combustion */:
                         if (removeMode != AURA_REMOVE_NONE && removeMode != AURA_REMOVE_BY_DEATH)
