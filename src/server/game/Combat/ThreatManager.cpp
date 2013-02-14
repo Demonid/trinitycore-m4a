@@ -158,9 +158,9 @@ void HostileReference::addThreat(float modThreat)
 
 void HostileReference::addThreatPercent(int32 percent)
 {
-    float tmpThreat = iThreat;
+    float tmpThreat = iThreat - iTempThreatModifier;
     AddPct(tmpThreat, percent);
-    addThreat(tmpThreat - iThreat);
+    addThreat(tmpThreat - (iThreat - iTempThreatModifier));
 }
 
 //============================================================
