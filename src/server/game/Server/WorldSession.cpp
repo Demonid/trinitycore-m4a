@@ -523,13 +523,6 @@ void WorldSession::LogoutPlayer(bool Save)
         if (_player->GetGroup() && !_player->GetGroup()->isRaidGroup() && m_Socket)
             _player->RemoveFromGroup();
 
-        //! Send update to group and reset stored max enchanting level
-        if (_player->GetGroup())
-        {
-            _player->GetGroup()->SendUpdate();
-            _player->GetGroup()->ResetMaxEnchantingLevel();
-        }
-
         //! Broadcast a logout message to the player's friends
         sSocialMgr->SendFriendStatus(_player, FRIEND_OFFLINE, _player->GetGUIDLow(), true);
         sSocialMgr->RemovePlayerSocial(_player->GetGUIDLow());
@@ -544,10 +537,27 @@ void WorldSession::LogoutPlayer(bool Save)
         _player->CleanupsBeforeDelete();
         sLog->outInfo(LOG_FILTER_CHARACTER, "Account: %d (IP: %s) Logout Character:[%s] (GUID: %u) Level: %d",
             GetAccountId(), GetRemoteAddress().c_str(), _player->GetName().c_str(), _player->GetGUIDLow(), _player->getLevel());
+        auto group = _player->GetGroup();
+        auto guid = _player->GetGUID();
         if (Map* _map = _player->FindMap())
             _map->RemovePlayerFromMap(_player, true);
 
         SetPlayer(NULL); //! Pointer already deleted during RemovePlayerFromMap
+
+        //! Send update to group and reset stored max enchanting level
+        if (group)
+        {
+            {
+                WorldPacket packet(SMSG_PARTY_MEMBER_STATS_FULL, 1 + 9 + 4 + 2);
+                packet << static_cast<uint8>(0);
+                packet.appendPackGUID(guid);
+                packet << static_cast<uint32>(GROUP_UPDATE_FLAG_STATUS);
+                packet << static_cast<uint16>(get_group_member_online_status(nullptr));
+                group->BroadcastPacket(&packet, false);
+            }
+            group->SendUpdate();
+            group->ResetMaxEnchantingLevel();
+        }
 
         //! Send the 'logout complete' packet to the client
         //! Client will respond by sending 3x CMSG_CANCEL_TRADE, which we currently dont handle
