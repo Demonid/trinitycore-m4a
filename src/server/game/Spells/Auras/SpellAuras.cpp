@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.hpp"
+#include <tuple>
 #include "Common.h"
 #include "WorldPacket.h"
 #include "Opcodes.h"
@@ -37,20 +38,19 @@
 #include "SpellScript.h"
 #include "Vehicle.h"
 
-using boost::none;
-using boost::optional;
 using Trinity::UnitListSearcher;
 
 AuraApplication::AuraApplication(Unit* target, Unit* caster, Aura* aura, uint8 effMask):
 _target(target), _base(aura), _removeMode(AURA_REMOVE_NONE),
-_flags(AFLAG_NONE), _effectsToApply(effMask), _needClientUpdate(false)
+_flags(AFLAG_NONE), _effectsToApply(effMask), _needClientUpdate(false),
+has_slot()
 {
     ASSERT(GetTarget() && GetBase());
 
     if (GetBase()->CanBeSentToClient())
     {
         // Try find slot for aura
-        optional<uint8> slot;
+        std::pair<bool, uint8> slot;
         // Lookup for auras already applied from spell
         if (AuraApplication * foundAura = GetTarget()->GetAuraApplication(GetBase()->GetId(), GetBase()->GetCasterGUID(), GetBase()->GetCastItemGUID()))
         {
@@ -66,19 +66,19 @@ _flags(AFLAG_NONE), _effectsToApply(effMask), _needClientUpdate(false)
             {
                 if (itr == visibleAuras->end() || itr->first != freeSlot)
                 {
-                    slot = freeSlot;
+                    slot = std::make_pair(true, freeSlot);
                     break;
                 }
             }
         }
 
         // Register Visible Aura
-        if (slot)
+        if (slot.first)
         {
-            _slot = slot;
-            GetTarget()->SetVisibleAura(*slot, this);
+            std::tie(has_slot, _slot) = slot;
+            GetTarget()->SetVisibleAura(slot.second, this);
             SetNeedClientUpdate();
-            sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Aura: %u Effect: %d put to unit visible auras slot: %u", GetBase()->GetId(), GetEffectMask(), *slot);
+            sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Aura: %u Effect: %d put to unit visible auras slot: %u", GetBase()->GetId(), GetEffectMask(), slot.second);
         }
         else
             sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Aura: %u Effect: %d could not find empty unit visible slot", GetBase()->GetId(), GetEffectMask());
@@ -89,9 +89,9 @@ _flags(AFLAG_NONE), _effectsToApply(effMask), _needClientUpdate(false)
 
 void AuraApplication::_Remove()
 {
-    optional<uint8> slot = GetSlot();
+    std::pair<bool, uint8> slot = GetSlot();
 
-    if (!slot)
+    if (!slot.first)
         return;
 
     if (AuraApplication * foundAura = _target->GetAuraApplication(GetBase()->GetId(), GetBase()->GetCasterGUID(), GetBase()->GetCastItemGUID()))
@@ -99,20 +99,20 @@ void AuraApplication::_Remove()
         // Reuse visible aura slot by aura which is still applied - prevent storing dead pointers
         if (slot == foundAura->GetSlot())
         {
-            if (GetTarget()->GetVisibleAura(*slot) == this)
+            if (GetTarget()->GetVisibleAura(slot.second) == this)
             {
-                GetTarget()->SetVisibleAura(*slot, foundAura);
+                GetTarget()->SetVisibleAura(slot.second, foundAura);
                 foundAura->SetNeedClientUpdate();
             }
             // set not valid slot for aura - prevent removing other visible aura
-            slot = none;
+            slot.first = false;
         }
     }
 
     // update for out of range group members
-    if (slot)
+    if (slot.first)
     {
-        GetTarget()->RemoveVisibleAura(*slot);
+        GetTarget()->RemoveVisibleAura(slot.second);
         ClientUpdate(true);
     }
 }
@@ -182,15 +182,16 @@ void AuraApplication::_HandleEffect(uint8 effIndex, bool apply)
 
 void AuraApplication::BuildUpdatePacket(ByteBuffer& data, bool remove) const
 {
-    data << uint8(*_slot);
+    ASSERT(has_slot);
+    data << uint8(_slot);
 
     if (remove)
     {
-        ASSERT(!_target->GetVisibleAura(*_slot));
+        ASSERT(!_target->GetVisibleAura(_slot));
         data << uint32(0);
         return;
     }
-    ASSERT(_target->GetVisibleAura(*_slot));
+    ASSERT(_target->GetVisibleAura(_slot));
 
     Aura const* aura = GetBase();
     data << uint32(aura->GetId());
