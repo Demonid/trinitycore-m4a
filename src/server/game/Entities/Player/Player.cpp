@@ -22158,6 +22158,7 @@ void Player::SendInitialVisiblePackets(Unit* target)
         if (target->HasUnitState(UNIT_STATE_MELEE_ATTACKING) && target->getVictim())
             target->SendMeleeAttackStart(target->getVictim());
     }
+    target->send_init_threat(*this);
 }
 
 template<class T>
