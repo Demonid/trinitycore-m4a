@@ -1644,7 +1644,7 @@ void AuraEffect::HandleModInvisibilityDetect(AuraApplication const* aurApp, uint
     }
 
     // call functions which may have additional effects after chainging state of unit
-    target->UpdateObjectVisibility();
+    target->UpdateObjectVisibility(false);
 }
 
 void AuraEffect::HandleModInvisibility(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -1700,7 +1700,7 @@ void AuraEffect::HandleModInvisibility(AuraApplication const* aurApp, uint8 mode
         // drop flag at invisibiliy in bg
         target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_IMMUNE_OR_LOST_SELECTION);
     }
-    target->UpdateObjectVisibility();
+    target->UpdateObjectVisibility(false);
 }
 
 void AuraEffect::HandleModStealthDetect(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -6048,7 +6048,8 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
         switch (auraId)
         {
         case 66 /* Invisibility */:
-            target->CastCustomSpell(triggerSpellId, SPELLVALUE_BASE_POINT0, -100 / static_cast<int>(GetTotalTicks() - (m_tickNumber - 1)), target, true, nullptr, this, GetCasterGUID());
+            if (m_tickNumber == 2)
+                target->RemoveAura(GetBase(), AURA_REMOVE_BY_EXPIRE);
             return;
             // Pursuing Spikes (Anub'arak)
             case 65920:
