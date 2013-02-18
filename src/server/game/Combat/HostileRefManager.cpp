@@ -24,6 +24,12 @@
 #include "SpellMgr.h"
 #include "SpellInfo.h"
 
+HostileRefManager::HostileRefManager(Unit *owner)
+: temp_threat_()
+{
+    iOwner = owner;
+}
+
 HostileRefManager::~HostileRefManager()
 {
     deleteReferences();
@@ -50,19 +56,22 @@ void HostileRefManager::threatAssist(Unit* victim, float baseThreat, SpellInfo c
 
 //=================================================
 
+float HostileRefManager::temp_threat() const
+{
+    return temp_threat_;
+}
+
 void HostileRefManager::addTempThreat(float threat, bool apply)
 {
+    if (apply)
+        temp_threat_ += threat;
+    else
+        temp_threat_ -= threat;
     HostileReference* ref = getFirst();
 
     while (ref)
     {
-        if (apply)
-        {
-            if (ref->getTempThreatModifier() == 0.0f)
-                ref->addTempThreat(threat);
-        }
-        else
-            ref->resetTempThreat();
+        ref->addTempThreat(apply ? threat : -threat);
 
         ref = ref->next();
     }
@@ -104,6 +113,12 @@ void HostileRefManager::updateThreatTables()
         ref->updateOnlineStatus();
         ref = ref->next();
     }
+}
+
+void HostileRefManager::add_reference(HostileReference *reference)
+{
+    insertFirst(reference);
+    reference->addTempThreat(temp_threat_);
 }
 
 //=================================================

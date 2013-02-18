@@ -13074,8 +13074,6 @@ void Unit::TauntApply(Unit* taunter)
     SetInFront(taunter);
     if (creature->IsAIEnabled)
         creature->AI()->AttackStart(taunter);
-
-    //m_ThreatManager.tauntApply(taunter);
 }
 
 //======================================================================

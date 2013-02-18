@@ -67,25 +67,10 @@ class HostileReference : public Reference<Unit, ThreatManager>
 
         // used for temporary setting a threat and reducting it later again.
         // the threat modification is stored
-        void setTempThreat(float threat)
-        {
-            addTempThreat(threat - getThreat());
-        }
-
         void addTempThreat(float threat)
         {
-            iTempThreatModifier = threat;
-            if (iTempThreatModifier != 0.0f)
-                addThreat(iTempThreatModifier);
-        }
-
-        void resetTempThreat()
-        {
-            if (iTempThreatModifier != 0.0f)
-            {
-                addThreat(-iTempThreatModifier);
-                iTempThreatModifier = 0.0f;
-            }
+            iTempThreatModifier += threat;
+            addThreat(threat);
         }
 
         float getTempThreatModifier() { return iTempThreatModifier; }
@@ -227,9 +212,6 @@ class ThreatManager
         Unit* getOwner() const { return iOwner; }
 
         Unit* getHostilTarget();
-
-        void tauntApply(Unit* taunter);
-        void tauntFadeOut(Unit* taunter);
 
         void setCurrentVictim(HostileReference* hostileRef);
 

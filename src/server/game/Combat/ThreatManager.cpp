@@ -96,10 +96,10 @@ HostileReference::HostileReference(Unit* refUnit, ThreatManager* threatManager, 
 {
     iThreat = threat;
     iTempThreatModifier = 0.0f;
-    link(refUnit, threatManager);
     iUnitGuid = refUnit->GetGUID();
     iOnline = true;
     iAccessible = true;
+    link(refUnit, threatManager);
 }
 
 //============================================================
@@ -482,27 +482,6 @@ float ThreatManager::getThreat(Unit* victim, bool alsoSearchOfflineList)
     if (ref)
         threat = ref->getThreat();
     return threat;
-}
-
-//============================================================
-
-void ThreatManager::tauntApply(Unit* taunter)
-{
-    HostileReference* ref = iThreatContainer.getReferenceByTarget(taunter);
-    if (getCurrentVictim() && ref && (ref->getThreat() < getCurrentVictim()->getThreat()))
-    {
-        if (ref->getTempThreatModifier() == 0.0f) // Ok, temp threat is unused
-            ref->setTempThreat(getCurrentVictim()->getThreat());
-    }
-}
-
-//============================================================
-
-void ThreatManager::tauntFadeOut(Unit* taunter)
-{
-    HostileReference* ref = iThreatContainer.getReferenceByTarget(taunter);
-    if (ref)
-        ref->resetTempThreat();
 }
 
 //============================================================
