@@ -3013,12 +3013,7 @@ void AuraEffect::HandleAuraModTotalThreat(AuraApplication const* aurApp, uint8 m
 
     Unit* target = aurApp->GetTarget();
 
-    if (!target->isAlive() || target->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    Unit* caster = GetCaster();
-    if (caster && caster->isAlive())
-        target->getHostileRefManager().addTempThreat((float)GetAmount(), apply);
+    target->getHostileRefManager().addTempThreat((float)GetAmount(), apply);
 }
 
 void AuraEffect::HandleModTaunt(AuraApplication const* aurApp, uint8 mode, bool apply) const
