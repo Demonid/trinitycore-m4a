@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.hpp"
+#include <cmath>
 #include "Common.h"
 #include "DatabaseEnv.h"
 #include "Group.h"
@@ -755,7 +756,7 @@ void WorldSession::BuildPartyMemberStatsChangedPacket(Player* player, WorldPacke
         *data << (uint16) player->GetZoneId();
 
     if (mask & GROUP_UPDATE_FLAG_POSITION)
-        *data << (uint16) player->GetPositionX() << (uint16) player->GetPositionY();
+        *data << (int16) std::floor(player->GetPositionX() + 0.5F) << (int16) std::floor(player->GetPositionY() + 0.5F);
 
     if (mask & GROUP_UPDATE_FLAG_AURAS)
     {
@@ -903,8 +904,8 @@ void WorldSession::HandleRequestPartyMemberStatsOpcode(WorldPacket &recvData)
     data << (uint16) player->GetMaxPower(powerType);        // GROUP_UPDATE_FLAG_MAX_POWER
     data << (uint16) player->getLevel();                    // GROUP_UPDATE_FLAG_LEVEL
     data << (uint16) player->GetZoneId();                   // GROUP_UPDATE_FLAG_ZONE
-    data << (uint16) player->GetPositionX();                // GROUP_UPDATE_FLAG_POSITION
-    data << (uint16) player->GetPositionY();                // GROUP_UPDATE_FLAG_POSITION
+    data << (int16) std::floor(player->GetPositionX() + 0.5F);  // GROUP_UPDATE_FLAG_POSITION
+    data << (int16) std::floor(player->GetPositionY() + 0.5F);  // GROUP_UPDATE_FLAG_POSITION
 
     uint64 auramask = 0;
     size_t maskPos = data.wpos();

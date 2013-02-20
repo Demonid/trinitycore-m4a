@@ -34,7 +34,7 @@ class HostileRefManager : public RefManager<Unit, ThreatManager>
     private:
         Unit* iOwner;
     public:
-        explicit HostileRefManager(Unit* owner) { iOwner = owner; }
+        explicit HostileRefManager(Unit* owner);
         ~HostileRefManager();
 
         Unit* getOwner() { return iOwner; }
@@ -44,9 +44,13 @@ class HostileRefManager : public RefManager<Unit, ThreatManager>
         // use for buffs and healing threat functionality
         void threatAssist(Unit* victim, float baseThreat, SpellInfo const* threatSpell = NULL);
 
+        float temp_threat() const;
+
         void addTempThreat(float threat, bool apply);
 
         void addThreatPercent(int32 percent);
+
+        void add_reference(HostileReference *reference);
 
         // The references are not needed anymore
         // tell the source to remove them from the list and free the mem
@@ -68,6 +72,9 @@ class HostileRefManager : public RefManager<Unit, ThreatManager>
         void deleteReference(Unit* creature);
 
         void UpdateVisibility();
+
+private:
+    float temp_threat_;
 };
 //=================================================
 #endif

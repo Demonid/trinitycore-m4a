@@ -298,6 +298,8 @@ class instance_ruby_sanctum : public InstanceMapScript
             {
                 switch (type)
                 {
+                default:
+                    return 0;
                 case DATA_BALTHARUS_SHARED_HEALTH:
                     return BaltharusSharedHealth;
                 case DATA_HALION_CORPOREALITY_MATERIAL:

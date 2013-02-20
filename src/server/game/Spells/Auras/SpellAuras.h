@@ -19,7 +19,7 @@
 #ifndef TRINITY_SPELLAURAS_H
 #define TRINITY_SPELLAURAS_H
 
-#include <boost/optional/optional.hpp>
+#include <utility>
 #include "SpellAuraDefines.h"
 #include "SpellInfo.h"
 #include "Unit.h"
@@ -51,7 +51,7 @@ class AuraApplication
         Unit* const _target;
         Aura* const _base;
         AuraRemoveMode _removeMode:8;                  // Store info for know remove aura reason
-        boost::optional<uint8> _slot;                  // Aura slot on unit
+        uint8 _slot;                                   // Aura slot on unit
         uint8 _flags;                                  // Aura info flag
         uint8 _effectsToApply;                         // Used only at spell hit to determine which effect should be applied
         bool _needClientUpdate:1;
@@ -66,7 +66,7 @@ class AuraApplication
         Unit* GetTarget() const { return _target; }
         Aura* GetBase() const { return _base; }
 
-        boost::optional<uint8> GetSlot() const { return _slot; }
+        std::pair<bool, uint8> GetSlot() const { return std::make_pair(has_slot, _slot); }
         uint8 GetFlags() const { return _flags; }
         uint8 GetEffectMask() const { return _flags & (AFLAG_EFF_INDEX_0 | AFLAG_EFF_INDEX_1 | AFLAG_EFF_INDEX_2); }
         bool HasEffect(uint8 effect) const { ASSERT(effect < MAX_SPELL_EFFECTS);  return _flags & (1<<effect); }
@@ -81,6 +81,9 @@ class AuraApplication
         bool IsNeedClientUpdate() const { return _needClientUpdate;}
         void BuildUpdatePacket(ByteBuffer& data, bool remove) const;
         void ClientUpdate(bool remove = false);
+
+private:
+    bool has_slot;
 };
 
 class Aura

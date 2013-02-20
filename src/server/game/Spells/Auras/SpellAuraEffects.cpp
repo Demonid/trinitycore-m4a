@@ -1644,7 +1644,7 @@ void AuraEffect::HandleModInvisibilityDetect(AuraApplication const* aurApp, uint
     }
 
     // call functions which may have additional effects after chainging state of unit
-    target->UpdateObjectVisibility();
+    target->UpdateObjectVisibility(false);
 }
 
 void AuraEffect::HandleModInvisibility(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -1700,7 +1700,7 @@ void AuraEffect::HandleModInvisibility(AuraApplication const* aurApp, uint8 mode
         // drop flag at invisibiliy in bg
         target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_IMMUNE_OR_LOST_SELECTION);
     }
-    target->UpdateObjectVisibility();
+    target->UpdateObjectVisibility(false);
 }
 
 void AuraEffect::HandleModStealthDetect(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -3013,12 +3013,7 @@ void AuraEffect::HandleAuraModTotalThreat(AuraApplication const* aurApp, uint8 m
 
     Unit* target = aurApp->GetTarget();
 
-    if (!target->isAlive() || target->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    Unit* caster = GetCaster();
-    if (caster && caster->isAlive())
-        target->getHostileRefManager().addTempThreat((float)GetAmount(), apply);
+    target->getHostileRefManager().addTempThreat((float)GetAmount(), apply);
 }
 
 void AuraEffect::HandleModTaunt(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -6047,6 +6042,10 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
         // Spell exist but require custom code
         switch (auraId)
         {
+        case 66 /* Invisibility */:
+            if (m_tickNumber == 2)
+                target->RemoveAura(GetBase(), AURA_REMOVE_BY_EXPIRE);
+            return;
             // Pursuing Spikes (Anub'arak)
             case 65920:
             case 65922:

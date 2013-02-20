@@ -96,10 +96,10 @@ HostileReference::HostileReference(Unit* refUnit, ThreatManager* threatManager, 
 {
     iThreat = threat;
     iTempThreatModifier = 0.0f;
-    link(refUnit, threatManager);
     iUnitGuid = refUnit->GetGUID();
     iOnline = true;
     iAccessible = true;
+    link(refUnit, threatManager);
 }
 
 //============================================================
@@ -158,9 +158,9 @@ void HostileReference::addThreat(float modThreat)
 
 void HostileReference::addThreatPercent(int32 percent)
 {
-    float tmpThreat = iThreat;
+    float tmpThreat = iThreat - iTempThreatModifier;
     AddPct(tmpThreat, percent);
-    addThreat(tmpThreat - iThreat);
+    addThreat(tmpThreat - (iThreat - iTempThreatModifier));
 }
 
 //============================================================
@@ -486,34 +486,14 @@ float ThreatManager::getThreat(Unit* victim, bool alsoSearchOfflineList)
 
 //============================================================
 
-void ThreatManager::tauntApply(Unit* taunter)
-{
-    HostileReference* ref = iThreatContainer.getReferenceByTarget(taunter);
-    if (getCurrentVictim() && ref && (ref->getThreat() < getCurrentVictim()->getThreat()))
-    {
-        if (ref->getTempThreatModifier() == 0.0f) // Ok, temp threat is unused
-            ref->setTempThreat(getCurrentVictim()->getThreat());
-    }
-}
-
-//============================================================
-
-void ThreatManager::tauntFadeOut(Unit* taunter)
-{
-    HostileReference* ref = iThreatContainer.getReferenceByTarget(taunter);
-    if (ref)
-        ref->resetTempThreat();
-}
-
-//============================================================
-
 void ThreatManager::setCurrentVictim(HostileReference* pHostileReference)
 {
-    if (pHostileReference && pHostileReference != iCurrentVictim)
-    {
-        iOwner->SendChangeCurrentVictimOpcode(pHostileReference);
-    }
+    auto old_victim = iCurrentVictim;
     iCurrentVictim = pHostileReference;
+    if (iCurrentVictim && iCurrentVictim != old_victim)
+    {
+        iOwner->SendChangeCurrentVictimOpcode();
+    }
 }
 
 //============================================================

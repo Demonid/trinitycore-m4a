@@ -13045,7 +13045,7 @@ void Unit::AddThreat(Unit* victim, float fThreat, SpellSchoolMask schoolMask, Sp
 
 void Unit::DeleteThreatList()
 {
-    if (CanHaveThreatList() && !m_ThreatManager.isThreatListEmpty())
+    if (!m_ThreatManager.isThreatListEmpty())
         SendClearThreatListOpcode();
     m_ThreatManager.clearReferences();
 }
@@ -13074,8 +13074,6 @@ void Unit::TauntApply(Unit* taunter)
     SetInFront(taunter);
     if (creature->IsAIEnabled)
         creature->AI()->AttackStart(taunter);
-
-    //m_ThreatManager.tauntApply(taunter);
 }
 
 //======================================================================
@@ -17587,23 +17585,41 @@ void Unit::SendThreatListUpdate()
     }
 }
 
-void Unit::SendChangeCurrentVictimOpcode(HostileReference* pHostileReference)
+namespace
 {
-    if (!getThreatManager().isThreatListEmpty())
+    WorldPacket make_highest_threat_update_msg(const Unit &unit)
     {
-        uint32 count = getThreatManager().getThreatList().size();
+        uint32 count = unit.getThreatManager().getThreatList().size();
 
         sLog->outDebug(LOG_FILTER_UNITS, "WORLD: Send SMSG_HIGHEST_THREAT_UPDATE Message");
         WorldPacket data(SMSG_HIGHEST_THREAT_UPDATE, 8 + 8 + count * 8);
-        data.append(GetPackGUID());
-        data.appendPackGUID(pHostileReference->getUnitGuid());
+        data.append(unit.GetPackGUID());
+        data.appendPackGUID(unit.getThreatManager().getCurrentVictim()->getUnitGuid());
         data << uint32(count);
-        ThreatContainer::StorageType const &tlist = getThreatManager().getThreatList();
+        ThreatContainer::StorageType const &tlist = unit.getThreatManager().getThreatList();
         for (ThreatContainer::StorageType::const_iterator itr = tlist.begin(); itr != tlist.end(); ++itr)
         {
             data.appendPackGUID((*itr)->getUnitGuid());
             data << uint32((*itr)->getThreat()*100);
         }
+        return data;
+    }
+}
+
+void Unit::send_init_threat(Player &player) const
+{
+    if (getThreatManager().getCurrentVictim() && !getThreatManager().isThreatListEmpty())
+    {
+        auto data = make_highest_threat_update_msg(*this);
+        player.GetSession()->SendPacket(&data);
+    }
+}
+
+void Unit::SendChangeCurrentVictimOpcode()
+{
+    if (getThreatManager().getCurrentVictim() && !getThreatManager().isThreatListEmpty())
+    {
+        auto data = make_highest_threat_update_msg(*this);
         SendMessageToSet(&data, false);
     }
 }
