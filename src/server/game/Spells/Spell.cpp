@@ -801,7 +801,7 @@ void Spell::SelectSpellTargets()
         }
         else if (m_spellInfo->Speed > 0.0f)
         {
-            float dist = m_caster->GetDistance(*m_targets.GetDstPos());
+            float dist = m_caster->GetExactDist(m_targets.GetDstPos());
             m_delayMoment = (uint64) floor(dist / m_spellInfo->Speed * 1000.0f);
         }
     }
@@ -2188,7 +2188,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
     {
         // calculate spell incoming interval
         // TODO: this is a hack
-        float dist = m_caster->GetDistance(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
+        float dist = m_caster->GetExactDist(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
 
         if (dist < 5.0f)
             dist = 5.0f;
@@ -2268,7 +2268,7 @@ void Spell::AddGOTarget(GameObject* go, uint32 effectMask)
     if (m_spellInfo->Speed > 0.0f)
     {
         // calculate spell incoming interval
-        float dist = m_caster->GetDistance(go->GetPositionX(), go->GetPositionY(), go->GetPositionZ());
+        float dist = m_caster->GetExactDist(go->GetPositionX(), go->GetPositionY(), go->GetPositionZ());
         if (dist < 5.0f)
             dist = 5.0f;
         target.timeDelay = uint64(floor(dist / m_spellInfo->Speed * 1000.0f));
