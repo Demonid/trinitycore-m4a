@@ -136,8 +136,8 @@ public:
         bool bIntroDone;
         bool bWiped;
 
-        std::list<Creature*> _waveList;
-        std::list<Creature*> _activeWaveList;
+        std::list<uint64> _waveList;
+        std::list<uint64> _activeWaveList;
 
         EventMap events;
 
@@ -573,7 +573,7 @@ public:
           for(uint8 i = 0; i < count; i++)
           {
             Creature* summon = instance->SummonCreature(WaveEntries[urand(0,4)], SpawnPos[i]);
-            _waveList.push_back(summon);
+            _waveList.push_back(summon->GetGUID());
           }                 
         }
 
@@ -582,20 +582,21 @@ public:
         {
           while(!_waveList.empty())
           {
-            std::list<Creature*>::iterator itr = _waveList.begin();
-            (*itr)->DespawnOrUnsummon();
-            _waveList.erase(itr);
+            if(Creature* temp = instance->GetCreature(_waveList.front()))
+              temp->DespawnOrUnsummon();
+            _waveList.pop_front();
           }
           while(!_activeWaveList.empty())
           {
-            std::list<Creature*>::iterator itr = _activeWaveList.begin();
-            (*itr)->DespawnOrUnsummon();
-            _activeWaveList.erase(itr);
+            if(Creature* temp = instance->GetCreature(_activeWaveList.front()))
+              temp->DespawnOrUnsummon();
+            _activeWaveList.pop_front();
           }
         }
 
         void ActivateWave()
-        {                  
+        {   
+          _activeWaveList.clear();
           spawnCount = 3 + uiWaveCount / 3;
 
           if(uiWaveCount == 8)
@@ -603,13 +604,16 @@ public:
 
           for(uint8 i = 0; i < spawnCount &&  !_waveList.empty(); ++i)
           {
-            std::list<Creature*>::iterator itr = _waveList.begin();
+            std::list<uint64>::iterator itr = _waveList.begin();
             std::advance(itr, urand(0, _waveList.size() - 1)); 
-            (*itr)->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC|UNIT_FLAG_NOT_SELECTABLE);
-            (*itr)->SetInCombatWithZone();
-            if (Unit* target = (*itr)->SelectNearestTarget())
-              (*itr)->AI()->AttackStart(target);
-            _activeWaveList.push_back(*itr);
+            if(Creature* temp = instance->GetCreature(*itr))
+            {
+              temp->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC|UNIT_FLAG_NOT_SELECTABLE);
+              temp->SetInCombatWithZone();
+              if (Unit* target = temp->SelectNearestTarget())
+                temp->AI()->AttackStart(target);
+              _activeWaveList.push_back(*itr);
+            }
             _waveList.erase(itr);
           }
         }
