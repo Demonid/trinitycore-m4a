@@ -40,6 +40,7 @@ enum Events
     EVENT_NONE,
     EVENT_NEXT_WAVE,
     EVENT_RESET_LK_EVENT,
+    EVENT_CHECK_WIPE,
 };
 
 static Position SpawnPos[ENCOUNTER_WAVE_COUNT] =
@@ -148,6 +149,7 @@ public:
             uiFalric = 0;
             uiMarwyn = 0;
             uiLichKingEvent = 0;
+            uiLichKingBoss = 0;
             uiJainaPart1 = 0;
             uiLeader = 0;
 
@@ -197,7 +199,7 @@ public:
                     uiLichKingEvent = creature->GetGUID();
                     break;
                 case NPC_SYLVANAS_PART1:
-					          if (uiTeamInInstance == ALLIANCE)
+					if (uiTeamInInstance == ALLIANCE)
                         creature->UpdateEntry(NPC_JAINA_PART1, ALLIANCE);
                     uiJainaPart1 = creature->GetGUID();
                     if(bIntroDone)
@@ -350,8 +352,22 @@ public:
                   break;
                 case DATA_LICHKING_EVENT:
                     uiEncounter[2] = data;
-                    if(data == FAIL)
-                      events.ScheduleEvent(EVENT_RESET_LK_EVENT, 30000);
+                    if(data == IN_PROGRESS)
+                    {
+                      if(instance->IsHeroic())
+                        DoStartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_NOT_RETREATING_EVENT);
+                    }
+                    else if(data == FAIL)
+                    {
+                      //events.ScheduleEvent(EVENT_RESET_LK_EVENT, 30000);
+                      DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_NOT_RETREATING_EVENT);
+                      bWiped = false;
+                    }
+                    else if(data == DONE)
+                    {
+                      DoCastSpellOnPlayers(SPELL_ACHIEV_CHECK);
+                      DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_NOT_RETREATING_EVENT);
+                    }
                     break;  
                 case DATA_WAVE_COUNT:
                   {
@@ -361,15 +377,49 @@ public:
                       SpawnWaves(ENCOUNTER_WAVE_COUNT);
                       HandleGameObject(uiFrontDoor, false);
                       events.ScheduleEvent(EVENT_NEXT_WAVE, 10000);
+                      events.ScheduleEvent(EVENT_CHECK_WIPE, 2000);
                       bIntroDone = true;
                       break;
-                    case RESUME: // Resumes waves in case of wipe
+                    case RESUME: // Hack used to spawn after wipe/load (avoiding DB spawning)
+                      DespawnWaves();
                       if(GetData(DATA_MARWYN_EVENT) != DONE)
                       {
+                        uint32 spawns = 22;
+                        uiWaveCount = 5;
+                        if(GetData(DATA_FALRIC_EVENT) != DONE)
+                        {
+                          if (Creature* falric = instance->SummonCreature(NPC_FALRIC,bossSpawnPos[0]))
+                          {
+                            falric->SetVisible(true);
+                            falric->GetMotionMaster()->MovePoint(0, 5283.309f, 2031.173f, 709.319f);
+                            SetData64(DATA_FALRIC, falric->GetGUID());
+                          }
+                          spawns = 36;
+                          uiWaveCount = 0;
+                        }
+
+                        if (Creature* marwyn = instance->SummonCreature(NPC_MARWYN,bossSpawnPos[1]))
+                        {
+                          marwyn->SetVisible(true);
+                          marwyn->GetMotionMaster()->MovePoint(0, 5335.585f, 1981.439f, 709.319f);
+                          SetData64(DATA_MARWYN, marwyn->GetGUID());
+                        }
+
+                        SpawnWaves(spawns);
                         HandleGameObject(uiFrontDoor, false);
-                        bIntroDone = true;
                         events.ScheduleEvent(EVENT_NEXT_WAVE, 10000);
                       }
+                      else if(GetData(DATA_LICHKING_EVENT) != DONE)
+                      {                        
+                        HandleGameObject(uiArthasDoor, true);
+                        HandleGameObject(uiFrontDoor, true);
+
+                        instance->SummonCreature(NPC_LICH_KING_BOSS, OutroSpawns[0]);
+                        instance->SummonCreature(NPC_JAINA_PART2, OutroSpawns[1]);
+
+                        DoUpdateWorldState(WORLD_STATE_HOR, 0);
+                      }
+                      events.ScheduleEvent(EVENT_CHECK_WIPE, 2000);
                       bWiped = false;
                       break;
                     case DECREASE: // Called on wave creature death
@@ -460,9 +510,9 @@ public:
             if (dataHead1 == 'H' && dataHead2 == 'R')
             {   
 
-                SetData(DATA_FALRIC_EVENT, data0);
-                SetData(DATA_MARWYN_EVENT, data1);
-                SetData(DATA_LICHKING_EVENT, data2);
+                uiEncounter[0] = data0;
+                uiEncounter[1] = data1;
+                uiEncounter[2] = data2;
 
                 for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
                     if (uiEncounter[i] == IN_PROGRESS)
@@ -471,9 +521,10 @@ public:
             } else OUT_LOAD_INST_DATA_FAIL;
 
             if (uiEncounter[0] == DONE || uiEncounter[1] == DONE)
+            {
                 bIntroDone = true;
-
-            //DoWipe(); //On load set the instance in right state
+                bWiped = true;
+            }
 
             OUT_LOAD_INST_DATA_COMPLETE;
         }
@@ -510,7 +561,7 @@ public:
             }
         }
 
-        // Wipe has been detected. Perform cleanup and reset.
+        // Wipe has been detected. Perform cleanup.
         void DoWipe()
         {           
             events.Reset();
@@ -522,48 +573,8 @@ public:
             if (Creature* pMarwyn = instance->GetCreature(uiMarwyn))
               pMarwyn->DespawnOrUnsummon();
 
-            uiWaveCount = 0;
-
-            if(GetData(DATA_FALRIC_EVENT) == DONE && GetData(DATA_MARWYN_EVENT) == DONE)
-            {
-              HandleGameObject(uiArthasDoor, true);
-              uiWaveCount = 10;
-            }
-            else if(GetData(DATA_FALRIC_EVENT) != DONE)
-            {              
-              if (Creature* falric = instance->SummonCreature(NPC_FALRIC,bossSpawnPos[0]))
-              {
-                falric->SetVisible(true);
-                falric->GetMotionMaster()->MovePoint(0, 5283.309f, 2031.173f, 709.319f);
-                SetData64(DATA_FALRIC, falric->GetGUID());
-              }
-              if (Creature* marwyn = instance->SummonCreature(NPC_MARWYN,bossSpawnPos[1]))
-              {
-                marwyn->SetVisible(true);
-                marwyn->GetMotionMaster()->MovePoint(0, 5335.585f, 1981.439f, 709.319f);
-                SetData64(DATA_MARWYN, marwyn->GetGUID());
-              }
-              SpawnWaves(ENCOUNTER_WAVE_COUNT);
-            }
-            else if(GetData(DATA_MARWYN_EVENT) != DONE)
-            {
-              if (Creature* marwyn = instance->SummonCreature(NPC_MARWYN,bossSpawnPos[1]))
-              {
-                marwyn->SetVisible(true);
-                marwyn->GetMotionMaster()->MovePoint(0, 5335.585f, 1981.439f, 709.319f);
-                SetData64(DATA_MARWYN, marwyn->GetGUID());
-              }
-              SpawnWaves(22);
-              uiWaveCount = 5;
-            }
-
-            DoUpdateWorldState(WORLD_STATE_HOR, 1);
-            DoUpdateWorldState(WORLD_STATE_HOR_WAVE_COUNT, uiWaveCount);
             HandleGameObject(uiFrontDoor, true);
 
-            if(bIntroDone)
-              if (Creature* pJaina = instance->GetCreature(uiJainaPart1))
-                pJaina->DespawnOrUnsummon();
             bWiped = true;
         }
 
@@ -636,24 +647,26 @@ public:
 
         void Update(uint32 diff)
         {
-            if (!instance->HavePlayers())
+          if (!instance->HavePlayers())
                 return;
 
-            events.Update(diff);
+          events.Update(diff);
 
-            if(uiWaveCount && !bWiped && CheckWipe())
-              DoWipe();
-
-            switch (events.ExecuteEvent())
-            {
-                case EVENT_NEXT_WAVE:
-                    uiWaveCount++;
-                    AddWave();
-                    break;
-                case EVENT_RESET_LK_EVENT:
-                    instance->SummonCreature(NPC_LICH_KING_BOSS, OutroSpawns[0]);
-                    instance->SummonCreature(NPC_JAINA_PART2, OutroSpawns[1]);
-                    HandleGameObject(uiRearDoor, true);
+          switch (events.ExecuteEvent())
+          {
+              case EVENT_NEXT_WAVE:
+                  uiWaveCount++;
+                  AddWave();
+                  break;
+              case EVENT_RESET_LK_EVENT:
+                  //instance->SummonCreature(NPC_LICH_KING_BOSS, OutroSpawns[0]);
+                  //instance->SummonCreature(NPC_JAINA_PART2, OutroSpawns[1]);
+                  //HandleGameObject(uiRearDoor, true);
+                  break;
+              case EVENT_CHECK_WIPE:
+                  if(!bWiped && CheckWipe())                    
+                    DoWipe();
+                  events.ScheduleEvent(EVENT_CHECK_WIPE, 2000);
                   break;
             }
         }     

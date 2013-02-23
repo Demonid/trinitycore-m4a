@@ -74,7 +74,35 @@ enum Yells
     SAY_FALRIC_INTRO_1                  = 5,
     SAY_FALRIC_INTRO_2                  = 6,
 
-    SAY_MARWYN_INTRO_1                  = 4
+    SAY_MARWYN_INTRO_1                  = 4,
+
+    SAY_LK_ALLIANCE_AGGRO               = 0,
+    SAY_LK_HORDE_AGGRO                  = 1,
+    SAY_LK_EVENT_START                  = 2,
+    SAY_LK_EVENT_ICEWALL_01             = 3,
+    SAY_LK_EVENT_ICEWALL_02             = 4,
+    SAY_LK_EVENT_ICEWALL_03             = 5,
+    SAY_LK_EVENT_ICEWALL_04             = 6,
+    SAY_LK_EVENT_END                    = 7,
+
+    SAY_JAINA_ESCAPE_START              = 0,
+    SAY_JAINA_ESCAPE_ICEWALL_01         = 1,
+    SAY_JAINA_ESCAPE_ICEWALL_02         = 2,
+    SAY_JAINA_ESCAPE_ICEWALL_03         = 3,
+    SAY_JAINA_ESCAPE_ICEWALL_04         = 4,
+    SAY_JAINA_ESCAPE_END_01             = 5,
+    SAY_JAINA_ESCAPE_END_02             = 6,
+    SAY_JAINA_ESCAPE_END_03             = 7,
+    SAY_JAINA_ESCAPE_END_04             = 8,
+
+    SAY_SYLVANAS_ESCAPE_START           = 0,
+    SAY_SYLVANAS_ESCAPE_ICEWALL_01      = 1,
+    SAY_SYLVANAS_ESCAPE_ICEWALL_02      = 2,
+    SAY_SYLVANAS_ESCAPE_ICEWALL_03      = 3,
+    SAY_SYLVANAS_ESCAPE_ICEWALL_04      = 4,
+    SAY_SYLVANAS_ESCAPE_END_01          = 5,
+    SAY_SYLVANAS_ESCAPE_END_02          = 6,
+    SAY_SYLVANAS_ESCAPE_END_03          = 7,
 };
 
 enum
@@ -1225,6 +1253,7 @@ public:
                         pLider->AI()->DoAction(ACTION_OUTRO);
                     }
                     instance->SetData(DATA_LICHKING_EVENT,DONE);
+                    Talk(SAY_LK_EVENT_END);
                     break;
             }
         }
@@ -1236,7 +1265,7 @@ public:
           if (summons.empty())
           {
             me->RemoveAurasDueToSpell(SPELL_WINTER);
-            me->SetSpeed(MOVE_RUN, 0.8f, false);
+            me->SetSpeed(MOVE_RUN, 0.8f, false);            
             if(Creature* pLider = me->GetCreature(*me, instance->GetData64(DATA_ESCAPE_LIDER)))
               pLider->AI()->DoAction(ACTION_DESTROY_WALL);
 
@@ -1681,8 +1710,6 @@ public:
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
 
-            me->SetHealth(me->GetMaxHealth()/10);
-
             if(instance->GetData(DATA_LICHKING_EVENT) == DONE)
                me->DisappearAndDie();
 
@@ -1690,6 +1717,7 @@ public:
 
             DoCast(me,SPELL_ICE_BARRIER);
            
+            triggered = false;
             //if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
               //me->Attack(pLichKingBoss,true);
         }
@@ -1700,43 +1728,59 @@ public:
             {
               case 3:  // WP3 - Summon first Ice wall
                   summonWall(5540.39f, 2086.48f, 731.066f, 1.00057f);
+                  if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
+                    pLichKingBoss->AI()->Talk(SAY_LK_EVENT_ICEWALL_01); 
                   break;
               case 4: // WP4 - Start destroying wall
                   SetEscortPaused(true);
                   me->CastSpell(me, me->GetEntry() == NPC_JAINA_PART2? SPELL_DESTROY_ICE_WALL_01 : SPELL_DESTROY_ICE_WALL_02, false);  
                   if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
                     pLichKingBoss->AI()->DoAction(ACTION_WALL_01);
+                  Talk(me->GetEntry() == NPC_JAINA_PART2? SAY_JAINA_ESCAPE_ICEWALL_01 : SAY_SYLVANAS_ESCAPE_ICEWALL_01);
                   break;
               case 7: // WP8 - Summon second wall
-                  summonWall(5494.3f, 1978.27f, 736.689f, 1.0885f);                               
+                  summonWall(5494.3f, 1978.27f, 736.689f, 1.0885f);
+                  if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
+                    pLichKingBoss->AI()->Talk(SAY_LK_EVENT_ICEWALL_02);
                   break;
               case 8: // WP9 - Start destroying wall
                   SetEscortPaused(true);
                   me->CastSpell(me, me->GetEntry() == NPC_JAINA_PART2? SPELL_DESTROY_ICE_WALL_01 : SPELL_DESTROY_ICE_WALL_02, false);
                   if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
                     pLichKingBoss->AI()->DoAction(ACTION_WALL_02);
+                  Talk(me->GetEntry() == NPC_JAINA_PART2? SAY_JAINA_ESCAPE_ICEWALL_02 : SAY_SYLVANAS_ESCAPE_ICEWALL_02);
                   break;
               case 11: // WP11 - Summon third wall                 
-                  summonWall(5426.27f, 1888.12f, 751.303f, 0.923328f);                                                     
+                  summonWall(5426.27f, 1888.12f, 751.303f, 0.923328f);
+                  if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
+                    pLichKingBoss->AI()->Talk(SAY_LK_EVENT_ICEWALL_03);
                   break;
               case 12: // WP12 - Start destroying wall
                   SetEscortPaused(true);
                   me->CastSpell(me, me->GetEntry() == NPC_JAINA_PART2? SPELL_DESTROY_ICE_WALL_01 : SPELL_DESTROY_ICE_WALL_02, false);
                   if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
                     pLichKingBoss->AI()->DoAction(ACTION_WALL_03);
+                  Talk(me->GetEntry() == NPC_JAINA_PART2? SAY_JAINA_ESCAPE_ICEWALL_03 : SAY_SYLVANAS_ESCAPE_ICEWALL_03);
                   break;
               case 15: // WP15 - Summon 4th wall                 
-                  summonWall(5323.61f, 1755.85f, 770.305f, 0.784186f);                 
+                  summonWall(5323.61f, 1755.85f, 770.305f, 0.784186f); 
+                  if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
+                    pLichKingBoss->AI()->Talk(SAY_LK_EVENT_ICEWALL_04);
                   break;
               case 16: // WP16 - Start destroying wall
                   SetEscortPaused(true);
                   me->CastSpell(me, me->GetEntry() == NPC_JAINA_PART2? SPELL_DESTROY_ICE_WALL_01 : SPELL_DESTROY_ICE_WALL_02, false);
                   if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
                     pLichKingBoss->AI()->DoAction(ACTION_WALL_04);
+                  Talk(me->GetEntry() == NPC_JAINA_PART2? SAY_JAINA_ESCAPE_ICEWALL_04 : SAY_SYLVANAS_ESCAPE_ICEWALL_04);
+                  break;
+              case 17:
+                  Talk(me->GetEntry() == NPC_JAINA_PART2? SAY_JAINA_ESCAPE_END_01 : SAY_SYLVANAS_ESCAPE_END_01);
                   break;
               case 20:
                   SetEscortPaused(true);
                   me->SetUInt32Value(UNIT_NPC_EMOTESTATE,me->GetEntry() == NPC_JAINA_PART2 ? EMOTE_STATE_READY2HL : EMOTE_STATE_READY1H);
+                  Talk(me->GetEntry() == NPC_JAINA_PART2? SAY_JAINA_ESCAPE_END_02 : SAY_SYLVANAS_ESCAPE_END_02);
                   break;
             }
         }
@@ -1767,11 +1811,16 @@ public:
             if(!who || who->GetTypeId() != TYPEID_PLAYER)
                 return;
             
-            if(!me->HasAura(SPELL_ICE_BARRIER))
+            if(triggered)
               return;
  
-            if(me->IsWithinDistInMap(who, 20.0f))               
-                events.ScheduleEvent(EVENT_ESCAPE_FREEZ_AND_MOVE,5000);                
+            if(me->IsWithinDistInMap(who, 50.0f))
+            {
+                events.ScheduleEvent(EVENT_ESCAPE_FREEZ_AND_MOVE,15000);
+                if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
+                  pLichKingBoss->AI()->Talk(me->GetEntry() == NPC_JAINA_PART2? SAY_LK_ALLIANCE_AGGRO : SAY_LK_HORDE_AGGRO);
+                triggered = true;
+            }
         }
   
         void HoRQuestComplete(uint32 killCredit)
@@ -1808,7 +1857,8 @@ public:
 
                 me->GetMotionMaster()->MovePoint(0, 5577.187f, 2236.003f, 733.012f);
                 me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-                me->FindNearestGameObject(GO_RUN_DOOR, 50.0f)->SetGoState(GO_STATE_ACTIVE);                
+                me->FindNearestGameObject(GO_RUN_DOOR, 50.0f)->SetGoState(GO_STATE_ACTIVE);
+                Talk(SAY_JAINA_ESCAPE_START);
                 break;
               case EVENT_FINISH_ESCAPE:
                 ship->BuildStopMovePacket(me->GetMap());
@@ -1820,6 +1870,8 @@ public:
 
                 if(Creature* pLichKingBoss = me->GetCreature(*me, instance->GetData64(NPC_LICH_KING_BOSS)))
                   pLichKingBoss->DisappearAndDie();
+                Talk(me->GetEntry() == NPC_JAINA_PART2? SAY_JAINA_ESCAPE_END_03 : SAY_SYLVANAS_ESCAPE_END_03);
+                HoRQuestComplete(38211);
                 break;
               }
             }
@@ -1861,6 +1913,7 @@ public:
           EventMap events;
           InstanceScript* instance;
           Transport* ship;
+          bool triggered;
     };
 };
 

@@ -99,6 +99,12 @@ enum GameObjects
     GO_CAPTAIN_CHEST_ALLIANCE_HC           = 202336, 
 };
 
+enum Achievements
+{
+    ACHIEV_NOT_RETREATING_EVENT    = 22615,
+    SPELL_ACHIEV_CHECK             = 72830,
+};
+
 enum HorWorldStates
 {
     WORLD_STATE_HOR                               = 4884,
