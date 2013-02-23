@@ -2121,6 +2121,7 @@ public:
                             if (owner && owner->GetQuestStatus(QUEST_BURY_THOSE_COCKROACHES) == QUEST_STATUS_INCOMPLETE)
                                 owner->KilledMonsterCredit(cCredit->GetEntry(), cCredit->GetGUID());
                         }
+                        me->Kill(cCredit);
                     }
                 }
                 me->Kill(me);
