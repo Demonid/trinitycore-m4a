@@ -404,7 +404,6 @@ void CalendarMgr::SendCalendarEventInvite(CalendarInvite const& invite)
 {
     CalendarEvent* calendarEvent = GetEvent(invite.GetEventId());
     time_t statusTime = invite.GetStatusTime();
-    bool hasStatusTime = statusTime != 946684800;   // 01/01/2000 00:00:00
 
     uint64 invitee = invite.GetInviteeGUID();
     Player* player = ObjectAccessor::FindPlayer(invitee);
@@ -417,8 +416,8 @@ void CalendarMgr::SendCalendarEventInvite(CalendarInvite const& invite)
     data << uint64(invite.GetInviteId());
     data << uint8(level);
     data << uint8(invite.GetStatus());
-    data << uint8(hasStatusTime);
-    if (hasStatusTime)
+    data << uint8(static_cast<bool>(statusTime));
+    if (statusTime)
         data.AppendPackedTime(statusTime);
     data << uint8(invite.GetSenderGUID() != invite.GetInviteeGUID()); // false only if the invite is sign-up
 

@@ -31,7 +31,7 @@ SMSG_CALENDAR_RAID_LOCKOUT_UPDATED      SendCalendarRaidLockoutUpdated(InstanceS
 Finish complains' handling - what to do with received complains and how to respond?
 Find out what to do with all "not used yet" opcodes
 Correct errors sending (event/invite not found, invites exceeded, event already passed, permissions etc.)
-Fix locked events to be displayed properly and response time shouldn't be shown for people that haven't respond yet
+Fix locked events to be displayed properly
 Copied events should probably have a new owner
 
 */
@@ -245,8 +245,7 @@ void WorldSession::HandleCalendarAddEvent(WorldPacket& recvData)
 
     if (calendarEvent->IsGuildAnnouncement())
     {
-        // 946684800 is 01/01/2000 00:00:00 - default response time
-        CalendarInvite* invite = new CalendarInvite(0, calendarEvent->GetEventId(), 0, guid, 946684800, CALENDAR_STATUS_NOT_SIGNED_UP, CALENDAR_RANK_PLAYER, "");
+        CalendarInvite* invite = new CalendarInvite(0, calendarEvent->GetEventId(), 0, guid, time_t(), CALENDAR_STATUS_NOT_SIGNED_UP, CALENDAR_RANK_PLAYER, "");
         sCalendarMgr->AddInvite(calendarEvent, invite);
     }
     else
@@ -262,8 +261,7 @@ void WorldSession::HandleCalendarAddEvent(WorldPacket& recvData)
             recvData.readPackGUID(invitee);
             recvData >> status >> rank;
 
-            // 946684800 is 01/01/2000 00:00:00 - default response time
-            CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), calendarEvent->GetEventId(), invitee, guid, 946684800, CalendarInviteStatus(status), CalendarModerationRank(rank), "");
+            CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), calendarEvent->GetEventId(), invitee, guid, time_t(), CalendarInviteStatus(status), CalendarModerationRank(rank), "");
             sCalendarMgr->AddInvite(calendarEvent, invite);
         }
     }
@@ -431,8 +429,7 @@ void WorldSession::HandleCalendarEventInvite(WorldPacket& recvData)
                 return;
             }
 
-            // 946684800 is 01/01/2000 00:00:00 - default response time
-            CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, inviteeGuid, playerGuid, 946684800, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
+            CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, inviteeGuid, playerGuid, time_t(), CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
             sCalendarMgr->AddInvite(calendarEvent, invite);
         }
         else
@@ -446,8 +443,7 @@ void WorldSession::HandleCalendarEventInvite(WorldPacket& recvData)
             return;
         }
 
-        // 946684800 is 01/01/2000 00:00:00 - default response time
-        CalendarInvite* invite = new CalendarInvite(inviteId, 0, inviteeGuid, playerGuid, 946684800, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
+        CalendarInvite* invite = new CalendarInvite(inviteId, 0, inviteeGuid, playerGuid, time_t(), CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
         sCalendarMgr->SendCalendarEventInvite(*invite);
     }
 }
