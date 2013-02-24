@@ -16,7 +16,6 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "stdafx.hpp"
 /*
 ----- Opcodes Not Used yet -----
 
@@ -36,6 +35,7 @@ Copied events should probably have a new owner
 
 */
 
+#include "stdafx.hpp"
 #include "InstanceSaveMgr.h"
 #include "Log.h"
 #include "Opcodes.h"
@@ -227,17 +227,17 @@ void WorldSession::HandleCalendarAddEvent(WorldPacket& recvData)
     uint8 repeatable;
     uint32 maxInvites;
     int32 dungeonId;
-    uint32 eventPackedTime;
-    uint32 unkPackedTime;
+    time_t event_time;
+    time_t lockout_time;
     uint32 flags;
 
     recvData >> title >> description >> type >> repeatable >> maxInvites >> dungeonId;
-    recvData.ReadPackedTime(eventPackedTime);
-    recvData.ReadPackedTime(unkPackedTime);
+    recvData.ReadPackedTime(event_time);
+    recvData.ReadPackedTime(lockout_time);
     recvData >> flags;
 
     CalendarEvent* calendarEvent = new CalendarEvent(sCalendarMgr->GetFreeEventId(), guid, 0, CalendarEventType(type), dungeonId,
-        time_t(eventPackedTime), flags, time_t(unkPackedTime), title, description);
+        event_time, flags, lockout_time, title, description);
 
     if (calendarEvent->IsGuildEvent() || calendarEvent->IsGuildAnnouncement())
         if (Player* creator = ObjectAccessor::FindPlayer(guid))
@@ -245,7 +245,7 @@ void WorldSession::HandleCalendarAddEvent(WorldPacket& recvData)
 
     if (calendarEvent->IsGuildAnnouncement())
     {
-        CalendarInvite* invite = new CalendarInvite(0, calendarEvent->GetEventId(), 0, guid, time_t(), CALENDAR_STATUS_NOT_SIGNED_UP, CALENDAR_RANK_PLAYER, "");
+        CalendarInvite* invite = new CalendarInvite(0, calendarEvent->GetEventId(), 0, guid, -1, CALENDAR_STATUS_NOT_SIGNED_UP, CALENDAR_RANK_PLAYER, "");
         sCalendarMgr->AddInvite(calendarEvent, invite);
     }
     else
@@ -261,7 +261,7 @@ void WorldSession::HandleCalendarAddEvent(WorldPacket& recvData)
             recvData.readPackGUID(invitee);
             recvData >> status >> rank;
 
-            CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), calendarEvent->GetEventId(), invitee, guid, time_t(), CalendarInviteStatus(status), CalendarModerationRank(rank), "");
+            CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), calendarEvent->GetEventId(), invitee, guid, -1, CalendarInviteStatus(status), CalendarModerationRank(rank), "");
             sCalendarMgr->AddInvite(calendarEvent, invite);
         }
     }
@@ -282,21 +282,21 @@ void WorldSession::HandleCalendarUpdateEvent(WorldPacket& recvData)
     uint8 repetitionType;
     uint32 maxInvites;
     int32 dungeonId;
-    uint32 eventPackedTime;
-    uint32 timeZoneTime;
+    time_t event_time;
+    time_t lockout_time;
     uint32 flags;
 
     recvData >> eventId >> inviteId >> title >> description >> type >> repetitionType >> maxInvites >> dungeonId;
-    recvData.ReadPackedTime(eventPackedTime);
-    recvData.ReadPackedTime(timeZoneTime);
+    recvData.ReadPackedTime(event_time);
+    recvData.ReadPackedTime(lockout_time);
     recvData >> flags;
 
     sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_CALENDAR_UPDATE_EVENT [" UI64FMTD "] EventId [" UI64FMTD
         "], InviteId [" UI64FMTD "] Title %s, Description %s, type %u "
-        "Repeatable %u, MaxInvites %u, Dungeon ID %d, Time %u "
-        "Time2 %u, Flags %u", guid, eventId, inviteId, title.c_str(),
+        "Repeatable %u, MaxInvites %u, Dungeon ID %d, Time %ld "
+        "Time2 %ld, Flags %u", guid, eventId, inviteId, title.c_str(),
         description.c_str(), type, repetitionType, maxInvites, dungeonId,
-        eventPackedTime, timeZoneTime, flags);
+        static_cast<long>(event_time), static_cast<long>(lockout_time), flags);
 
     if (CalendarEvent* calendarEvent = sCalendarMgr->GetEvent(eventId))
     {
@@ -304,8 +304,8 @@ void WorldSession::HandleCalendarUpdateEvent(WorldPacket& recvData)
 
         calendarEvent->SetType(CalendarEventType(type));
         calendarEvent->SetFlags(flags);
-        calendarEvent->SetEventTime(time_t(eventPackedTime));
-        calendarEvent->SetTimeZoneTime(time_t(timeZoneTime)); // Not sure, seems constant from the little sniffs we have
+        calendarEvent->SetEventTime(event_time);
+        calendarEvent->SetTimeZoneTime(lockout_time);
         calendarEvent->SetDungeonId(dungeonId);
         calendarEvent->SetTitle(title);
         calendarEvent->SetDescription(description);
@@ -333,17 +333,17 @@ void WorldSession::HandleCalendarCopyEvent(WorldPacket& recvData)
     uint64 guid = _player->GetGUID();
     uint64 eventId;
     uint64 inviteId;
-    uint32 time;
+    time_t event_time;
 
     recvData >> eventId >> inviteId;
-    recvData.ReadPackedTime(time);
+    recvData.ReadPackedTime(event_time);
     sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_CALENDAR_COPY_EVENT [" UI64FMTD "], EventId [" UI64FMTD
-        "] inviteId [" UI64FMTD "] Time: %u", guid, eventId, inviteId, time);
+        "] inviteId [" UI64FMTD "] Time: %ld", guid, eventId, inviteId, static_cast<long>(event_time));
 
     if (CalendarEvent* oldEvent = sCalendarMgr->GetEvent(eventId))
     {
         CalendarEvent* newEvent = new CalendarEvent(*oldEvent, sCalendarMgr->GetFreeEventId());
-        newEvent->SetEventTime(time_t(time));
+        newEvent->SetEventTime(event_time);
         sCalendarMgr->AddEvent(newEvent, CALENDAR_SENDTYPE_COPY);
 
         std::vector<CalendarInvite*> invites = sCalendarMgr->GetEventInvites(eventId);
@@ -429,7 +429,7 @@ void WorldSession::HandleCalendarEventInvite(WorldPacket& recvData)
                 return;
             }
 
-            CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, inviteeGuid, playerGuid, time_t(), CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
+            CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
             sCalendarMgr->AddInvite(calendarEvent, invite);
         }
         else
@@ -443,7 +443,7 @@ void WorldSession::HandleCalendarEventInvite(WorldPacket& recvData)
             return;
         }
 
-        CalendarInvite* invite = new CalendarInvite(inviteId, 0, inviteeGuid, playerGuid, time_t(), CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
+        CalendarInvite* invite = new CalendarInvite(inviteId, 0, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
         sCalendarMgr->SendCalendarEventInvite(*invite);
     }
 }

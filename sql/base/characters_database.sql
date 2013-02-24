@@ -251,9 +251,9 @@ CREATE TABLE IF NOT EXISTS `calendar_events` (
   `description` varchar(255) NOT NULL DEFAULT '',
   `type` tinyint(1) unsigned NOT NULL DEFAULT '4',
   `dungeon` int(10) NOT NULL DEFAULT '-1',
-  `eventtime` int(10) unsigned NOT NULL DEFAULT '0',
+  `event_time` int(10) NOT NULL DEFAULT '-1',
   `flags` int(10) unsigned NOT NULL DEFAULT '0',
-  `time2` int(10) unsigned NOT NULL DEFAULT '0',
+  `lockout_time` int(10) NOT NULL DEFAULT '-1',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -271,7 +271,7 @@ CREATE TABLE IF NOT EXISTS `calendar_invites` (
   `invitee` int(10) unsigned NOT NULL DEFAULT '0',
   `sender` int(10) unsigned NOT NULL DEFAULT '0',
   `status` tinyint(1) unsigned NOT NULL DEFAULT '0',
-  `statustime` int(10) unsigned NOT NULL DEFAULT '0',
+  `response_time` int(10) NOT NULL DEFAULT '-1',
   `rank` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `text` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)

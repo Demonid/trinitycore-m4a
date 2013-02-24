@@ -208,8 +208,8 @@ struct CalendarEvent
             _eventTime(eventTime), _flags(flags), _timezoneTime(timezoneTime), _title(title),
             _description(description) { }
 
-        CalendarEvent() : _eventId(1), _creatorGUID(0), _guildId(0), _type(CALENDAR_TYPE_OTHER), _dungeonId(-1), _eventTime(0),
-            _flags(0), _timezoneTime(0), _title(""), _description("") { }
+        CalendarEvent() : _eventId(1), _creatorGUID(0), _guildId(0), _type(CALENDAR_TYPE_OTHER), _dungeonId(-1), _eventTime(-1),
+            _flags(0), _timezoneTime(-1), _title(""), _description("") { }
 
         ~CalendarEvent();
 

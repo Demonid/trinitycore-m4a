@@ -359,7 +359,7 @@ class ByteBuffer
             }
         }
 
-        uint32 ReadPackedTime()
+        time_t ReadPackedTime()
         {
             if (uint32 packedDate = read<uint32>())
             {
@@ -374,13 +374,13 @@ class ByteBuffer
                 lt.tm_year = ((packedDate >> 24) & 0x1F) + 100;
                 lt.tm_isdst = -1;
 
-                return uint32(mktime(&lt));
+                return mktime(&lt);
             }
             else
-                return 0;
+                return -1;
         }
 
-        ByteBuffer& ReadPackedTime(uint32& time)
+        ByteBuffer& ReadPackedTime(time_t& time)
         {
             time = ReadPackedTime();
             return *this;
@@ -467,7 +467,7 @@ class ByteBuffer
 
         void AppendPackedTime(time_t time)
         {
-            tm* lt = time ? localtime(&time) : nullptr;
+            tm* lt = time != -1 ? localtime(&time) : nullptr;
             append<uint32>(lt ? (lt->tm_year - 100) << 24 | lt->tm_mon  << 20 | (lt->tm_mday - 1) << 14 | lt->tm_wday << 11 | lt->tm_hour << 6 | lt->tm_min : 0);
         }
 
