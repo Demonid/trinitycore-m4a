@@ -372,6 +372,7 @@ class ByteBuffer
                 lt.tm_mday = ((packedDate >> 14) & 0x3F) + 1;
                 lt.tm_mon = (packedDate >> 20) & 0xF;
                 lt.tm_year = ((packedDate >> 24) & 0x1F) + 100;
+                lt.tm_isdst = -1;
 
                 return uint32(mktime(&lt));
             }
