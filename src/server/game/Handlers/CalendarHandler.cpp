@@ -343,15 +343,31 @@ void WorldSession::HandleCalendarCopyEvent(WorldPacket& recvData)
     if (CalendarEvent* oldEvent = sCalendarMgr->GetEvent(eventId))
     {
         CalendarEvent* newEvent = new CalendarEvent(*oldEvent, sCalendarMgr->GetFreeEventId());
+        newEvent->SetCreatorGUID(guid);
         newEvent->SetEventTime(event_time);
         sCalendarMgr->AddEvent(newEvent, CALENDAR_SENDTYPE_COPY);
 
         std::vector<CalendarInvite*> invites = sCalendarMgr->GetEventInvites(eventId);
 
         for (std::vector<CalendarInvite*>::const_iterator itr = invites.begin(); itr != invites.end(); ++itr)
-            sCalendarMgr->AddInvite(newEvent, new CalendarInvite(**itr, sCalendarMgr->GetFreeInviteId(), newEvent->GetEventId()));
-
-        // should we change owner when somebody makes a copy of event owned by another person?
+        {
+            auto &old_invite = *itr;
+            auto invitee = old_invite->GetInviteeGUID();
+            auto status = CALENDAR_STATUS_INVITED;
+            auto rank = old_invite->GetRank();
+            if ((*itr)->GetInviteeGUID() == guid)
+            {
+                status = CALENDAR_STATUS_CONFIRMED;
+                rank = CALENDAR_RANK_OWNER;
+            }
+            else
+            {
+                if (rank == CALENDAR_RANK_OWNER)
+                    rank = CALENDAR_RANK_MODERATOR;
+            }
+            auto invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), newEvent->GetEventId(), invitee, guid, -1, status, rank, "");
+            sCalendarMgr->AddInvite(newEvent, invite);
+        }
     }
     else
         sCalendarMgr->SendCalendarCommandResult(guid, CALENDAR_ERROR_EVENT_INVALID);
