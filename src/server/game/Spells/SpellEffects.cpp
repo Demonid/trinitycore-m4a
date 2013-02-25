@@ -1618,8 +1618,16 @@ void Spell::EffectHealPct(SpellEffIndex /*effIndex*/)
     if (m_spellInfo->Id == 59754 && unitTarget == m_caster)
         return;
 
-    uint32 heal = m_originalCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, unitTarget->CountPctFromMaxHealth(damage), HEAL);
-    heal = unitTarget->SpellHealingBonusTaken(m_originalCaster, m_spellInfo, heal, HEAL);
+    uint32 heal = unitTarget->CountPctFromMaxHealth(damage);
+    bool apply_bonuses = true;
+    if (auto creature = dynamic_cast<Creature *>(unitTarget))
+        if (creature->isWorldBoss() || creature->IsDungeonBoss())
+            apply_bonuses = false;
+    if (apply_bonuses)
+    {
+        heal = m_originalCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, heal, HEAL);
+        heal = unitTarget->SpellHealingBonusTaken(m_originalCaster, m_spellInfo, heal, HEAL);
+    }
 
     m_healing += heal;
 }
