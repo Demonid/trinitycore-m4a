@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.hpp"
+#include <algorithm>
 #include "HostileRefManager.h"
 #include "ThreatManager.h"
 #include "Unit.h"
@@ -42,15 +43,17 @@ HostileRefManager::~HostileRefManager()
 
 void HostileRefManager::threatAssist(Unit* victim, float baseThreat, SpellInfo const* threatSpell)
 {
-    HostileReference* ref = getFirst();
     float threat = ThreatCalcHelper::calcThreat(victim, iOwner, baseThreat, (threatSpell ? threatSpell->GetSchoolMask() : SPELL_SCHOOL_MASK_NORMAL), threatSpell);
-    threat /= getSize();
-    while (ref)
+    auto pred = [&](Reference<Unit, ThreatManager> &ref)
+        {
+            return iOwner->IsValidAttackTarget(ref.getSource()->getOwner()) && ThreatCalcHelper::isValidProcess(victim, ref.getSource()->getOwner(), threatSpell);
+        };
+    if (auto count = std::count_if(begin(), end(), pred))
     {
-        if (ThreatCalcHelper::isValidProcess(victim, ref->getSource()->getOwner(), threatSpell))
-            ref->getSource()->doAddThreat(victim, threat);
-
-        ref = ref->next();
+        threat /= count;
+        for (auto &ref : *this)
+            if (pred(ref))
+                ref.getSource()->doAddThreat(victim, threat);
     }
 }
 
