@@ -345,7 +345,6 @@ void WorldSession::HandleCalendarCopyEvent(WorldPacket& recvData)
         CalendarEvent* newEvent = new CalendarEvent(*oldEvent, sCalendarMgr->GetFreeEventId());
         newEvent->SetCreatorGUID(guid);
         newEvent->SetEventTime(event_time);
-        sCalendarMgr->AddEvent(newEvent, CALENDAR_SENDTYPE_COPY);
 
         std::vector<CalendarInvite*> invites = sCalendarMgr->GetEventInvites(eventId);
 
@@ -368,6 +367,8 @@ void WorldSession::HandleCalendarCopyEvent(WorldPacket& recvData)
             auto invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), newEvent->GetEventId(), invitee, guid, -1, status, rank, "");
             sCalendarMgr->AddInvite(newEvent, invite);
         }
+
+        sCalendarMgr->AddEvent(newEvent, CALENDAR_SENDTYPE_COPY);
     }
     else
         sCalendarMgr->SendCalendarCommandResult(guid, CALENDAR_ERROR_EVENT_INVALID);
