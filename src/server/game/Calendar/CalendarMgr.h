@@ -263,7 +263,7 @@ struct CalendarEvent
         std::string _description;
 };
 
-typedef std::set<CalendarEvent*> CalendarEventStore;
+typedef std::set<std::unique_ptr<CalendarEvent>> CalendarEventStore;
 typedef std::map<uint64 /* eventId */, std::vector<std::unique_ptr<CalendarInvite>> > CalendarInviteStore;
 
 class CalendarMgr
@@ -287,7 +287,7 @@ class CalendarMgr
 
         CalendarEvent* GetEvent(uint64 eventId);
         CalendarEventStore const& GetEvents() const { return _events; }
-        CalendarEventStore GetPlayerEvents(uint64 guid);
+        std::set<CalendarEvent *> GetPlayerEvents(uint64 guid);
 
         CalendarInvite* GetInvite(uint64 inviteId);
         CalendarInviteStore const& GetInvites() const { return _invites; }
@@ -301,7 +301,7 @@ class CalendarMgr
 
         uint32 GetPlayerNumPending(uint64 guid);
 
-        void AddEvent(CalendarEvent* calendarEvent, CalendarSendEventType sendType);
+        void AddEvent(std::unique_ptr<CalendarEvent> calendarEvent, CalendarSendEventType sendType);
         void RemoveEvent(uint64 eventId, uint64 remover);
         void UpdateEvent(CalendarEvent* calendarEvent);
 

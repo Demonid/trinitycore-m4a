@@ -72,8 +72,8 @@ void CalendarMgr::LoadFromDB()
             if (flags & CALENDAR_FLAG_GUILD_EVENT || flags & CALENDAR_FLAG_WITHOUT_INVITES)
                 guildId = Player::GetGuildIdFromDB(creatorGUID);
 
-            CalendarEvent* calendarEvent = new CalendarEvent(eventId, creatorGUID , guildId, type, dungeonId, event_time, flags, lockout_time, title, description);
-            _events.insert(calendarEvent);
+            std::unique_ptr<CalendarEvent> calendarEvent(new CalendarEvent(eventId, creatorGUID , guildId, type, dungeonId, event_time, flags, lockout_time, title, description));
+            _events.insert(std::move(calendarEvent));
 
             _maxEventId = std::max(_maxEventId, eventId);
 
@@ -119,11 +119,12 @@ void CalendarMgr::LoadFromDB()
             _freeInviteIds.push_back(i);
 }
 
-void CalendarMgr::AddEvent(CalendarEvent* calendarEvent, CalendarSendEventType sendType)
+void CalendarMgr::AddEvent(std::unique_ptr<CalendarEvent> calendarEvent, CalendarSendEventType sendType)
 {
-    _events.insert(calendarEvent);
-    UpdateEvent(calendarEvent);
-    SendCalendarEvent(calendarEvent->GetCreatorGUID(), *calendarEvent, sendType);
+    auto tmp = calendarEvent.get();
+    _events.insert(std::move(calendarEvent));
+    UpdateEvent(tmp);
+    SendCalendarEvent(tmp->GetCreatorGUID(), *tmp, sendType);
 }
 
 void CalendarMgr::AddInvite(CalendarEvent* calendarEvent, std::unique_ptr<CalendarInvite> invite)
@@ -144,7 +145,11 @@ void CalendarMgr::AddInvite(CalendarEvent* calendarEvent, std::unique_ptr<Calend
 
 void CalendarMgr::RemoveEvent(uint64 eventId, uint64 remover)
 {
-    CalendarEvent* calendarEvent = GetEvent(eventId);
+    auto it = _events.begin(), last = _events.end();
+    for (; it != last; ++it)
+        if ((*it)->GetEventId() == eventId)
+            break;
+    CalendarEvent* calendarEvent = it != last ? it->get() : nullptr;
 
     if (!calendarEvent)
     {
@@ -177,8 +182,7 @@ void CalendarMgr::RemoveEvent(uint64 eventId, uint64 remover)
     trans->Append(stmt);
     CharacterDatabase.CommitTransaction(trans);
 
-    delete calendarEvent;
-    _events.erase(calendarEvent);
+    _events.erase(it);
 }
 
 void CalendarMgr::RemoveInvite(uint64 inviteId, uint64 eventId, uint64 /*remover*/)
@@ -276,7 +280,7 @@ CalendarEvent* CalendarMgr::GetEvent(uint64 eventId)
 {
     for (CalendarEventStore::const_iterator itr = _events.begin(); itr != _events.end(); ++itr)
         if ((*itr)->GetEventId() == eventId)
-            return *itr;
+            return itr->get();
 
     sLog->outDebug(LOG_FILTER_CALENDAR, "CalendarMgr::GetEvent: [" UI64FMTD "] not found!", eventId);
     return NULL;
@@ -333,9 +337,9 @@ uint64 CalendarMgr::GetFreeInviteId()
     }
 }
 
-CalendarEventStore CalendarMgr::GetPlayerEvents(uint64 guid)
+std::set<CalendarEvent *> CalendarMgr::GetPlayerEvents(uint64 guid)
 {
-    CalendarEventStore events;
+    std::set<CalendarEvent *> events;
 
     for (CalendarInviteStore::const_iterator itr = _invites.begin(); itr != _invites.end(); ++itr)
         for (auto itr2 = itr->second.begin(); itr2 != itr->second.end(); ++itr2)
@@ -345,7 +349,7 @@ CalendarEventStore CalendarMgr::GetPlayerEvents(uint64 guid)
     if (Player* player = ObjectAccessor::FindPlayer(guid))
         for (CalendarEventStore::const_iterator itr = _events.begin(); itr != _events.end(); ++itr)
             if ((*itr)->GetGuildId() == player->GetGuildId())
-                events.insert(*itr);
+                events.insert(itr->get());
 
     return events;
 }
