@@ -470,7 +470,7 @@ void WorldSession::HandleCalendarEventInvite(WorldPacket& recvData)
             return;
         }
 
-        CalendarInvite invite(inviteId, 0, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
+        CalendarInvite invite(0, 0, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
         sCalendarMgr->SendCalendarEventInvite(invite);
     }
 }
