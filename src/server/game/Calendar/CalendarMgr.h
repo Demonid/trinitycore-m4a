@@ -18,6 +18,7 @@
 #ifndef TRINITY_CALENDARMGR_H
 #define TRINITY_CALENDARMGR_H
 
+#include <memory>
 #include <ace/Singleton.h>
 #include "Common.h"
 #include "WorldPacket.h"
@@ -263,7 +264,7 @@ struct CalendarEvent
 };
 
 typedef std::set<CalendarEvent*> CalendarEventStore;
-typedef std::map<uint64 /* eventId */, std::vector<CalendarInvite*> > CalendarInviteStore;
+typedef std::map<uint64 /* eventId */, std::vector<std::unique_ptr<CalendarInvite>> > CalendarInviteStore;
 
 class CalendarMgr
 {
@@ -304,7 +305,7 @@ class CalendarMgr
         void RemoveEvent(uint64 eventId, uint64 remover);
         void UpdateEvent(CalendarEvent* calendarEvent);
 
-        void AddInvite(CalendarEvent* calendarEvent, CalendarInvite* invite);
+        void AddInvite(CalendarEvent* calendarEvent, std::unique_ptr<CalendarInvite> invite);
         void RemoveInvite(uint64 inviteId, uint64 eventId, uint64 remover);
         void UpdateInvite(CalendarInvite* invite);
 

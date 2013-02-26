@@ -36,6 +36,8 @@ Copied events should probably have a new owner
 */
 
 #include "stdafx.hpp"
+#include <memory>
+#include <utility>
 #include "InstanceSaveMgr.h"
 #include "Log.h"
 #include "Opcodes.h"
@@ -245,8 +247,8 @@ void WorldSession::HandleCalendarAddEvent(WorldPacket& recvData)
 
     if (calendarEvent->IsGuildAnnouncement())
     {
-        CalendarInvite* invite = new CalendarInvite(0, calendarEvent->GetEventId(), 0, guid, -1, CALENDAR_STATUS_NOT_SIGNED_UP, CALENDAR_RANK_PLAYER, "");
-        sCalendarMgr->AddInvite(calendarEvent, invite);
+        std::unique_ptr<CalendarInvite> invite(new CalendarInvite(0, calendarEvent->GetEventId(), 0, guid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, ""));
+        sCalendarMgr->AddInvite(calendarEvent, std::move(invite));
     }
     else
     {
@@ -261,8 +263,8 @@ void WorldSession::HandleCalendarAddEvent(WorldPacket& recvData)
             recvData.readPackGUID(invitee);
             recvData >> status >> rank;
 
-            CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), calendarEvent->GetEventId(), invitee, guid, -1, CalendarInviteStatus(status), CalendarModerationRank(rank), "");
-            sCalendarMgr->AddInvite(calendarEvent, invite);
+            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), calendarEvent->GetEventId(), invitee, guid, -1, CalendarInviteStatus(status), CalendarModerationRank(rank), ""));
+            sCalendarMgr->AddInvite(calendarEvent, std::move(invite));
         }
     }
 
@@ -346,26 +348,34 @@ void WorldSession::HandleCalendarCopyEvent(WorldPacket& recvData)
         newEvent->SetCreatorGUID(guid);
         newEvent->SetEventTime(event_time);
 
-        std::vector<CalendarInvite*> invites = sCalendarMgr->GetEventInvites(eventId);
-
-        for (std::vector<CalendarInvite*>::const_iterator itr = invites.begin(); itr != invites.end(); ++itr)
+        if (newEvent->IsGuildAnnouncement())
         {
-            auto &old_invite = *itr;
-            auto invitee = old_invite->GetInviteeGUID();
-            auto status = CALENDAR_STATUS_INVITED;
-            auto rank = old_invite->GetRank();
-            if ((*itr)->GetInviteeGUID() == guid)
+            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(0, newEvent->GetEventId(), 0, guid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, ""));
+            sCalendarMgr->AddInvite(newEvent, std::move(invite));
+        }
+        else
+        {
+            std::vector<CalendarInvite*> invites = sCalendarMgr->GetEventInvites(eventId);
+
+            for (std::vector<CalendarInvite*>::const_iterator itr = invites.begin(); itr != invites.end(); ++itr)
             {
-                status = CALENDAR_STATUS_CONFIRMED;
-                rank = CALENDAR_RANK_OWNER;
+                auto &old_invite = *itr;
+                auto invitee = old_invite->GetInviteeGUID();
+                auto status = CALENDAR_STATUS_INVITED;
+                auto rank = old_invite->GetRank();
+                if ((*itr)->GetInviteeGUID() == guid)
+                {
+                    status = CALENDAR_STATUS_CONFIRMED;
+                    rank = CALENDAR_RANK_OWNER;
+                }
+                else
+                {
+                    if (rank == CALENDAR_RANK_OWNER)
+                        rank = CALENDAR_RANK_MODERATOR;
+                }
+                std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), newEvent->GetEventId(), invitee, guid, -1, status, rank, ""));
+                sCalendarMgr->AddInvite(newEvent, std::move(invite));
             }
-            else
-            {
-                if (rank == CALENDAR_RANK_OWNER)
-                    rank = CALENDAR_RANK_MODERATOR;
-            }
-            auto invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), newEvent->GetEventId(), invitee, guid, -1, status, rank, "");
-            sCalendarMgr->AddInvite(newEvent, invite);
         }
 
         sCalendarMgr->AddEvent(newEvent, CALENDAR_SENDTYPE_COPY);
@@ -446,8 +456,8 @@ void WorldSession::HandleCalendarEventInvite(WorldPacket& recvData)
                 return;
             }
 
-            CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
-            sCalendarMgr->AddInvite(calendarEvent, invite);
+            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, ""));
+            sCalendarMgr->AddInvite(calendarEvent, std::move(invite));
         }
         else
             sCalendarMgr->SendCalendarCommandResult(playerGuid, CALENDAR_ERROR_EVENT_INVALID);
@@ -460,8 +470,8 @@ void WorldSession::HandleCalendarEventInvite(WorldPacket& recvData)
             return;
         }
 
-        CalendarInvite* invite = new CalendarInvite(inviteId, 0, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
-        sCalendarMgr->SendCalendarEventInvite(*invite);
+        CalendarInvite invite(inviteId, 0, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
+        sCalendarMgr->SendCalendarEventInvite(invite);
     }
 }
 
@@ -483,8 +493,8 @@ void WorldSession::HandleCalendarEventSignup(WorldPacket& recvData)
         }
 
         CalendarInviteStatus status = tentative ? CALENDAR_STATUS_TENTATIVE : CALENDAR_STATUS_SIGNED_UP;
-        CalendarInvite* invite = new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, guid, guid, time(NULL), status, CALENDAR_RANK_PLAYER, "");
-        sCalendarMgr->AddInvite(calendarEvent, invite);
+        std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, guid, guid, time(NULL), status, CALENDAR_RANK_PLAYER, ""));
+        sCalendarMgr->AddInvite(calendarEvent, std::move(invite));
         sCalendarMgr->SendCalendarClearPendingAction(guid);
     }
     else
