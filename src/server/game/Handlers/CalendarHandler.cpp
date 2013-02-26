@@ -370,6 +370,13 @@ void WorldSession::HandleCalendarCopyEvent(WorldPacket& recvData)
                 }
                 else
                 {
+                    if (newEvent->IsGuildEvent())
+                    {
+                        auto player = ObjectAccessor::FindPlayer(invitee);
+                        if (auto guild = player ? player->GetGuildId() : Player::GetGuildIdFromDB(invitee))
+                            if (guild == newEvent->GetGuildId())
+                                continue;
+                    }
                     if (rank == CALENDAR_RANK_OWNER)
                         rank = CALENDAR_RANK_MODERATOR;
                 }
