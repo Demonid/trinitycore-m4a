@@ -135,8 +135,9 @@ void CalendarMgr::AddInvite(CalendarEvent* calendarEvent, std::unique_ptr<Calend
 
     if (!calendarEvent->IsGuildAnnouncement())
     {
+        auto tmp = invite.get();
         _invites[invite->GetEventId()].push_back(std::move(invite));
-        UpdateInvite(invite.get());
+        UpdateInvite(tmp);
     }
 }
 
