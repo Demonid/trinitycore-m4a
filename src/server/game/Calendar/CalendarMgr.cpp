@@ -395,10 +395,13 @@ uint32 CalendarMgr::GetPlayerNumPending(uint64 guid)
     std::vector<CalendarInvite*> const& invites = GetPlayerInvites(guid);
 
     uint32 pendingNum = 0;
+    auto time_ = time(nullptr);
     for (std::vector<CalendarInvite*>::const_iterator itr = invites.begin(); itr != invites.end(); ++itr)
         // correct?
-        if ((*itr)->GetStatus() == CALENDAR_STATUS_INVITED || (*itr)->GetStatus() == CALENDAR_STATUS_TENTATIVE || (*itr)->GetStatus() == CALENDAR_STATUS_NOT_SIGNED_UP)
-            ++pendingNum;
+        if ((*itr)->GetStatus() == CALENDAR_STATUS_INVITED)
+            if (auto event = GetEvent((*itr)->GetEventId()))
+                if (event->GetEventTime() > time_)
+                    ++pendingNum;
 
     return pendingNum;
 }
