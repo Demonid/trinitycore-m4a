@@ -68,11 +68,7 @@ void WorldSession::HandleCalendarGetCalendar(WorldPacket& /*recvData*/)
         data << uint8((*itr)->GetStatus());
         data << uint8((*itr)->GetRank());
         data << uint8((*itr)->type);
-
-        if (CalendarEvent* calendarEvent = sCalendarMgr->GetEvent((*itr)->GetEventId()))
-            data.appendPackGUID(calendarEvent->GetCreatorGUID());
-        else
-            data.appendPackGUID((*itr)->GetSenderGUID());
+        data.appendPackGUID((*itr)->GetSenderGUID());
     }
 
     auto &&playerEvents = sCalendarMgr->GetPlayerEvents(guid);
