@@ -870,8 +870,10 @@ public:
 
         void UpdateAI(const uint32 /*diff*/)
         {
-            if (WithRedDragonBlood && HarpoonerGUID && !me->HasAura(SPELL_RED_DRAGONBLOOD))
+            if (HarpoonerGUID && !me->HasAura(SPELL_RED_DRAGONBLOOD))
             {
+              if(WithRedDragonBlood)
+              {
                 if (Player* pHarpooner = Unit::GetPlayer(*me, HarpoonerGUID))
                 {
                     EnterEvadeMode();
@@ -883,6 +885,8 @@ public:
                     me->AttackStop();
                     WithRedDragonBlood = false;
                 }
+              }
+              else SetFollowComplete();
             }
 
             if (!UpdateVictim())
