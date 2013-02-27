@@ -84,6 +84,14 @@ enum CalendarInviteStatus
     CALENDAR_STATUS_REMOVED         = 9     // correct name?
 };
 
+enum calendar_invitetype
+{
+    calendar_invitetype_normal,
+    calendar_invitetype_signup,
+};
+
+const int calendar_max_invitetype = calendar_invitetype_signup;
+
 enum CalendarError
 {
     CALENDAR_OK                                 = 0,
@@ -130,6 +138,7 @@ struct CalendarInvite
 {
     public:
         CalendarInvite(CalendarInvite const& calendarInvite, uint64 inviteId, uint64 eventId)
+        : type(calendarInvite.type)
         {
             _inviteId = inviteId;
             _eventId = eventId;
@@ -142,12 +151,14 @@ struct CalendarInvite
         }
 
         CalendarInvite() : _inviteId(1), _eventId(0), _invitee(0), _senderGUID(0), _statusTime(time(NULL)),
-            _status(CALENDAR_STATUS_INVITED), _rank(CALENDAR_RANK_PLAYER), _text("") { }
+            _status(CALENDAR_STATUS_INVITED), _rank(CALENDAR_RANK_PLAYER),
+            type(), _text("") { }
 
         CalendarInvite(uint64 inviteId, uint64 eventId, uint64 invitee, uint64 senderGUID, time_t statusTime,
-            CalendarInviteStatus status, CalendarModerationRank rank, std::string text) :
+            CalendarInviteStatus status, CalendarModerationRank rank, calendar_invitetype type, std::string text) :
             _inviteId(inviteId), _eventId(eventId), _invitee(invitee), _senderGUID(senderGUID), _statusTime(statusTime),
-            _status(status), _rank(rank), _text(text) { }
+            _status(status), _rank(rank),
+            type(type), _text(text) { }
 
         ~CalendarInvite();
 
@@ -184,6 +195,8 @@ struct CalendarInvite
         CalendarInviteStatus _status;
         CalendarModerationRank _rank;
         std::string _text;
+public:
+        calendar_invitetype type;
 };
 
 struct CalendarEvent
@@ -305,7 +318,7 @@ class CalendarMgr
         void RemoveEvent(uint64 eventId, uint64 remover);
         void UpdateEvent(CalendarEvent* calendarEvent);
 
-        void AddInvite(CalendarEvent* calendarEvent, std::unique_ptr<CalendarInvite> invite);
+        void AddInvite(CalendarEvent* calendarEvent, std::unique_ptr<CalendarInvite> invite, bool creating = false);
         void RemoveInvite(uint64 inviteId, uint64 eventId, uint64 remover);
         void UpdateInvite(CalendarInvite* invite);
 
@@ -314,7 +327,7 @@ class CalendarMgr
 
         void SendCalendarEvent(uint64 guid, CalendarEvent const& calendarEvent, CalendarSendEventType sendType);
         void SendCalendarEventInvite(CalendarInvite const& invite);
-        void SendCalendarEventInviteAlert(CalendarEvent const& calendarEvent, CalendarInvite const& invite);
+        void SendCalendarEventInviteAlert(CalendarEvent const& calendarEvent, CalendarInvite const& invite, Player *except = nullptr);
         void SendCalendarEventInviteRemove(CalendarEvent const& calendarEvent, CalendarInvite const& invite, uint32 flags);
         void SendCalendarEventInviteRemoveAlert(uint64 guid, CalendarEvent const& calendarEvent, CalendarInviteStatus status);
         void SendCalendarEventUpdateAlert(CalendarEvent const& calendarEvent, time_t oldEventTime);

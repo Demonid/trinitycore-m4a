@@ -2325,6 +2325,11 @@ bool Guild::ChangeMemberRank(uint64 guid, uint8 newRank)
     return false;
 }
 
+bool Guild::has_member(uint64 guid) const
+{
+    return m_members.find(GUID_LOPART(guid)) != m_members.end();
+}
+
 // Bank (items move)
 void Guild::SwapItems(Player* player, uint8 tabId, uint8 slotId, uint8 destTabId, uint8 destSlotId, uint32 splitedAmount)
 {

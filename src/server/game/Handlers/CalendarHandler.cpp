@@ -31,7 +31,6 @@ Finish complains' handling - what to do with received complains and how to respo
 Find out what to do with all "not used yet" opcodes
 Correct errors sending (event/invite not found, invites exceeded, event already passed, permissions etc.)
 Fix locked events to be displayed properly
-Copied events should probably have a new owner
 
 */
 
@@ -68,17 +67,12 @@ void WorldSession::HandleCalendarGetCalendar(WorldPacket& /*recvData*/)
         data << uint64((*itr)->GetInviteId());
         data << uint8((*itr)->GetStatus());
         data << uint8((*itr)->GetRank());
+        data << uint8((*itr)->type);
 
         if (CalendarEvent* calendarEvent = sCalendarMgr->GetEvent((*itr)->GetEventId()))
-        {
-            data << uint8(calendarEvent->IsGuildEvent());
             data.appendPackGUID(calendarEvent->GetCreatorGUID());
-        }
         else
-        {
-            data << uint8(0);
             data.appendPackGUID((*itr)->GetSenderGUID());
-        }
     }
 
     auto &&playerEvents = sCalendarMgr->GetPlayerEvents(guid);
@@ -247,11 +241,12 @@ void WorldSession::HandleCalendarAddEvent(WorldPacket& recvData)
 
     if (calendarEvent->IsGuildAnnouncement())
     {
-        std::unique_ptr<CalendarInvite> invite(new CalendarInvite(0, calendarEvent->GetEventId(), 0, guid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, ""));
-        sCalendarMgr->AddInvite(calendarEvent.get(), std::move(invite));
+        std::unique_ptr<CalendarInvite> invite(new CalendarInvite(0, calendarEvent->GetEventId(), 0, guid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, calendar_invitetype_normal, ""));
+        sCalendarMgr->AddInvite(calendarEvent.get(), std::move(invite), true);
     }
     else
     {
+        Player *except = nullptr;
         uint32 inviteCount;
         recvData >> inviteCount;
 
@@ -263,9 +258,18 @@ void WorldSession::HandleCalendarAddEvent(WorldPacket& recvData)
             recvData.readPackGUID(invitee);
             recvData >> status >> rank;
 
-            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), calendarEvent->GetEventId(), invitee, guid, -1, CalendarInviteStatus(status), CalendarModerationRank(rank), ""));
-            sCalendarMgr->AddInvite(calendarEvent.get(), std::move(invite));
+            if (invitee == guid)
+                except = _player;
+            else
+                if (calendarEvent->IsGuildEvent())
+                    if (auto guild = sGuildMgr->GetGuildById(calendarEvent->GetGuildId()))
+                        if (guild->has_member(invitee))
+                            continue;
+            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), calendarEvent->GetEventId(), invitee, guid, -1, CalendarInviteStatus(status), CalendarModerationRank(rank), calendar_invitetype_normal, ""));
+            sCalendarMgr->AddInvite(calendarEvent.get(), std::move(invite), true);
         }
+        if (calendarEvent->IsGuildEvent())
+            sCalendarMgr->SendCalendarEventInviteAlert(*calendarEvent, CalendarInvite(0, calendarEvent->GetEventId(), 0, guid, -1, CALENDAR_STATUS_NOT_SIGNED_UP, CALENDAR_RANK_PLAYER, calendar_invitetype_signup, ""), except);
     }
 
     sCalendarMgr->AddEvent(std::move(calendarEvent), CALENDAR_SENDTYPE_ADD);
@@ -350,11 +354,12 @@ void WorldSession::HandleCalendarCopyEvent(WorldPacket& recvData)
 
         if (newEvent->IsGuildAnnouncement())
         {
-            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(0, newEvent->GetEventId(), 0, guid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, ""));
-            sCalendarMgr->AddInvite(newEvent.get(), std::move(invite));
+            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(0, newEvent->GetEventId(), 0, guid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, calendar_invitetype_normal, ""));
+            sCalendarMgr->AddInvite(newEvent.get(), std::move(invite), true);
         }
         else
         {
+            Player *except = nullptr;
             std::vector<CalendarInvite*> invites = sCalendarMgr->GetEventInvites(eventId);
 
             for (std::vector<CalendarInvite*>::const_iterator itr = invites.begin(); itr != invites.end(); ++itr)
@@ -367,22 +372,22 @@ void WorldSession::HandleCalendarCopyEvent(WorldPacket& recvData)
                 {
                     status = CALENDAR_STATUS_CONFIRMED;
                     rank = CALENDAR_RANK_OWNER;
+                    except = _player;
                 }
                 else
                 {
                     if (newEvent->IsGuildEvent())
-                    {
-                        auto player = ObjectAccessor::FindPlayer(invitee);
-                        if (auto guild = player ? player->GetGuildId() : Player::GetGuildIdFromDB(invitee))
-                            if (guild == newEvent->GetGuildId())
+                        if (auto guild = sGuildMgr->GetGuildById(newEvent->GetGuildId()))
+                            if (guild->has_member(invitee))
                                 continue;
-                    }
                     if (rank == CALENDAR_RANK_OWNER)
                         rank = CALENDAR_RANK_MODERATOR;
                 }
-                std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), newEvent->GetEventId(), invitee, guid, -1, status, rank, ""));
-                sCalendarMgr->AddInvite(newEvent.get(), std::move(invite));
+                std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), newEvent->GetEventId(), invitee, guid, -1, status, rank, calendar_invitetype_normal, ""));
+                sCalendarMgr->AddInvite(newEvent.get(), std::move(invite), true);
             }
+            if (newEvent->IsGuildEvent())
+                sCalendarMgr->SendCalendarEventInviteAlert(*newEvent, CalendarInvite(0, newEvent->GetEventId(), 0, guid, -1, CALENDAR_STATUS_NOT_SIGNED_UP, CALENDAR_RANK_PLAYER, calendar_invitetype_signup, ""), except);
         }
 
         sCalendarMgr->AddEvent(std::move(newEvent), CALENDAR_SENDTYPE_COPY);
@@ -463,7 +468,7 @@ void WorldSession::HandleCalendarEventInvite(WorldPacket& recvData)
                 return;
             }
 
-            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, ""));
+            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, calendar_invitetype_normal, ""));
             sCalendarMgr->AddInvite(calendarEvent, std::move(invite));
         }
         else
@@ -477,7 +482,7 @@ void WorldSession::HandleCalendarEventInvite(WorldPacket& recvData)
             return;
         }
 
-        CalendarInvite invite(0, 0, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, "");
+        CalendarInvite invite(0, 0, inviteeGuid, playerGuid, -1, CALENDAR_STATUS_INVITED, CALENDAR_RANK_PLAYER, calendar_invitetype_normal, "");
         sCalendarMgr->SendCalendarEventInvite(invite);
     }
 }
@@ -500,7 +505,7 @@ void WorldSession::HandleCalendarEventSignup(WorldPacket& recvData)
         }
 
         CalendarInviteStatus status = tentative ? CALENDAR_STATUS_TENTATIVE : CALENDAR_STATUS_SIGNED_UP;
-        std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, guid, guid, time(NULL), status, CALENDAR_RANK_PLAYER, ""));
+        std::unique_ptr<CalendarInvite> invite(new CalendarInvite(sCalendarMgr->GetFreeInviteId(), eventId, guid, guid, time(NULL), status, CALENDAR_RANK_PLAYER, calendar_invitetype_signup, ""));
         sCalendarMgr->AddInvite(calendarEvent, std::move(invite));
         sCalendarMgr->SendCalendarClearPendingAction(guid);
     }

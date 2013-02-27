@@ -84,8 +84,8 @@ void CalendarMgr::LoadFromDB()
     sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded %u calendar events", count);
     count = 0;
 
-    //                                                       0   1      2        3       4       5              6     7
-    if (QueryResult result = CharacterDatabase.Query("SELECT id, event, invitee, sender, status, response_time, rank, text FROM calendar_invites"))
+    //                                                       0   1      2        3       4       5              6     7       8
+    if (QueryResult result = CharacterDatabase.Query("SELECT id, event, invitee, sender, status, response_time, rank, type-1, text FROM calendar_invites"))
         do
         {
             Field* fields = result->Fetch();
@@ -97,9 +97,11 @@ void CalendarMgr::LoadFromDB()
             CalendarInviteStatus status = CalendarInviteStatus(fields[4].GetUInt8());
             time_t response_time        = fields[5].GetInt32();
             CalendarModerationRank rank = CalendarModerationRank(fields[6].GetUInt8());
-            std::string text            = fields[7].GetString();
+            int type                    = fields[7].GetDouble();
+            auto type_ = type >= 0 && type <= calendar_max_invitetype ? static_cast<calendar_invitetype>(type) : calendar_invitetype_normal;
+            std::string text            = fields[8].GetString();
 
-            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(inviteId, eventId, invitee, senderGUID, response_time, status, rank, text));
+            std::unique_ptr<CalendarInvite> invite(new CalendarInvite(inviteId, eventId, invitee, senderGUID, response_time, status, rank, type_, text));
             _invites[eventId].push_back(std::move(invite));
 
             _maxInviteId = std::max(_maxInviteId, inviteId);
@@ -127,12 +129,18 @@ void CalendarMgr::AddEvent(std::unique_ptr<CalendarEvent> calendarEvent, Calenda
     SendCalendarEvent(tmp->GetCreatorGUID(), *tmp, sendType);
 }
 
-void CalendarMgr::AddInvite(CalendarEvent* calendarEvent, std::unique_ptr<CalendarInvite> invite)
+void CalendarMgr::AddInvite(CalendarEvent* calendarEvent, std::unique_ptr<CalendarInvite> invite, bool creating)
 {
     if (!calendarEvent->IsGuildAnnouncement())
         SendCalendarEventInvite(*invite);
 
-    if (!calendarEvent->IsGuildEvent() || invite->GetInviteeGUID() == calendarEvent->GetCreatorGUID())
+    bool no_alert = false;
+    if (!creating)
+        if (calendarEvent->IsGuildEvent())
+            if (auto guild = sGuildMgr->GetGuildById(calendarEvent->GetGuildId()))
+                if (guild->has_member(invite->GetInviteeGUID()))
+                    no_alert = true;
+    if (!no_alert)
         SendCalendarEventInviteAlert(*calendarEvent, *invite);
 
     if (!calendarEvent->IsGuildAnnouncement())
@@ -206,7 +214,12 @@ void CalendarMgr::RemoveInvite(uint64 inviteId, uint64 eventId, uint64 /*remover
     trans->Append(stmt);
     CharacterDatabase.CommitTransaction(trans);
 
-    if (!calendarEvent->IsGuildEvent())
+    auto no_alert = false;
+    if (calendarEvent->IsGuildEvent())
+        if (auto guild = sGuildMgr->GetGuildById(calendarEvent->GetGuildId()))
+            if (guild->has_member((*itr)->GetInviteeGUID()))
+                no_alert = true;
+    if (!no_alert)
         SendCalendarEventInviteRemoveAlert((*itr)->GetInviteeGUID(), *calendarEvent, CALENDAR_STATUS_REMOVED);
 
     SendCalendarEventInviteRemove(*calendarEvent, **itr, calendarEvent->GetFlags());
@@ -247,7 +260,8 @@ void CalendarMgr::UpdateInvite(CalendarInvite* invite)
     stmt->setUInt8(4, invite->GetStatus());
     stmt->setInt32(5, invite->GetStatusTime());
     stmt->setUInt8(6, invite->GetRank());
-    stmt->setString(7, invite->GetText());
+    stmt->setUInt8(7, invite->type);
+    stmt->setString(8, invite->GetText());
     trans->Append(stmt);
     CharacterDatabase.CommitTransaction(trans);
 }
@@ -509,7 +523,7 @@ void CalendarMgr::SendCalendarEventModeratorStatusAlert(CalendarEvent const& cal
     SendPacketToAllEventRelatives(data, calendarEvent);
 }
 
-void CalendarMgr::SendCalendarEventInviteAlert(CalendarEvent const& calendarEvent, CalendarInvite const& invite)
+void CalendarMgr::SendCalendarEventInviteAlert(CalendarEvent const& calendarEvent, CalendarInvite const& invite, Player *except)
 {
     WorldPacket data(SMSG_CALENDAR_EVENT_INVITE_ALERT);
     data << uint64(calendarEvent.GetEventId());
@@ -524,10 +538,14 @@ void CalendarMgr::SendCalendarEventInviteAlert(CalendarEvent const& calendarEven
     data.appendPackGUID(calendarEvent.GetCreatorGUID());
     data.appendPackGUID(invite.GetSenderGUID());
 
-    if (calendarEvent.IsGuildEvent() || calendarEvent.IsGuildAnnouncement())
+    if (calendarEvent.IsGuildEvent() && !invite.GetInviteId() || calendarEvent.IsGuildAnnouncement())
     {
         if (Guild* guild = sGuildMgr->GetGuildById(calendarEvent.GetGuildId()))
-            guild->BroadcastPacket(&data);
+            guild->BroadcastWorker([&data](Player *player)
+                {
+                    player->GetSession()->SendPacket(&data);
+                },
+            except);
     }
     else
         if (Player* player = ObjectAccessor::FindPlayer(invite.GetInviteeGUID()))
@@ -565,13 +583,12 @@ void CalendarMgr::SendCalendarEvent(uint64 guid, CalendarEvent const& calendarEv
         Player* invitee = ObjectAccessor::FindPlayer(inviteeGuid);
 
         uint8 inviteeLevel = invitee ? invitee->getLevel() : Player::GetLevelFromDB(inviteeGuid);
-        uint32 inviteeGuildId = invitee ? invitee->GetGuildId() : Player::GetGuildIdFromDB(inviteeGuid);
 
         data.appendPackGUID(inviteeGuid);
         data << uint8(inviteeLevel);
         data << uint8(calendarInvite->GetStatus());
         data << uint8(calendarInvite->GetRank());
-        data << uint8(calendarEvent.IsGuildEvent() && calendarEvent.GetGuildId() == inviteeGuildId);
+        data << uint8(calendarInvite->type);
         data << uint64(calendarInvite->GetInviteId());
         data.AppendPackedTime(calendarInvite->GetStatusTime());
         data << calendarInvite->GetText();

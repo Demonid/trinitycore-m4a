@@ -273,6 +273,7 @@ CREATE TABLE IF NOT EXISTS `calendar_invites` (
   `status` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `response_time` int(10) NOT NULL DEFAULT '-1',
   `rank` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `type` enum('normal','signup') NOT NULL DEFAULT 'normal',
   `text` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
