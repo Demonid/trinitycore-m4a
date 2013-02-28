@@ -541,7 +541,7 @@ void CalendarMgr::SendCalendarEventInviteAlert(CalendarEvent const& calendarEven
     data.appendPackGUID(calendarEvent.GetCreatorGUID());
     data.appendPackGUID(invite.GetSenderGUID());
 
-    if (calendarEvent.IsGuildEvent() && !invite.GetInviteId() || calendarEvent.IsGuildAnnouncement())
+    if ((calendarEvent.IsGuildEvent() && !invite.GetInviteId()) || calendarEvent.IsGuildAnnouncement())
     {
         if (Guild* guild = sGuildMgr->GetGuildById(calendarEvent.GetGuildId()))
             guild->BroadcastWorker([&data](Player *player)
