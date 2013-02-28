@@ -714,7 +714,7 @@ public:
     void MassInviteToEvent(WorldSession* session, uint32 minLevel, uint32 maxLevel, uint32 minRank);
 
     template<class Do>
-    void BroadcastWorker(Do& _do, Player* except = NULL)
+    void BroadcastWorker(Do _do, Player* except = NULL)
     {
         for (Members::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
             if (Player* player = itr->second->FindPlayer())
