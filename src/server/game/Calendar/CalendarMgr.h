@@ -23,6 +23,8 @@
 #include "Common.h"
 #include "WorldPacket.h"
 
+class Player;
+
 enum CalendarMailAnswers
 {
     // else
