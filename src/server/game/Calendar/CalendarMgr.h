@@ -153,14 +153,14 @@ struct CalendarInvite
         }
 
         CalendarInvite() : _inviteId(1), _eventId(0), _invitee(0), _senderGUID(0), _statusTime(time(NULL)),
-            _status(CALENDAR_STATUS_INVITED), _rank(CALENDAR_RANK_PLAYER),
-            type(), _text("") { }
+            _status(CALENDAR_STATUS_INVITED), _rank(CALENDAR_RANK_PLAYER), _text(""),
+            type() { }
 
         CalendarInvite(uint64 inviteId, uint64 eventId, uint64 invitee, uint64 senderGUID, time_t statusTime,
             CalendarInviteStatus status, CalendarModerationRank rank, calendar_invitetype type, std::string text) :
             _inviteId(inviteId), _eventId(eventId), _invitee(invitee), _senderGUID(senderGUID), _statusTime(statusTime),
             _status(status), _rank(rank),
-            type(type), _text(text) { }
+            _text(text), type(type) { }
 
         ~CalendarInvite();
 
