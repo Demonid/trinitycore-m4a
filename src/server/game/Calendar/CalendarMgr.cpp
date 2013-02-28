@@ -546,7 +546,7 @@ void CalendarMgr::SendCalendarEventInviteAlert(CalendarEvent const& calendarEven
         if (Guild* guild = sGuildMgr->GetGuildById(calendarEvent.GetGuildId()))
             guild->BroadcastWorker([&data](Player *player)
                 {
-                    player->GetSession()->SendPacket(&data);
+                    player->SendDirectMessage(&data);
                 },
             except);
     }
