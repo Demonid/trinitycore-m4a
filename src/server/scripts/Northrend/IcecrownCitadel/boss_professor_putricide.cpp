@@ -140,18 +140,21 @@ enum Events
     EVENT_PHASE_TRANSITION      = 15
 };
 
-enum Phases
+namespace
 {
-    PHASE_NONE          = 0,
-    PHASE_FESTERGUT     = 1,
-    PHASE_ROTFACE       = 2,
-    PHASE_COMBAT_1      = 4,
-    PHASE_COMBAT_2      = 5,
-    PHASE_COMBAT_3      = 6,
+    enum Phases
+    {
+        PHASE_NONE          = 0,
+        PHASE_FESTERGUT     = 1,
+        PHASE_ROTFACE       = 2,
+        PHASE_COMBAT_1      = 4,
+        PHASE_COMBAT_2      = 5,
+        PHASE_COMBAT_3      = 6,
 
-    PHASE_MASK_COMBAT   = (1 << PHASE_COMBAT_1) | (1 << PHASE_COMBAT_2) | (1 << PHASE_COMBAT_3),
-    PHASE_MASK_NOT_SELF = (1 << PHASE_FESTERGUT) | (1 << PHASE_ROTFACE)
-};
+        PHASE_MASK_COMBAT   = (1 << PHASE_COMBAT_1) | (1 << PHASE_COMBAT_2) | (1 << PHASE_COMBAT_3),
+        PHASE_MASK_NOT_SELF = (1 << PHASE_FESTERGUT) | (1 << PHASE_ROTFACE)
+    };
+}
 
 enum Points
 {
@@ -213,7 +216,7 @@ struct RotfaceHeightCheck
 
     bool operator()(Creature* stalker) const
     {
-        return stalker->GetPositionZ() < _rotface->GetPositionZ() + 5.0f;
+        return !(stalker->GetPositionZ() < _rotface->GetPositionZ() + 5.0f);
     }
 
 private:
