@@ -16,6 +16,9 @@
  */
 
 #include "stdafx.hpp"
+#include <algorithm>
+#include <iterator>
+#include <utility>
 #include "ObjectMgr.h"
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
@@ -486,8 +489,16 @@ class boss_professor_putricide : public CreatureScript
                         Talk(SAY_ROTFACE_OOZE_FLOOD);
                         if (Creature* dummy = Unit::GetCreature(*me, _oozeFloodDummyGUIDs[_oozeFloodStage]))
                             dummy->CastSpell(dummy, oozeFloodSpells[_oozeFloodStage], true, NULL, NULL, me->GetGUID()); // cast from self for LoS (with prof's GUID for logs)
-                        if (++_oozeFloodStage == 4)
+                        if (_oozeFloodStage == 3)
+                        {
+                            using std::begin;
+                            std::random_shuffle(begin(_oozeFloodDummyGUIDs), begin(_oozeFloodDummyGUIDs) + _oozeFloodStage);
+                            using std::swap;
+                            swap(_oozeFloodDummyGUIDs[urand(1, _oozeFloodStage)], _oozeFloodDummyGUIDs[_oozeFloodStage]);
                             _oozeFloodStage = 0;
+                        }
+                        else
+                            ++_oozeFloodStage;
                         break;
                     case ACTION_ROTFACE_DEATH:
                         events.ScheduleEvent(EVENT_ROTFACE_DIES, 4500, 0, PHASE_ROTFACE);
