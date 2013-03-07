@@ -268,9 +268,12 @@ void CalendarMgr::UpdateInvite(CalendarInvite* invite)
 
 void CalendarMgr::RemoveAllPlayerEventsAndInvites(uint64 guid)
 {
-    for (CalendarEventStore::const_iterator itr = _events.begin(); itr != _events.end(); ++itr)
+    for (CalendarEventStore::const_iterator it = _events.begin(); it != _events.end(); )
+    {
+        auto itr = it++;
         if ((*itr)->GetCreatorGUID() == guid)
             RemoveEvent((*itr)->GetEventId(), 0); // don't send mail if removing a character
+    }
 
     std::vector<CalendarInvite*> playerInvites = GetPlayerInvites(guid);
     for (std::vector<CalendarInvite*>::const_iterator itr = playerInvites.begin(); itr != playerInvites.end(); ++itr)
@@ -279,9 +282,12 @@ void CalendarMgr::RemoveAllPlayerEventsAndInvites(uint64 guid)
 
 void CalendarMgr::RemovePlayerGuildEventsAndSignups(uint64 guid, uint32 guildId)
 {
-    for (CalendarEventStore::const_iterator itr = _events.begin(); itr != _events.end(); ++itr)
+    for (CalendarEventStore::const_iterator it = _events.begin(); it != _events.end(); )
+    {
+        auto itr = it++;
         if ((*itr)->GetCreatorGUID() == guid && ((*itr)->IsGuildEvent() || (*itr)->IsGuildAnnouncement()))
             RemoveEvent((*itr)->GetEventId(), guid);
+    }
 
     std::vector<CalendarInvite*> playerInvites = GetPlayerInvites(guid);
     for (std::vector<CalendarInvite*>::const_iterator itr = playerInvites.begin(); itr != playerInvites.end(); ++itr)
