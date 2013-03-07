@@ -393,7 +393,7 @@ class boss_professor_putricide : public CreatureScript
                         instance->SetBossState(DATA_ROTFACE, IN_PROGRESS);   // needed here for delayed gate close
                         me->SetSpeed(MOVE_RUN, _baseSpeed, true);
                         DoAction(ACTION_ROTFACE_OOZE);
-                        events.ScheduleEvent(EVENT_ROTFACE_OOZE_FLOOD, 25000, 0, PHASE_ROTFACE);
+                        events.ScheduleEvent(EVENT_ROTFACE_OOZE_FLOOD, 20000, 0, PHASE_ROTFACE);
                         break;
                     case POINT_TABLE:
                         if (IsHeroic())
@@ -603,7 +603,7 @@ class boss_professor_putricide : public CreatureScript
                             break;
                         case EVENT_ROTFACE_OOZE_FLOOD:
                             DoAction(ACTION_ROTFACE_OOZE);
-                            events.ScheduleEvent(EVENT_ROTFACE_OOZE_FLOOD, 25000, 0, PHASE_ROTFACE);
+                            events.ScheduleEvent(EVENT_ROTFACE_OOZE_FLOOD, 20000, 0, PHASE_ROTFACE);
                             break;
                         case EVENT_BERSERK:
                             Talk(SAY_BERSERK);
