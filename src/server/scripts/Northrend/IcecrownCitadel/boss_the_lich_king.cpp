@@ -28,6 +28,7 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CreatureTextMgr.h"
+#include "utility.hpp"
 #include "icecrown_citadel.h"
 
 enum Texts
@@ -1754,7 +1755,6 @@ class npc_strangulate_vehicle : public CreatureScript
 
             void IsSummonedBy(Unit* summoner)
             {
-                me->SetFacingToObject(summoner);
                 DoCast(summoner, SPELL_HARVEST_SOUL_VEHICLE);
                 _events.Reset();
                 _events.ScheduleEvent(EVENT_MOVE_TO_LICH_KING, 2000);
@@ -1817,7 +1817,7 @@ class npc_strangulate_vehicle : public CreatureScript
                                 if (me->GetExactDist(lichKing) > 10.0f)
                                 {
                                     Position pos;
-                                    lichKing->GetNearPosition(pos, float(rand_norm()) * 5.0f  + 7.5f, lichKing->GetAngle(me));
+                                    lichKing->GetNearPosition(pos, float(rand_norm()) * 5.0f  + 7.5f, lichKing->GetAngle(me) - lichKing->GetOrientation());
                                     me->GetMotionMaster()->MovePoint(0, pos);
                                 }
                             }
@@ -2996,6 +2996,27 @@ class spell_the_lich_king_vile_spirit_damage_target_search : public SpellScriptL
         }
 };
 
+namespace
+{
+    struct harvest_soul_spell
+    : SpellScript
+    {
+        PrepareSpellScript(harvest_soul_spell)
+
+        void Register() override
+        {
+            OnEffectHitTarget += SpellEffectFn(harvest_soul_spell::on_effect_hit_target, EFFECT_2, SPELL_EFFECT_FORCE_CAST);
+        }
+
+        void on_effect_hit_target(SpellEffIndex effIndex UNUSED)
+        {
+            auto u = GetHitUnit();
+            u->NearTeleportTo(u->GetPositionX(), u->GetPositionY(), u->GetPositionZ(), u->GetAngle(GetCaster()));
+            u->SetOrientation(u->GetAngle(GetCaster()));
+        }
+    };
+}
+
 class spell_the_lich_king_harvest_soul : public SpellScriptLoader
 {
     public:
@@ -3022,6 +3043,11 @@ class spell_the_lich_king_harvest_soul : public SpellScriptLoader
                 AfterEffectRemove += AuraEffectRemoveFn(spell_the_lich_king_harvest_soul_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
             }
         };
+
+        SpellScript *GetSpellScript() const override
+        {
+            return new harvest_soul_spell;
+        }
 
         AuraScript* GetAuraScript() const
         {
