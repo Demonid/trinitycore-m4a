@@ -1099,11 +1099,14 @@ class boss_the_lich_king : public CreatureScript
                                         switch(summon->GetEntry())
                                         {
                                           case NPC_VILE_SPIRIT:
-                                            summon->m_Events.KillAllEvents(true);
-                                            summon->m_Events.AddEvent(new VileSpiritActivateEvent(summon), summon->m_Events.CalculateTime(53000));
-                                            summon->GetMotionMaster()->MoveRandom(10.0f);
-                                            summon->SetReactState(REACT_PASSIVE);
-                                            summon->AI()->EnterEvadeMode(); 
+                                              if (summon->IsAIEnabled)
+                                              {
+                                                  summon->m_Events.KillAllEvents(true);
+                                                  summon->m_Events.AddEvent(new VileSpiritActivateEvent(summon), summon->m_Events.CalculateTime(53000));
+                                                  summon->GetMotionMaster()->MoveRandom(10.0f);
+                                                  summon->SetReactState(REACT_PASSIVE);
+                                                  summon->AI()->EnterEvadeMode(); 
+                                              }
                                             break;
                                           case NPC_RAGING_SPIRIT:
                                             summon->m_Events.KillAllEvents(true);
@@ -2981,6 +2984,11 @@ class spell_the_lich_king_vile_spirit_damage_target_search : public SpellScriptL
                 GetCaster()->CastSpell((Unit*)NULL, SPELL_SPIRIT_BURST, true);
                 GetCaster()->ToCreature()->DespawnOrUnsummon(3000);
                 GetCaster()->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                auto caster = static_cast<Creature *>(GetCaster());
+                caster->IsAIEnabled = false;
+                caster->DeleteThreatList();
+                caster->AttackStop();
+                caster->StopMoving();
             }
 
             void Register()
@@ -3150,10 +3158,11 @@ class spell_the_lich_king_restore_soul : public SpellScriptLoader
                 std::list<Creature*> spirits;
                 GetCaster()->GetCreatureListWithEntryInGrid(spirits, NPC_WICKED_SPIRIT, 200.0f);
                 for (std::list<Creature*>::iterator itr = spirits.begin(); itr != spirits.end(); ++itr)
-                {
-                    (*itr)->SetReactState(REACT_PASSIVE);
-                    (*itr)->AI()->EnterEvadeMode();
-                }
+                    if ((*itr)->IsAIEnabled)
+                    {
+                        (*itr)->SetReactState(REACT_PASSIVE);
+                        (*itr)->AI()->EnterEvadeMode();
+                    }
             }
 
             void RemoveAura()
