@@ -16,6 +16,7 @@
  */
 
 #include "stdafx.hpp"
+#include <algorithm>
 #include "ObjectMgr.h"
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
@@ -1817,7 +1818,7 @@ class npc_strangulate_vehicle : public CreatureScript
                                 if (me->GetExactDist(lichKing) > 10.0f)
                                 {
                                     Position pos;
-                                    lichKing->GetNearPosition(pos, float(rand_norm()) * 5.0f  + 7.5f, lichKing->GetAngle(me) - lichKing->GetOrientation());
+                                    lichKing->GetNearPosition(pos, std::min(float(rand_norm()) * 5.0f  + 7.5f, me->GetExactDist2d(lichKing)), lichKing->GetAngle(me) - lichKing->GetOrientation());
                                     me->GetMotionMaster()->MovePoint(0, pos);
                                 }
                             }
@@ -3011,8 +3012,11 @@ namespace
         void on_effect_hit_target(SpellEffIndex effIndex UNUSED)
         {
             auto u = GetHitUnit();
-            u->NearTeleportTo(u->GetPositionX(), u->GetPositionY(), u->GetPositionZ(), u->GetAngle(GetCaster()));
-            u->SetOrientation(u->GetAngle(GetCaster()));
+            if (u->GetExactDist(GetCaster()) > 10.0F)
+            {
+                u->NearTeleportTo(u->GetPositionX(), u->GetPositionY(), u->GetPositionZ(), u->GetAngle(GetCaster()));
+                u->SetOrientation(u->GetAngle(GetCaster()));
+            }
         }
     };
 }
