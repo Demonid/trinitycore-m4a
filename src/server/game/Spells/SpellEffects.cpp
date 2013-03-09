@@ -1222,11 +1222,11 @@ void Spell::EffectTeleportUnits(SpellEffIndex /*effIndex*/)
     }
 
     // Init dest coordinates
-    uint32 mapid = destTarget->GetMapId();
+    uint32 mapid = m_targets.GetDstPos()->GetMapId();
     if (mapid == MAPID_INVALID)
         mapid = unitTarget->GetMapId();
     float x, y, z, orientation;
-    destTarget->GetPosition(x, y, z, orientation);
+    m_targets.GetDstPos()->GetPosition(x, y, z, orientation);
     if (!orientation && m_targets.GetUnitTarget())
         orientation = m_targets.GetUnitTarget()->GetOrientation();
     sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell::EffectTeleportUnits - teleport unit to %u %f %f %f %f\n", mapid, x, y, z, orientation);
