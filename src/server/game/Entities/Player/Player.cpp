@@ -22216,7 +22216,7 @@ void Player::UpdateVisibilityForPlayer()
 {
     // updates visibility of all objects around point of view for current player
     Trinity::VisibleNotifier notifier(*this);
-    m_seer->VisitNearbyObject(GetSightRange(), notifier);
+    m_seer->VisitNearbyObject(MAX_VISIBILITY_DISTANCE, notifier);
     notifier.SendToSelf();   // send gathered data
 }
 
