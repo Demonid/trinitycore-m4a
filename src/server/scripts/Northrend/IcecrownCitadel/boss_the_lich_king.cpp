@@ -1074,6 +1074,14 @@ class boss_the_lich_king : public CreatureScript
                             case EVENT_HARVEST_SOULS:
                                 Talk(SAY_LK_HARVEST_SOUL);
                                 DoCastAOE(SPELL_HARVEST_SOULS);
+                                {
+                                    auto me_ = me;
+                                    add_simple_event(me->m_Events, [me_]()
+                                            {
+                                                me_->CastSpell(static_cast<Unit *>(nullptr), 73823 /* Harvest Souls */, false);
+                                            },
+                                        6000);
+                                }
                                 events.ScheduleEvent(EVENT_HARVEST_SOULS, urand(100000, 110000), 0, PHASE_THREE);
                                 events.SetPhase(PHASE_FROSTMOURNE); // will stop running UpdateVictim (no evading)
                                 me->SetReactState(REACT_PASSIVE);
@@ -1797,10 +1805,7 @@ class npc_strangulate_vehicle : public CreatureScript
                                     if (!IsHeroic())
                                         summoner->CastSpell(summoner, SPELL_HARVEST_SOUL_TELEPORT, true);
                                     else
-                                    {
                                         summoner->CastSpell(summoner, SPELL_HARVEST_SOULS_TELEPORT, true);
-                                        summoner->RemoveAurasDueToSpell(HARVEST_SOUL, 0, 0, AURA_REMOVE_BY_EXPIRE);
-                                    }
                                 }
                             }
 
