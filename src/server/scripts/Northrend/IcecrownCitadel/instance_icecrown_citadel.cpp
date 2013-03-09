@@ -318,7 +318,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                         break;
                     case NPC_WICKED_SPIRIT:
                         // Remove corpse as soon as it dies (and respawn 10 seconds later)
-                        creature->SetCorpseDelay(0);
+                        creature->SetCorpseDelay(3);
                         creature->SetReactState(REACT_PASSIVE);
                         break;
                     default:
