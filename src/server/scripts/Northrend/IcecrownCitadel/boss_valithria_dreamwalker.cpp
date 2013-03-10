@@ -957,7 +957,7 @@ class npc_blistering_zombie : public CreatureScript
             void UpdateAI(uint32 const /*diff*/)
             {
                 if (!burst)
-                    if (me->GetHealth() == 1U)
+                    if (!HealthAbovePct(0))
                     {
                         me->SetReactState(REACT_PASSIVE);
                         me->AttackStop();

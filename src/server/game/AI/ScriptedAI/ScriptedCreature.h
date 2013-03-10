@@ -183,8 +183,8 @@ struct ScriptedAI : public CreatureAI
     //Spawns a creature relative to me
     Creature* DoSpawnCreature(uint32 entry, float offsetX, float offsetY, float offsetZ, float angle, uint32 type, uint32 despawntime);
 
-    bool HealthBelowPct(uint32 pct) const { return me->HealthBelowPct(pct); }
-    bool HealthAbovePct(uint32 pct) const { return me->HealthAbovePct(pct); }
+    bool HealthBelowPct(uint32 pct) const { return static_cast<uint32>(me->GetHealthPct() + 0.5F) < pct; }
+    bool HealthAbovePct(uint32 pct) const { return static_cast<uint32>(me->GetHealthPct() + 0.5F) > pct; }
 
     //Returns spells that meet the specified criteria from the creatures spell list
     SpellInfo const* SelectSpell(Unit* target, uint32 school, uint32 mechanic, SelectTargetType targets, uint32 powerCostMin, uint32 powerCostMax, float rangeMin, float rangeMax, SelectEffect effect);
