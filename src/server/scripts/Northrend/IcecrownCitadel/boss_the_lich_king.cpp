@@ -75,7 +75,7 @@ enum Texts
 
 namespace
 {
-    enum Spells
+    enum
     {
         // The Lich King
         SPELL_PLAGUE_AVOIDANCE              = 72846,    // raging spirits also get it
@@ -1661,20 +1661,8 @@ class npc_valkyr_shadowguard : public CreatureScript
                     case POINT_CHARGE:
                         if (Player* target = ObjectAccessor::GetPlayer(*me, _grabbedPlayer))
                         {
-                            if (GameObject* platform = ObjectAccessor::GetGameObject(*me, _instance->GetData64(DATA_ARTHAS_PLATFORM)))
-                            {
-                                std::list<Creature*> triggers;
-                                GetCreatureListWithEntryInGrid(triggers, me, NPC_WORLD_TRIGGER, 150.0f);
-                                triggers.remove_if(HeightDifferenceCheck(platform, 5.0f, true));
-                                if (triggers.empty())
-                                    return;
-
-                                triggers.sort(Trinity::ObjectDistanceOrderPred(me));
-                                DoCast(target, SPELL_VALKYR_CARRY);
-                                _dropPoint.Relocate(triggers.front());
-                                _events.ScheduleEvent(EVENT_MOVE_TO_DROP_POS, 500U);
-
-                            }
+                            DoCast(target, SPELL_VALKYR_CARRY);
+                            _events.ScheduleEvent(EVENT_MOVE_TO_DROP_POS, 500U);
                         }
                         else
                             me->DespawnOrUnsummon();
@@ -1711,7 +1699,19 @@ class npc_valkyr_shadowguard : public CreatureScript
                             }
                             break;
                         case EVENT_MOVE_TO_DROP_POS:
-                            me->GetMotionMaster()->MovePoint(POINT_DROP_PLAYER, _dropPoint);
+                            if (GameObject* platform = ObjectAccessor::GetGameObject(*me, _instance->GetData64(DATA_ARTHAS_PLATFORM)))
+                            {
+                                std::list<Creature*> triggers;
+                                GetCreatureListWithEntryInGrid(triggers, me, NPC_WORLD_TRIGGER, 150.0f);
+                                triggers.remove_if(HeightDifferenceCheck(platform, 5.0f, true));
+                                if (triggers.empty())
+                                    return;
+
+                                triggers.sort(Trinity::ObjectDistanceOrderPred(me));
+                                _dropPoint.Relocate(triggers.front());
+
+                                me->GetMotionMaster()->MovePoint(POINT_DROP_PLAYER, _dropPoint);
+                            }
                             break;
                         case EVENT_LIFE_SIPHON:
                             if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1))
