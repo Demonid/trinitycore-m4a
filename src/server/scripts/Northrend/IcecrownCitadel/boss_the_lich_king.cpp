@@ -609,13 +609,13 @@ class boss_the_lich_king : public CreatureScript
 
             void EnterEvadeMode()
             {
+                DoCastAOE(SPELL_KILL_FROSTMOURNE_PLAYERS);
+                EntryCheckPredicate pred(NPC_STRANGULATE_VEHICLE);
+                summons.DoAction(ACTION_TELEPORT_BACK, pred);
                 instance->SetBossState(DATA_THE_LICH_KING, FAIL);
                 BossAI::EnterEvadeMode();
                 if (Creature* tirion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HIGHLORD_TIRION_FORDRING)))
                     tirion->AI()->EnterEvadeMode();
-                DoCastAOE(SPELL_KILL_FROSTMOURNE_PLAYERS);
-                EntryCheckPredicate pred(NPC_STRANGULATE_VEHICLE);
-                summons.DoAction(ACTION_TELEPORT_BACK, pred);
             }
 
             void KilledUnit(Unit* victim)
@@ -661,6 +661,8 @@ class boss_the_lich_king : public CreatureScript
                         summons.DoAction(ACTION_TELEPORT_BACK, pred);
                         if (!IsHeroic())
                             Talk(SAY_LK_FROSTMOURNE_ESCAPE);
+                        else
+                            events.ScheduleEvent(EVENT_START_ATTACK, 1500);
                         break;
                     }
                     default:
@@ -1066,7 +1068,11 @@ class boss_the_lich_king : public CreatureScript
                             case EVENT_START_ATTACK:
                                 me->SetReactState(REACT_AGGRESSIVE);
                                 if (events.GetPhaseMask() & PHASE_MASK_FROSTMOURNE)
+                                {
                                     events.SetPhase(PHASE_THREE);
+                                    events.RescheduleEvent(EVENT_DEFILE, 0, 0, PHASE_THREE);
+                                    events.RescheduleEvent(EVENT_SOUL_REAPER, urand(7000, 12000), 0, PHASE_THREE);
+                                }
                                 break;
                             case EVENT_VILE_SPIRITS:
                                 SendMusicToPlayers(MUSIC_SPECIAL);
@@ -1119,13 +1125,10 @@ class boss_the_lich_king : public CreatureScript
                                     }
 
                                 events.DelayEvents(50000, EVENT_GROUP_VILE_SPIRITS);
-                                events.RescheduleEvent(EVENT_DEFILE, 50000, 0, PHASE_THREE);
-                                events.RescheduleEvent(EVENT_SOUL_REAPER, urand(57000, 62000), 0, PHASE_THREE);
-                                events.ScheduleEvent(EVENT_START_ATTACK, 49000);
                                 events.ScheduleEvent(EVENT_FROSTMOURNE_HEROIC, 6500);
                                 break;
                             case EVENT_FROSTMOURNE_HEROIC:
-                                if (TempSummon* terenas = me->GetMap()->SummonCreature(NPC_TERENAS_MENETHIL_FROSTMOURNE_H, TerenasSpawnHeroic, NULL, 50000))
+                                if (TempSummon* terenas = me->GetMap()->SummonCreature(NPC_TERENAS_MENETHIL_FROSTMOURNE_H, TerenasSpawnHeroic))
                                 {
                                     terenas->AI()->DoAction(ACTION_FROSTMOURNE_INTRO);
                                     std::list<Creature*> triggers;
@@ -1785,6 +1788,7 @@ class npc_strangulate_vehicle : public CreatureScript
 
                 if (Creature* lichKing = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_THE_LICH_KING)))
                     lichKing->AI()->SummonedCreatureDespawn(me);
+                me->DespawnOrUnsummon();
             }
 
             void UpdateAI(uint32 const diff)
@@ -1812,8 +1816,6 @@ class npc_strangulate_vehicle : public CreatureScript
                                         summoner->CastSpell(summoner, SPELL_HARVEST_SOULS_TELEPORT, true);
                                 }
                             }
-
-                            _events.ScheduleEvent(EVENT_DESPAWN_SELF, 65000);
                             break;
                         case EVENT_MOVE_TO_LICH_KING:
                             if (Creature* lichKing = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_THE_LICH_KING)))
@@ -1889,7 +1891,6 @@ class npc_terenas_menethil : public CreatureScript
                         break;
                     case ACTION_TELEPORT_BACK:
                         me->CastSpell((Unit*)NULL, SPELL_RESTORE_SOUL, TRIGGERED_NONE);
-                        me->DespawnOrUnsummon(3000);
                         break;
                     default:
                         break;
@@ -2073,6 +2074,7 @@ class npc_spirit_bomb : public CreatureScript
         {
             npc_spirit_bombAI(Creature* creature) : CreatureAI(creature)
             {
+                me->setActive(true);
             }
 
             void IsSummonedBy(Unit* /*summoner*/)
@@ -3167,6 +3169,8 @@ class spell_the_lich_king_restore_soul : public SpellScriptLoader
                         (*itr)->SetReactState(REACT_PASSIVE);
                         (*itr)->AI()->EnterEvadeMode();
                     }
+                if (auto caster = dynamic_cast<Creature *>(GetCaster()))
+                    caster->DespawnOrUnsummon(1000);
             }
 
             void RemoveAura()
