@@ -1950,15 +1950,6 @@ void GameObject::SetLootState(LootState state, Unit* unit)
     m_lootState = state;
     AI()->OnStateChanged(state, unit);
     sScriptMgr->OnGameObjectLootStateChanged(this, state, unit);
-    if (m_model)
-    {
-        bool collision = false;
-        // Use the current go state
-        if ((GetGoState() != GO_STATE_READY && (state == GO_ACTIVATED || state == GO_JUST_DEACTIVATED)) || state == GO_READY)
-            collision = !collision;
-
-        EnableCollision(collision);
-    }
 }
 
 void GameObject::SetGoState(GOState state)
