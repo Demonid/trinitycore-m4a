@@ -1872,8 +1872,12 @@ class npc_terenas_menethil : public CreatureScript
                     case ACTION_FROSTMOURNE_INTRO:
                         me->setActive(true);
                         if (!IsHeroic())
+                        {
                             me->SetHealth(me->GetMaxHealth() / 2);
-                        DoCast(me, SPELL_LIGHTS_FAVOR);
+                            DoCast(me, SPELL_LIGHTS_FAVOR);
+                        }
+                        else
+                            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC);
                         _events.Reset();
                         _events.ScheduleEvent(EVENT_FROSTMOURNE_TALK_1, 2000, PHASE_FROSTMOURNE);
                         _events.ScheduleEvent(EVENT_FROSTMOURNE_TALK_2, 11000, PHASE_FROSTMOURNE);
