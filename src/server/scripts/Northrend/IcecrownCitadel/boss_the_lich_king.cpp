@@ -540,7 +540,8 @@ class boss_the_lich_king : public CreatureScript
 
         struct boss_the_lich_kingAI : public BossAI
         {
-            boss_the_lich_kingAI(Creature* creature) : BossAI(creature, DATA_THE_LICH_KING)
+            boss_the_lich_kingAI(Creature* creature) : BossAI(creature, DATA_THE_LICH_KING),
+            vile_spirits_time()
             {
             }
 
@@ -1070,8 +1071,10 @@ class boss_the_lich_king : public CreatureScript
                                 if (events.GetPhaseMask() & PHASE_MASK_FROSTMOURNE)
                                 {
                                     events.SetPhase(PHASE_THREE);
-                                    events.RescheduleEvent(EVENT_DEFILE, 0, 0, PHASE_THREE);
-                                    events.RescheduleEvent(EVENT_SOUL_REAPER, urand(7000, 12000), 0, PHASE_THREE);
+                                    events.ScheduleEvent(EVENT_VILE_SPIRITS, vile_spirits_time, EVENT_GROUP_VILE_SPIRITS, PHASE_THREE);
+                                    events.ScheduleEvent(EVENT_DEFILE, 0, 0, PHASE_THREE);
+                                    events.ScheduleEvent(EVENT_SOUL_REAPER, urand(7000, 12000), 0, PHASE_THREE);
+                                    events.ScheduleEvent(EVENT_HARVEST_SOULS, urand(50000, 60000), 0, PHASE_THREE);
                                 }
                                 break;
                             case EVENT_VILE_SPIRITS:
@@ -1090,7 +1093,6 @@ class boss_the_lich_king : public CreatureScript
                                             },
                                         6000);
                                 }
-                                events.ScheduleEvent(EVENT_HARVEST_SOULS, urand(100000, 110000), 0, PHASE_THREE);
                                 events.SetPhase(PHASE_FROSTMOURNE); // will stop running UpdateVictim (no evading)
                                 me->SetReactState(REACT_PASSIVE);
                                 me->AttackStop();
@@ -1124,7 +1126,10 @@ class boss_the_lich_king : public CreatureScript
                                         }                                      
                                     }
 
-                                events.DelayEvents(50000, EVENT_GROUP_VILE_SPIRITS);
+                                vile_spirits_time = std::max(events.GetTimer(), events.GetNextEventTime(EVENT_VILE_SPIRITS)) - events.GetTimer();
+                                events.CancelEvent(EVENT_VILE_SPIRITS);
+                                events.CancelEvent(EVENT_DEFILE);
+                                events.CancelEvent(EVENT_SOUL_REAPER);
                                 events.ScheduleEvent(EVENT_FROSTMOURNE_HEROIC, 6500);
                                 break;
                             case EVENT_FROSTMOURNE_HEROIC:
@@ -1251,6 +1256,7 @@ class boss_the_lich_king : public CreatureScript
 
             uint32 _necroticPlagueStack;
             uint32 _vileSpiritExplosions;
+            uint32 vile_spirits_time;
         };
 
         CreatureAI* GetAI(Creature* creature) const
