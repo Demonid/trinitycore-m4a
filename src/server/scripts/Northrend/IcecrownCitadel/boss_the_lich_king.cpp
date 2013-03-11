@@ -2072,9 +2072,9 @@ class npc_spirit_bomb : public CreatureScript
 
         struct npc_spirit_bombAI : public CreatureAI
         {
-            npc_spirit_bombAI(Creature* creature) : CreatureAI(creature)
+            npc_spirit_bombAI(Creature* creature) : CreatureAI(creature),
+            explosion_timer()
             {
-                me->setActive(true);
             }
 
             void IsSummonedBy(Unit* /*summoner*/)
@@ -2084,27 +2084,37 @@ class npc_spirit_bomb : public CreatureScript
                 destZ = 1055.0f;    // approximation, gets more precise later
                 me->UpdateGroundPositionZ(destX, destY, destZ);
                 me->GetMotionMaster()->MovePoint(POINT_GROUND, destX, destY, destZ);
+                me->setActive(true);
+                explosion_timer = 10000;
             }
 
             void MovementInform(uint32 type, uint32 point)
             {
                 if (type != POINT_MOTION_TYPE || point != POINT_GROUND)
                     return;
-
-                me->RemoveAllAuras();
-                DoCastAOE(SPELL_EXPLOSION);
-                me->DespawnOrUnsummon(1000);
             }
 
             void AttackStart(Unit* /*victim*/)
             {
             }
 
-            void UpdateAI(uint32 const /*diff*/)
+            void UpdateAI(uint32 const diff)
             {
                 UpdateVictim();
+                if (explosion_timer)
+                    if (explosion_timer > diff)
+                        explosion_timer -= diff;
+                    else
+                    {
+                        explosion_timer = 0;
+                        me->RemoveAllAuras();
+                        DoCastAOE(SPELL_EXPLOSION);
+                        me->DespawnOrUnsummon(1000);
+                    }
                 // no melee attacks
             }
+
+            uint32 explosion_timer;
         };
 
         CreatureAI* GetAI(Creature* creature) const
