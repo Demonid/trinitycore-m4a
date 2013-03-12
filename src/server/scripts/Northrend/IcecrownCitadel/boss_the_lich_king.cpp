@@ -844,6 +844,12 @@ class boss_the_lich_king : public CreatureScript
                             events.RescheduleEvent(EVENT_SUMMON_ICE_SPHERE, 700U, 0U, PHASE_TRANSITION);
                     events.RescheduleEvent(EVENT_PAIN_AND_SUFFERING, 700U, 0, PHASE_TRANSITION);
                     break;
+                case SPELL_DEFILE:
+                    if (auto time = events.GetNextEventTime(EVENT_SUMMON_VALKYR))
+                        if (time < events.GetTimer() + 6000U)
+                            events.RescheduleEvent(EVENT_SUMMON_VALKYR, 6000U, 0U, PHASE_TWO);
+                    events.RescheduleEvent(EVENT_DEFILE, 30500U, 0, PHASE_TWO_THREE);
+                    break;
                 default:
                     if (spell->Id == REMORSELESS_WINTER_1 || spell->Id == REMORSELESS_WINTER_2)
                     {
@@ -1007,15 +1013,12 @@ class boss_the_lich_king : public CreatureScript
                                 events.ScheduleEvent(EVENT_SOUL_REAPER, urand(33000, 35000), 0, PHASE_TWO_THREE);
                                 break;
                             case EVENT_DEFILE:
+                                events.ScheduleEvent(EVENT_DEFILE, 1U, 0, PHASE_TWO_THREE);
                                 if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, -SPELL_HARVEST_SOUL_VALKYR))
                                 {
                                     Talk(EMOTE_DEFILE_WARNING);
                                     DoCast(target, SPELL_DEFILE);
                                 }
-                                if (auto time = events.GetNextEventTime(EVENT_SUMMON_VALKYR))
-                                    if (time < events.GetTimer() + 6000U)
-                                        events.RescheduleEvent(EVENT_SUMMON_VALKYR, 6000U, 0U, PHASE_TWO);
-                                events.ScheduleEvent(EVENT_DEFILE, 32500U, 0, PHASE_TWO_THREE);
                                 break;
                             case EVENT_HARVEST_SOUL:
                                 Talk(SAY_LK_HARVEST_SOUL);
