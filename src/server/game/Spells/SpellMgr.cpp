@@ -3600,7 +3600,7 @@ void SpellMgr::LoadDbcDataCorrections()
                 spellInfo->DurationIndex = 23; // 90 seconds
                 break;
             case 73530: // Shadow Trap (visual)
-                spellInfo->DurationIndex = 28; // 5 seconds
+                spellInfo->DurationIndex = 27; // 3 seconds
                 break;
             case 73529: // Shadow Trap
                 spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_10_YARDS; // 10yd
