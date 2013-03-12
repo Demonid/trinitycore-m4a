@@ -1656,6 +1656,9 @@ void Creature::Respawn(bool force)
         lootForBody         = false;
 
         SetMap(map);
+        GetMotionMaster()->Clear(false);
+        DisableSpline();
+        Relocate(GetHomePosition());
         UpdateEntry(m_originalEntry);
 
         CreatureTemplate const* cinfo = GetCreatureTemplate();
