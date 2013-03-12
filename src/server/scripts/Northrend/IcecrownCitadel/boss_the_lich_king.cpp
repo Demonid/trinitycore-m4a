@@ -296,7 +296,7 @@ namespace
         PHASE_MASK_TWO              = 1 << PHASE_TWO,
         PHASE_MASK_THREE            = 1 << PHASE_THREE,
         PHASE_MASK_TRANSITION       = 1 << PHASE_TRANSITION,
-        PHASE_MASK_NO_CAST_CHECK    = (1 << PHASE_FROSTMOURNE) | (1 << PHASE_OUTRO),
+        PHASE_MASK_NO_CAST_CHECK    = 1 << PHASE_OUTRO,
         PHASE_MASK_FROSTMOURNE      = 1 << PHASE_FROSTMOURNE,
         PHASE_MASK_OUTRO            = 1 << PHASE_OUTRO,
         PHASE_MASK_NO_VICTIM        = (1 << PHASE_INTRO) | (1 << PHASE_OUTRO) | (1 << PHASE_FROSTMOURNE),
@@ -1087,7 +1087,7 @@ class boss_the_lich_king : public CreatureScript
                                 DoCastAOE(SPELL_HARVEST_SOULS);
                                 {
                                     auto me_ = me;
-                                    add_simple_event(me->m_Events, [me_]()
+                                    add_simple_event(me_->m_Events, [me_]()
                                             {
                                                 me_->CastSpell(static_cast<Unit *>(nullptr), 73823 /* Harvest Souls */, false);
                                             },
@@ -1130,23 +1130,29 @@ class boss_the_lich_king : public CreatureScript
                                 events.CancelEvent(EVENT_VILE_SPIRITS);
                                 events.CancelEvent(EVENT_DEFILE);
                                 events.CancelEvent(EVENT_SOUL_REAPER);
-                                events.ScheduleEvent(EVENT_FROSTMOURNE_HEROIC, 6500);
+                                {
+                                    auto me_ = me;
+                                    add_simple_event(me_->m_Events, [me_]()
+                                            {
+                                                if (TempSummon* terenas = me_->GetMap()->SummonCreature(NPC_TERENAS_MENETHIL_FROSTMOURNE_H, TerenasSpawnHeroic))
+                                                {
+                                                    terenas->AI()->DoAction(ACTION_FROSTMOURNE_INTRO);
+                                                    std::list<Creature*> triggers;
+                                                    GetCreatureListWithEntryInGrid(triggers, terenas, NPC_WORLD_TRIGGER_INFINITE_AOI, 100.0f);
+                                                    if (!triggers.empty())
+                                                    {
+                                                        triggers.sort(Trinity::ObjectDistanceOrderPred(terenas, true));
+                                                        Creature* spawner = triggers.front();
+                                                        spawner->CastSpell(spawner, SPELL_SUMMON_SPIRIT_BOMB_1, true);  // summons bombs randomly
+                                                        spawner->CastSpell(spawner, SPELL_SUMMON_SPIRIT_BOMB_2, true);  // summons bombs on players
+                                                        spawner->m_Events.AddEvent(new TriggerWickedSpirit(spawner), spawner->m_Events.CalculateTime(3000));
+                                                    }                                    
+                                                }
+                                            },
+                                        6500);
+                                }
                                 break;
                             case EVENT_FROSTMOURNE_HEROIC:
-                                if (TempSummon* terenas = me->GetMap()->SummonCreature(NPC_TERENAS_MENETHIL_FROSTMOURNE_H, TerenasSpawnHeroic))
-                                {
-                                    terenas->AI()->DoAction(ACTION_FROSTMOURNE_INTRO);
-                                    std::list<Creature*> triggers;
-                                    GetCreatureListWithEntryInGrid(triggers, terenas, NPC_WORLD_TRIGGER_INFINITE_AOI, 100.0f);
-                                    if (!triggers.empty())
-                                    {
-                                        triggers.sort(Trinity::ObjectDistanceOrderPred(terenas, true));
-                                        Creature* spawner = triggers.front();
-                                        spawner->CastSpell(spawner, SPELL_SUMMON_SPIRIT_BOMB_1, true);  // summons bombs randomly
-                                        spawner->CastSpell(spawner, SPELL_SUMMON_SPIRIT_BOMB_2, true);  // summons bombs on players
-                                        spawner->m_Events.AddEvent(new TriggerWickedSpirit(spawner), spawner->m_Events.CalculateTime(3000));
-                                    }                                    
-                                }
                                 break;
                             case EVENT_OUTRO_TALK_1:
                                 Talk(SAY_LK_OUTRO_1);
