@@ -9512,6 +9512,9 @@ bool Unit::Attack(Unit* victim, bool meleeAttack)
     if (GetTypeId() == TYPEID_PLAYER && IsMounted())
         return false;
 
+    if (auto c = dynamic_cast<Creature *>(this))
+        if (c->IsInEvadeMode())
+            return false;
     // nobody can attack GM in GM-mode
     if (victim->GetTypeId() == TYPEID_PLAYER)
     {
