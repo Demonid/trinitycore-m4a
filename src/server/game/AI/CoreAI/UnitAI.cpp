@@ -267,7 +267,7 @@ void SimpleCharmedAI::UpdateAI(const uint32 /*diff*/)
         AttackStart(charmer->SelectNearestTargetInAttackDistance());
 }
 
-SpellTargetSelector::SpellTargetSelector(Unit* caster, uint32 spellId) :
+SpellTargetSelector::SpellTargetSelector(const Unit* caster, uint32 spellId) :
     _caster(caster), _spellInfo(sSpellMgr->GetSpellForDifficultyFromSpell(sSpellMgr->GetSpellInfo(spellId), caster))
 {
     ASSERT(_spellInfo);

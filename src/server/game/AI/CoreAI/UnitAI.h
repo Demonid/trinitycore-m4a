@@ -93,7 +93,7 @@ struct DefaultTargetSelector : public std::unary_function<Unit*, bool>
 struct SpellTargetSelector : public std::unary_function<Unit*, bool>
 {
     public:
-        SpellTargetSelector(Unit* caster, uint32 spellId);
+        SpellTargetSelector(const Unit* caster, uint32 spellId);
         bool operator()(Unit const* target) const;
 
     private:

@@ -379,14 +379,15 @@ enum MiscData
 class NecroticPlagueTargetCheck : public std::unary_function<Unit*, bool>
 {
     public:
-        NecroticPlagueTargetCheck(Unit const* obj, uint32 notAura1 = 0, uint32 notAura2 = 0)
-            : _sourceObj(obj), _notAura1(notAura1), _notAura2(notAura2)
+        NecroticPlagueTargetCheck(Unit const* obj, uint32 notAura1, uint32 notAura2, uint32 spell_id)
+            : _sourceObj(obj), _notAura1(notAura1), _notAura2(notAura2),
+            spell_pred(obj, spell_id)
         {
         }
 
         bool operator()(Unit* unit) const
         {
-            if (!unit || unit->GetTypeId() != TYPEID_PLAYER)
+            if (!spell_pred(unit))
                 return false;
             if (unit->HasAura(73879 /* Boss Hittin' Ya */))
                 return false;
@@ -399,6 +400,7 @@ class NecroticPlagueTargetCheck : public std::unary_function<Unit*, bool>
         Unit const* _sourceObj;
         uint32 _notAura1;
         uint32 _notAura2;
+        SpellTargetSelector spell_pred;
 };
 
 class HeightDifferenceCheck
@@ -996,7 +998,7 @@ class boss_the_lich_king : public CreatureScript
                                 events.ScheduleEvent(EVENT_INFEST, urand(21000, 24000), 0, (events.GetPhaseMask() & PHASE_MASK_ONE) ? PHASE_ONE : PHASE_TWO);
                                 break;
                             case EVENT_NECROTIC_PLAGUE:
-                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, NecroticPlagueTargetCheck(me, NECROTIC_PLAGUE_LK, NECROTIC_PLAGUE_PLR)))
+                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, NecroticPlagueTargetCheck(me, NECROTIC_PLAGUE_LK, NECROTIC_PLAGUE_PLR, SPELL_NECROTIC_PLAGUE)))
                                 {
                                     Talk(EMOTE_NECROTIC_PLAGUE_WARNING, target->GetGUID());
                                     DoCast(target, SPELL_NECROTIC_PLAGUE);
@@ -1014,10 +1016,23 @@ class boss_the_lich_king : public CreatureScript
                                 break;
                             case EVENT_DEFILE:
                                 events.ScheduleEvent(EVENT_DEFILE, 1U, 0, PHASE_TWO_THREE);
-                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, -SPELL_HARVEST_SOUL_VALKYR))
                                 {
-                                    Talk(EMOTE_DEFILE_WARNING);
-                                    DoCast(target, SPELL_DEFILE);
+                                    SpellTargetSelector spell_pred(me, SPELL_DEFILE);
+                                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, [&spell_pred](const Unit *target_)
+                                                {
+                                                    if (!spell_pred(target_))
+                                                        return false;
+                                                    if (target_->HasAura(73879 /* Boss Hittin' Ya */))
+                                                        return false;
+                                                    if (target_->HasAura(SPELL_HARVEST_SOUL_VALKYR))
+                                                        return false;
+                                                    return true;
+                                                }
+                                            ))
+                                    {
+                                        Talk(EMOTE_DEFILE_WARNING);
+                                        DoCast(target, SPELL_DEFILE);
+                                    }
                                 }
                                 break;
                             case EVENT_HARVEST_SOUL:
