@@ -1675,6 +1675,8 @@ void Creature::Respawn(bool force)
             SetByteValue(UNIT_FIELD_BYTES_0, 2, minfo->gender);
         }
 
+        if (m_creatureData)
+            m_defaultMovementType = MovementGeneratorType(m_creatureData->movementType);
         GetMotionMaster()->InitDefault();
 
         //Call AI respawn virtual function
