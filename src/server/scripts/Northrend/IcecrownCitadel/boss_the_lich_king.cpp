@@ -388,6 +388,8 @@ class NecroticPlagueTargetCheck : public std::unary_function<Unit*, bool>
         {
             if (!unit || unit->GetTypeId() != TYPEID_PLAYER)
                 return false;
+            if (unit->HasAura(73879 /* Boss Hittin' Ya */))
+                return false;
             if ((_notAura1 && unit->HasAura(_notAura1)) || (_notAura2 && unit->HasAura(_notAura2)))
                 return false;
             return true;
@@ -988,7 +990,7 @@ class boss_the_lich_king : public CreatureScript
                                 events.ScheduleEvent(EVENT_INFEST, urand(21000, 24000), 0, (events.GetPhaseMask() & PHASE_MASK_ONE) ? PHASE_ONE : PHASE_TWO);
                                 break;
                             case EVENT_NECROTIC_PLAGUE:
-                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, NecroticPlagueTargetCheck(me, NECROTIC_PLAGUE_LK, NECROTIC_PLAGUE_PLR)))
+                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, NecroticPlagueTargetCheck(me, NECROTIC_PLAGUE_LK, NECROTIC_PLAGUE_PLR)))
                                 {
                                     Talk(EMOTE_NECROTIC_PLAGUE_WARNING, target->GetGUID());
                                     DoCast(target, SPELL_NECROTIC_PLAGUE);
