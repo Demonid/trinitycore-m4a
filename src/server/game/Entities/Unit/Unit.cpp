@@ -12820,7 +12820,8 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced)
                     speed *= pOwner->GetSpeedRate(mtype) * mult; // pets derive speed from owner when not in combat
                 }
                 else
-                    speed *= ToCreature()->GetCreatureTemplate()->speed_run;    // at this point, MOVE_WALK is never reached
+                    if (mtype == MOVE_RUN)
+                        speed *= ToCreature()->GetCreatureTemplate()->speed_run;    // at this point, MOVE_WALK is never reached
             }
             break;
         default:
