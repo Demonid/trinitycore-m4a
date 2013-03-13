@@ -28,7 +28,7 @@
 
 namespace Movement
 {
-    UnitMoveType SelectSpeedType(uint32 moveFlags)
+    UnitMoveType SelectSpeedType(Unit &unit, uint32 moveFlags)
     {
         if (moveFlags & MOVEMENTFLAG_FLYING)
         {
@@ -46,8 +46,8 @@ namespace Movement
         }
         else if (moveFlags & MOVEMENTFLAG_WALKING)
         {
-            //if (speed_obj.run > speed_obj.walk)
-            return MOVE_WALK;
+            if (unit.GetSpeed(MOVE_RUN) > unit.GetSpeed(MOVE_WALK))
+                return MOVE_WALK;
         }
         else if (moveFlags & MOVEMENTFLAG_BACKWARD /*&& speed_obj.run >= speed_obj.run_back*/)
             return MOVE_RUN_BACK;
@@ -95,7 +95,7 @@ namespace Movement
         moveFlags |= (MOVEMENTFLAG_SPLINE_ENABLED|MOVEMENTFLAG_FORWARD);
 
         if (!args.HasVelocity)
-            args.velocity = unit.GetSpeed(SelectSpeedType(moveFlags));
+            args.velocity = unit.GetSpeed(SelectSpeedType(unit, moveFlags));
 
         if (!args.Validate(&unit))
             return;
