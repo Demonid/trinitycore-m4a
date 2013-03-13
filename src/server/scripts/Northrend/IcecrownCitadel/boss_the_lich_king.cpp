@@ -389,8 +389,6 @@ class NecroticPlagueTargetCheck : public std::unary_function<Unit*, bool>
         {
             if (!spell_pred(unit))
                 return false;
-            if (unit->HasAura(73879 /* Boss Hittin' Ya */))
-                return false;
             if ((_notAura1 && unit->HasAura(_notAura1)) || (_notAura2 && unit->HasAura(_notAura2)))
                 return false;
             return true;
@@ -1000,7 +998,7 @@ class boss_the_lich_king : public CreatureScript
                                 events.ScheduleEvent(EVENT_NECROTIC_PLAGUE, urand(30000, 33000), 0, PHASE_ONE);
                                 break;
                             case EVENT_SHADOW_TRAP:
-                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, NonTankTargetSelector(me)))
+                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, SpellTargetSelector(me, SPELL_SHADOW_TRAP)))
                                     DoCast(target, SPELL_SHADOW_TRAP);
                                 events.ScheduleEvent(EVENT_SHADOW_TRAP, 15500, 0, PHASE_ONE);
                                 break;
@@ -1009,23 +1007,10 @@ class boss_the_lich_king : public CreatureScript
                                 events.ScheduleEvent(EVENT_SOUL_REAPER, urand(33000, 35000), 0, PHASE_TWO_THREE);
                                 break;
                             case EVENT_DEFILE:
+                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, SpellTargetSelector(me, SPELL_DEFILE)))
                                 {
-                                    SpellTargetSelector spell_pred(me, SPELL_DEFILE);
-                                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, [&spell_pred](const Unit *target_)
-                                                {
-                                                    if (!spell_pred(target_))
-                                                        return false;
-                                                    if (target_->HasAura(73879 /* Boss Hittin' Ya */))
-                                                        return false;
-                                                    if (target_->HasAura(SPELL_HARVEST_SOUL_VALKYR))
-                                                        return false;
-                                                    return true;
-                                                }
-                                            ))
-                                    {
-                                        Talk(EMOTE_DEFILE_WARNING);
-                                        DoCast(target, SPELL_DEFILE);
-                                    }
+                                    Talk(EMOTE_DEFILE_WARNING);
+                                    DoCast(target, SPELL_DEFILE);
                                 }
                                 if (auto time = events.GetNextEventTime(EVENT_SUMMON_VALKYR))
                                     if (time < events.GetTimer() + 6000U)
@@ -1052,7 +1037,7 @@ class boss_the_lich_king : public CreatureScript
                                 events.ScheduleEvent(EVENT_SUMMON_ICE_SPHERE, urand(7500, 8500), 0, PHASE_TRANSITION);
                                 break;
                             case EVENT_SUMMON_RAGING_SPIRIT:
-                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true))
+                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, SpellTargetSelector(me, SPELL_RAGING_SPIRIT)))
                                     me->CastSpell(target, SPELL_RAGING_SPIRIT, TRIGGERED_NONE);
                                 if (auto time = events.GetNextEventTime(EVENT_SUMMON_ICE_SPHERE))
                                     if (time < events.GetTimer() + 1200U)
