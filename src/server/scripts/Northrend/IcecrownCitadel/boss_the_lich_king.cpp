@@ -1025,7 +1025,7 @@ class boss_the_lich_king : public CreatureScript
                                 break;
                             case EVENT_PAIN_AND_SUFFERING:
                                 events.ScheduleEvent(EVENT_PAIN_AND_SUFFERING, 1U, 0, PHASE_TRANSITION);
-                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true))
+                                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, SpellTargetSelector(me, SPELL_PAIN_AND_SUFFERING)))
                                     me->CastSpell(target, SPELL_PAIN_AND_SUFFERING, TRIGGERED_NONE);
                                 break;
                             case EVENT_SUMMON_ICE_SPHERE:
