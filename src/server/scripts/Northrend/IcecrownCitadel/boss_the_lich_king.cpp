@@ -2442,7 +2442,7 @@ class spell_the_lich_king_shadow_trap_visual : public SpellScriptLoader
                             {
                                 target->CastSpell(target, SPELL_SHADOW_TRAP_AURA, TRIGGERED_NONE);
                             },
-                        500);
+                        0);
                 }
             }
 
