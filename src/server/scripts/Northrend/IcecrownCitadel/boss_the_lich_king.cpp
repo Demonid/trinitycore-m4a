@@ -389,6 +389,8 @@ class NecroticPlagueTargetCheck : public std::unary_function<Unit*, bool>
         {
             if (!spell_pred(unit))
                 return false;
+            if (unit == _sourceObj->getVictim())
+                return false;
             if ((_notAura1 && unit->HasAura(_notAura1)) || (_notAura2 && unit->HasAura(_notAura2)))
                 return false;
             return true;
@@ -995,8 +997,10 @@ class boss_the_lich_king : public CreatureScript
                                 {
                                     Talk(EMOTE_NECROTIC_PLAGUE_WARNING, target->GetGUID());
                                     DoCast(target, SPELL_NECROTIC_PLAGUE);
+                                    events.ScheduleEvent(EVENT_NECROTIC_PLAGUE, urand(30000, 33000), 0, PHASE_ONE);
                                 }
-                                events.ScheduleEvent(EVENT_NECROTIC_PLAGUE, urand(30000, 33000), 0, PHASE_ONE);
+                                else
+                                    events.ScheduleEvent(EVENT_NECROTIC_PLAGUE, 1, 0, PHASE_ONE);
                                 break;
                             case EVENT_SHADOW_TRAP:
                                 if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, SpellTargetSelector(me, SPELL_SHADOW_TRAP)))
