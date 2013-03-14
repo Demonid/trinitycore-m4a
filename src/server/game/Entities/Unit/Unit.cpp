@@ -12961,6 +12961,7 @@ void Unit::setDeathState(DeathState s)
         UnsummonAllTotems();
         RemoveAllControlled();
         RemoveAllAurasOnDeath();
+        ExitVehicle();
     }
 
     if (s == JUST_DIED)
