@@ -615,8 +615,6 @@ class boss_the_lich_king : public CreatureScript
             void EnterEvadeMode()
             {
                 DoCastAOE(SPELL_KILL_FROSTMOURNE_PLAYERS);
-                EntryCheckPredicate pred(NPC_STRANGULATE_VEHICLE);
-                summons.DoAction(ACTION_TELEPORT_BACK, pred);
                 instance->SetBossState(DATA_THE_LICH_KING, FAIL);
                 BossAI::EnterEvadeMode();
                 if (Creature* tirion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HIGHLORD_TIRION_FORDRING)))
@@ -661,15 +659,11 @@ class boss_the_lich_king : public CreatureScript
                         events.ScheduleEvent(EVENT_OUTRO_TALK_8, 17000, 0, PHASE_OUTRO);
                         break;
                     case ACTION_TELEPORT_BACK:
-                    {
-                        EntryCheckPredicate pred(NPC_STRANGULATE_VEHICLE);
-                        summons.DoAction(ACTION_TELEPORT_BACK, pred);
                         if (!IsHeroic())
                             Talk(SAY_LK_FROSTMOURNE_ESCAPE);
                         else
                             events.ScheduleEvent(EVENT_START_ATTACK, 1500);
                         break;
-                    }
                     default:
                         break;
                 }
@@ -798,9 +792,6 @@ class boss_the_lich_king : public CreatureScript
                             summon->m_Events.AddEvent(new VileSpiritActivateEvent(summon), summon->m_Events.CalculateTime(15000));
                         return;
                     }
-                    case NPC_STRANGULATE_VEHICLE:
-                        summons.Summon(summon);
-                        return;
                     default:
                         break;
                 }
@@ -1023,9 +1014,11 @@ class boss_the_lich_king : public CreatureScript
                                 events.ScheduleEvent(EVENT_DEFILE, 32500U, 0, PHASE_TWO_THREE);
                                 break;
                             case EVENT_HARVEST_SOUL:
-                                Talk(SAY_LK_HARVEST_SOUL);
                                 if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, SpellTargetSelector(me, SPELL_HARVEST_SOUL)))
+                                {
+                                    Talk(SAY_LK_HARVEST_SOUL);
                                     DoCast(target, SPELL_HARVEST_SOUL);
+                                }
                                 events.ScheduleEvent(EVENT_HARVEST_SOUL, 75000, 0, PHASE_THREE);
                                 break;
                             case EVENT_PAIN_AND_SUFFERING:
@@ -1778,6 +1771,7 @@ class npc_strangulate_vehicle : public CreatureScript
             npc_strangulate_vehicleAI(Creature* creature) : ScriptedAI(creature),
                 _instance(creature->GetInstanceScript())
             {
+                me->setActive(true);
             }
 
             void IsSummonedBy(Unit* summoner)
@@ -1785,30 +1779,10 @@ class npc_strangulate_vehicle : public CreatureScript
                 DoCast(summoner, SPELL_HARVEST_SOUL_VEHICLE);
                 _events.Reset();
                 _events.ScheduleEvent(EVENT_MOVE_TO_LICH_KING, 2000);
-                _events.ScheduleEvent(EVENT_TELEPORT, 6000);
-
-                // this will let us easily access all creatures of this entry on heroic mode when its time to teleport back
-                if (Creature* lichKing = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_THE_LICH_KING)))
-                    lichKing->AI()->JustSummoned(me);
             }
 
             void DoAction(int32 const action)
             {
-                if (action != ACTION_TELEPORT_BACK)
-                    return;
-
-                if (TempSummon* summ = me->ToTempSummon())
-                {
-                    if (Unit* summoner = summ->GetSummoner())
-                    {
-                        DoCast(summoner, SPELL_HARVEST_SOUL_TELEPORT_BACK);
-                        summoner->RemoveAurasDueToSpell(SPELL_HARVEST_SOUL_DAMAGE_AURA);
-                    }
-                }
-
-                if (Creature* lichKing = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_THE_LICH_KING)))
-                    lichKing->AI()->SummonedCreatureDespawn(me);
-                me->DespawnOrUnsummon();
             }
 
             void UpdateAI(uint32 const diff)
@@ -1821,22 +1795,6 @@ class npc_strangulate_vehicle : public CreatureScript
                 {
                     switch (eventId)
                     {
-                        case EVENT_TELEPORT:
-                            me->GetMotionMaster()->Clear(false);
-                            me->GetMotionMaster()->MoveIdle();
-                            if (TempSummon* summ = me->ToTempSummon())
-                            {
-                                if (Unit* summoner = summ->GetSummoner())
-                                {
-                                    summoner->CastSpell((Unit*)NULL, SPELL_HARVEST_SOUL_VISUAL, true);
-                                    summoner->ExitVehicle(summoner);
-                                    if (!IsHeroic())
-                                        summoner->CastSpell(summoner, SPELL_HARVEST_SOUL_TELEPORT, true);
-                                    else
-                                        summoner->CastSpell(summoner, SPELL_HARVEST_SOULS_TELEPORT, true);
-                                }
-                            }
-                            break;
                         case EVENT_MOVE_TO_LICH_KING:
                             if (Creature* lichKing = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_THE_LICH_KING)))
                             {
@@ -1936,7 +1894,6 @@ class npc_terenas_menethil : public CreatureScript
                     {
                         me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                         DoCast(SPELL_TERENAS_LOSES_INSIDE);
-                        _events.ScheduleEvent(EVENT_TELEPORT_BACK, 1000);
                         if (Creature* warden = me->FindNearestCreature(NPC_SPIRIT_WARDEN, 20.0f))
                         {
                             warden->CastSpell((Unit*)NULL, SPELL_DESTROY_SOUL, TRIGGERED_NONE);
@@ -1997,13 +1954,12 @@ class npc_terenas_menethil : public CreatureScript
                         case EVENT_DESTROY_SOUL:
                             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                             if (Creature* warden = me->FindNearestCreature(NPC_SPIRIT_WARDEN, 20.0f))
+                            {
                                 warden->CastSpell((Unit*)NULL, SPELL_DESTROY_SOUL, TRIGGERED_NONE);
+                                warden->DespawnOrUnsummon(2000);
+                            }
                             DoCast(SPELL_TERENAS_LOSES_INSIDE);
-                            _events.ScheduleEvent(EVENT_TELEPORT_BACK, 1000);
-                            break;
-                        case EVENT_TELEPORT_BACK:
-                            if (Creature* lichKing = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_THE_LICH_KING)))
-                                lichKing->AI()->DoAction(ACTION_TELEPORT_BACK);
+                            me->DespawnOrUnsummon(2000);
                             break;
                         default:
                             break;
@@ -3104,9 +3060,22 @@ class spell_the_lich_king_harvest_soul : public SpellScriptLoader
 
             void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
+                auto target = GetTarget();
+                target->CastSpell((Unit*)NULL, SPELL_HARVEST_SOUL_VISUAL, true);
                 // m_originalCaster to allow stacking from different casters, meh
                 if (GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_DEATH)
-                    GetTarget()->CastSpell((Unit*)NULL, SPELL_HARVESTED_SOUL, true, NULL, NULL, GetTarget()->GetInstanceScript()->GetData64(DATA_THE_LICH_KING));
+                    target->CastSpell((Unit*)NULL, SPELL_HARVESTED_SOUL, true, NULL, NULL, target->GetInstanceScript()->GetData64(DATA_THE_LICH_KING));
+                else
+                    if (auto vehicle = target->GetVehicle())
+                    {
+                        auto is_heroic = vehicle->GetBase()->GetMap()->IsHeroic();
+                        auto caster = vehicle->GetBase()->GetGUID();
+                        add_simple_event(target->m_Events, [target, is_heroic, caster]()
+                                {
+                                    target->CastSpell(target, !is_heroic ? SPELL_HARVEST_SOUL_TELEPORT : SPELL_HARVEST_SOULS_TELEPORT, true, nullptr, nullptr, caster);
+                                },
+                            0);
+                    }
             }
 
             void Register()
@@ -3125,6 +3094,52 @@ class spell_the_lich_king_harvest_soul : public SpellScriptLoader
             return new spell_the_lich_king_harvest_soul_AuraScript();
         }
 };
+
+namespace
+{
+    struct harvest_soul_teleport_aura
+    : AuraScript
+    {
+        PrepareAuraScript(harvest_soul_teleport_aura)
+
+        void Register() override
+        {
+            AfterEffectRemove += AuraEffectRemoveFn(harvest_soul_teleport_aura::after_effect_remove, EFFECT_0, SPELL_EFFECT_ANY, AURA_EFFECT_HANDLE_REAL);
+        }
+
+        bool Load() override
+        {
+            if (!GetOwner()->GetInstanceScript())
+                return false;
+            return true;
+        }
+
+        void after_effect_remove(const AuraEffect *aurEff, AuraEffectHandleModes mode)
+        {
+            switch (GetTargetApplication()->GetRemoveMode())
+            {
+            case AURA_REMOVE_BY_EXPIRE:
+            case AURA_REMOVE_BY_DEATH:
+                // m_originalCaster to allow stacking from different casters, meh
+                GetTarget()->CastSpell((Unit*)NULL, SPELL_HARVESTED_SOUL, true, NULL, NULL, GetTarget()->GetInstanceScript()->GetData64(DATA_THE_LICH_KING));
+                break;
+            default:
+                break;
+            }
+            if (auto caster = GetCaster())
+            {
+                auto target = GetTarget()->GetGUID();
+                add_simple_event(caster->m_Events, [caster, target]()
+                        {
+                            caster->CastSpell(ObjectAccessor::GetUnit(*caster, target), SPELL_HARVEST_SOUL_TELEPORT_BACK, true);
+                            if (auto vehicle = dynamic_cast<TempSummon *>(caster))
+                                vehicle->DespawnOrUnsummon();
+                        },
+                    0);
+            }
+        }
+    };
+}
 
 class spell_the_lich_king_lights_favor : public SpellScriptLoader
 {
@@ -3222,8 +3237,8 @@ class spell_the_lich_king_restore_soul : public SpellScriptLoader
                         (*itr)->SetReactState(REACT_PASSIVE);
                         (*itr)->AI()->EnterEvadeMode();
                     }
-                if (auto caster = dynamic_cast<Creature *>(GetCaster()))
-                    caster->DespawnOrUnsummon(1000);
+                if (auto terenas = dynamic_cast<TempSummon *>(GetCaster()))
+                    terenas->DespawnOrUnsummon(3000);
             }
 
             void RemoveAura()
@@ -3247,6 +3262,33 @@ class spell_the_lich_king_restore_soul : public SpellScriptLoader
         }
 };
 
+namespace
+{
+    struct destroy_soul_spell
+    : SpellScript
+    {
+        PrepareSpellScript(destroy_soul_spell)
+
+        void Register() override
+        {
+            BeforeHit += SpellHitFn(destroy_soul_spell::before_hit);
+        }
+
+        bool Load() override
+        {
+            if (!GetCaster()->GetInstanceScript())
+                return false;
+            return true;
+        }
+
+        void before_hit()
+        {
+            if (auto target = GetHitUnit())
+                target->RemoveAurasDueToSpell(target->GetMap()->IsHeroic() ? SPELL_HARVEST_SOULS_TELEPORT : SPELL_HARVEST_SOUL_TELEPORT, 0, 0, AURA_REMOVE_BY_DEATH);
+        }
+    };
+}
+
 class spell_the_lich_king_in_frostmourne_room : public SpellScriptLoader
 {
     public:
@@ -3263,9 +3305,6 @@ class spell_the_lich_king_in_frostmourne_room : public SpellScriptLoader
 
             void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                // m_originalCaster to allow stacking from different casters, meh
-                if (GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_DEATH)
-                    GetTarget()->CastSpell((Unit*)NULL, SPELL_HARVESTED_SOUL, true, NULL, NULL, GetTarget()->GetInstanceScript()->GetData64(DATA_THE_LICH_KING));
             }
 
             void Register()
@@ -3489,9 +3528,11 @@ void AddSC_boss_the_lich_king()
     new spell_the_lich_king_vile_spirit_move_target_search();
     new spell_the_lich_king_vile_spirit_damage_target_search();
     new spell_the_lich_king_harvest_soul();
+    load_aura_script<harvest_soul_teleport_aura>("spell_the_lich_king_harvest_soul_teleport");
     new spell_the_lich_king_lights_favor();
     new spell_the_lich_king_soul_rip();
     new spell_the_lich_king_restore_soul();
+    load_spell_script<destroy_soul_spell>("spell_the_lich_king_destroy_soul");
     new spell_the_lich_king_in_frostmourne_room();
     new spell_the_lich_king_summon_spirit_bomb();
     new spell_the_lich_king_trigger_vile_spirit();

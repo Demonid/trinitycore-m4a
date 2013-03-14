@@ -3593,9 +3593,6 @@ void SpellMgr::LoadDbcDataCorrections()
                 spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_50000_YARDS; // 50000yd
                 spellInfo->EffectRadiusIndex[2] = EFFECT_RADIUS_50000_YARDS; // 50000yd
                 break;
-            case 73655: // Harvest Soul
-                spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_DONE_BONUS;
-                break;
             case 73540: // Summon Shadow Trap
                 spellInfo->DurationIndex = 23; // 90 seconds
                 break;

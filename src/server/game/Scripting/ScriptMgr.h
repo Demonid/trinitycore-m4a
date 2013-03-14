@@ -224,6 +224,26 @@ inline void load_spell_script(const char *name)
     new script_loader(name);
 }
 
+template<class AuraScriptType>
+inline void load_aura_script(const char *name)
+{
+    struct script_loader
+    : SpellScriptLoader
+    {
+        script_loader(const char *name)
+        : SpellScriptLoader(name)
+        {
+        }
+
+        AuraScript *GetAuraScript() const override
+        {
+            return new AuraScriptType();
+        }
+    };
+
+    new script_loader(name);
+}
+
 class ServerScript : public ScriptObject
 {
     protected:
