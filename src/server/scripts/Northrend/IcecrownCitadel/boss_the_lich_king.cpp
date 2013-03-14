@@ -1006,6 +1006,7 @@ class boss_the_lich_king : public CreatureScript
                                 if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, SpellTargetSelector(me, SPELL_DEFILE)))
                                 {
                                     Talk(EMOTE_DEFILE_WARNING);
+                                    me->SetTarget(target->GetGUID());
                                     DoCast(target, SPELL_DEFILE);
                                 }
                                 if (auto time = events.GetNextEventTime(EVENT_SUMMON_VALKYR))
