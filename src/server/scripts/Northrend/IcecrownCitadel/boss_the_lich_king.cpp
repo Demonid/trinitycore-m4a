@@ -2062,7 +2062,7 @@ class npc_spirit_bomb : public CreatureScript
                 me->UpdateGroundPositionZ(destX, destY, destZ);
                 me->GetMotionMaster()->MovePoint(POINT_GROUND, destX, destY, destZ);
                 me->setActive(true);
-                explosion_timer = 10000;
+                explosion_timer = 11000;
             }
 
             void MovementInform(uint32 type, uint32 point)
