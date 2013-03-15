@@ -1782,7 +1782,7 @@ class npc_strangulate_vehicle : public CreatureScript
                 _events.ScheduleEvent(EVENT_MOVE_TO_LICH_KING, 2000);
             }
 
-            void DoAction(int32 const action)
+            void DoAction(int32 const action UNUSED)
             {
             }
 
@@ -2079,6 +2079,7 @@ class npc_spirit_bomb : public CreatureScript
             {
                 UpdateVictim();
                 if (explosion_timer)
+                {
                     if (explosion_timer > diff)
                         explosion_timer -= diff;
                     else
@@ -2088,6 +2089,7 @@ class npc_spirit_bomb : public CreatureScript
                         DoCastAOE(SPELL_EXPLOSION);
                         me->DespawnOrUnsummon(1000);
                     }
+                }
                 // no melee attacks
             }
 
@@ -3115,7 +3117,7 @@ namespace
             return true;
         }
 
-        void after_effect_remove(const AuraEffect *aurEff, AuraEffectHandleModes mode)
+        void after_effect_remove(const AuraEffect *aurEff UNUSED, AuraEffectHandleModes mode UNUSED)
         {
             switch (GetTargetApplication()->GetRemoveMode())
             {
