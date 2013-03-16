@@ -843,7 +843,13 @@ class boss_the_lich_king : public CreatureScript
                     {
                         SendLightOverride(LIGHT_SNOWSTORM, 5000);
                         SendWeather(WEATHER_STATE_LIGHT_SNOW);
-                        summons.DespawnEntry(39137 /* Shadow Trap */);
+                        for (auto &guid : summons)
+                            if (auto summon = Unit::GetCreature(*me, guid))
+                                if (summon->GetEntry() == 39137 /* Shadow Trap */)
+                                {
+                                    summon->RemoveAllAuras();
+                                    summon->DespawnOrUnsummon(3000);
+                                }
                     }
                     break;
                 }
@@ -2426,39 +2432,31 @@ class spell_the_lich_king_shadow_trap_periodic : public SpellScriptLoader
         {
             PrepareSpellScript(spell_the_lich_king_shadow_trap_periodic_SpellScript);
 
-            bool Load() override
-            {
-                triggered = false;
-                return true;
-            }
-
             void CheckTargetCount(std::list<WorldObject*>& targets)
             {
                 if (targets.empty())
                     return;
 
-                if (!triggered)
-                {
-                    triggered = true;
-                    auto caster = GetCaster();
-                    add_simple_event(caster->m_Events, [caster]()
-                            {
-                                caster->RemoveAurasDueToSpell(SPELL_SHADOW_TRAP_AURA);
-                                caster->CastSpell((Unit*)NULL, SPELL_SHADOW_TRAP_KNOCKBACK, true);
+                auto caster = GetCaster();
+                add_simple_event(caster->m_Events, [caster]()
+                        {
+                            caster->RemoveAurasDueToSpell(SPELL_SHADOW_TRAP_AURA);
+                            add_simple_event(caster->m_Events, [caster]()
+                                    {
+                                        caster->CastSpell((Unit*)NULL, SPELL_SHADOW_TRAP_KNOCKBACK, true);
+                                    },
+                                0);
 
-                                if (caster->GetTypeId() == TYPEID_UNIT)
-                                  caster->ToCreature()->DespawnOrUnsummon(3000U);
-                            },
-                        500);
-                }
+                            if (caster->GetTypeId() == TYPEID_UNIT)
+                                caster->ToCreature()->DespawnOrUnsummon(3000U);
+                        },
+                    0);
             }
 
             void Register()
             {
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_the_lich_king_shadow_trap_periodic_SpellScript::CheckTargetCount, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
             }
-
-            bool triggered;
         };
 
         SpellScript* GetSpellScript() const
