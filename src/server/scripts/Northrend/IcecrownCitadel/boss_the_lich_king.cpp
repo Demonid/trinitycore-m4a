@@ -1623,7 +1623,9 @@ class npc_valkyr_shadowguard : public CreatureScript
             void IsSummonedBy(Unit* /*summoner*/)
             {
                 _events.Reset();
-                _events.ScheduleEvent(EVENT_GRAB_PLAYER, 2500);
+                auto wait_time = IsHeroic() ? 1000 : 2000;
+                _events.ScheduleEvent(EVENT_GRAB_PLAYER, wait_time);
+                _events.ScheduleEvent(EVENT_MOVE_TO_DROP_POS, wait_time + 1000);
             }
 
             void DamageTaken(Unit* /*attacker*/, uint32& damage)
@@ -1667,26 +1669,10 @@ class npc_valkyr_shadowguard : public CreatureScript
                 switch (id)
                 {
                     case POINT_DROP_PLAYER:
-                        if (me->HasAuraType(SPELL_AURA_CONTROL_VEHICLE))
-                        {
-                            if (me->GetDistance(_dropPoint) < 0.5F)
-                            {
-                                DoCastAOE(SPELL_EJECT_ALL_PASSENGERS);
-                                if (IsHeroic())
-                                    move_to_home();
-                                else
-                                    me->DespawnOrUnsummon(1000);
-                            }
-                            else
-                                _events.ScheduleEvent(EVENT_MOVE_TO_DROP_POS, 0U);
-                        }
                         break;
                     case POINT_CHARGE:
                         if (Player* target = ObjectAccessor::GetPlayer(*me, _grabbedPlayer))
-                        {
                             DoCast(target, SPELL_VALKYR_CARRY);
-                            _events.ScheduleEvent(EVENT_MOVE_TO_DROP_POS, 500U);
-                        }
                         else
                             me->DespawnOrUnsummon();
                         break;
@@ -1722,19 +1708,31 @@ class npc_valkyr_shadowguard : public CreatureScript
                             }
                             break;
                         case EVENT_MOVE_TO_DROP_POS:
-                            if (GameObject* platform = ObjectAccessor::GetGameObject(*me, _instance->GetData64(DATA_ARTHAS_PLATFORM)))
-                            {
-                                std::list<Creature*> triggers;
-                                GetCreatureListWithEntryInGrid(triggers, me, NPC_WORLD_TRIGGER, 150.0f);
-                                triggers.remove_if(HeightDifferenceCheck(platform, 5.0f, true));
-                                if (triggers.empty())
-                                    return;
+                            _events.ScheduleEvent(EVENT_MOVE_TO_DROP_POS, 2000);
+                            if (me->HasAuraType(SPELL_AURA_CONTROL_VEHICLE))
+                                if (GameObject* platform = ObjectAccessor::GetGameObject(*me, _instance->GetData64(DATA_ARTHAS_PLATFORM)))
+                                {
+                                    std::list<Creature*> triggers;
+                                    GetCreatureListWithEntryInGrid(triggers, me, NPC_WORLD_TRIGGER, 150.0f);
+                                    triggers.remove_if(HeightDifferenceCheck(platform, 5.0f, true));
+                                    if (triggers.empty())
+                                        return;
 
-                                triggers.sort(Trinity::ObjectDistanceOrderPred(me));
-                                _dropPoint.Relocate(triggers.front());
+                                    triggers.sort(Trinity::ObjectDistanceOrderPred(me));
+                                    _dropPoint.Relocate(triggers.front());
 
-                                me->GetMotionMaster()->MovePoint(POINT_DROP_PLAYER, _dropPoint);
-                            }
+                                    if (me->GetDistance(_dropPoint) < 0.5F)
+                                    {
+                                        DoCastAOE(SPELL_EJECT_ALL_PASSENGERS);
+                                        if (IsHeroic())
+                                            move_to_home();
+                                        else
+                                            me->DespawnOrUnsummon(1000);
+                                    }
+                                    else
+                                        if (!me->GetMotionMaster()->GetMotionSlot(MOTION_SLOT_ACTIVE))
+                                            me->GetMotionMaster()->MovePoint(POINT_DROP_PLAYER, _dropPoint);
+                                }
                             break;
                         case EVENT_LIFE_SIPHON:
                             if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1))
@@ -3067,10 +3065,10 @@ class spell_the_lich_king_harvest_soul : public SpellScriptLoader
                 if (GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_DEATH)
                     target->CastSpell((Unit*)NULL, SPELL_HARVESTED_SOUL, true, NULL, NULL, target->GetInstanceScript()->GetData64(DATA_THE_LICH_KING));
                 else
-                    if (auto vehicle = target->GetVehicle())
+                    if (auto vehicle = target->GetVehicleBase())
                     {
-                        auto is_heroic = vehicle->GetBase()->GetMap()->IsHeroic();
-                        auto caster = vehicle->GetBase()->GetGUID();
+                        auto is_heroic = vehicle->GetMap()->IsHeroic();
+                        auto caster = vehicle->GetGUID();
                         add_simple_event(target->m_Events, [target, is_heroic, caster]()
                                 {
                                     target->CastSpell(target, !is_heroic ? SPELL_HARVEST_SOUL_TELEPORT : SPELL_HARVEST_SOULS_TELEPORT, true, nullptr, nullptr, caster);
