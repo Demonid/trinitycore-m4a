@@ -2064,7 +2064,7 @@ class npc_spirit_bomb : public CreatureScript
                 me->GetPosition(destX, destY);
                 destZ = 1055.0f;    // approximation, gets more precise later
                 me->UpdateGroundPositionZ(destX, destY, destZ);
-                me->GetMotionMaster()->MovePoint(POINT_GROUND, destX, destY, destZ);
+                me->GetMotionMaster()->MovePoint(POINT_GROUND, destX, destY, destZ + 1.0F);
                 me->setActive(true);
                 explosion_timer = 11000;
             }
