@@ -1781,9 +1781,10 @@ class npc_strangulate_vehicle : public CreatureScript
 
             void IsSummonedBy(Unit* summoner)
             {
-                DoCast(summoner, SPELL_HARVEST_SOUL_VEHICLE);
+                me->SetFacingToObject(summoner);
                 _events.Reset();
-                _events.ScheduleEvent(EVENT_MOVE_TO_LICH_KING, 2000);
+                _events.ScheduleEvent(EVENT_GRAB_PLAYER, 1000);
+                _events.ScheduleEvent(EVENT_MOVE_TO_LICH_KING, 3000);
             }
 
             void DoAction(int32 const action UNUSED)
@@ -1800,6 +1801,10 @@ class npc_strangulate_vehicle : public CreatureScript
                 {
                     switch (eventId)
                     {
+                    case EVENT_GRAB_PLAYER:
+                        if (auto summon = dynamic_cast<TempSummon *>(me))
+                            DoCast(summon->GetSummoner(), SPELL_HARVEST_SOUL_VEHICLE);
+                        break;
                         case EVENT_MOVE_TO_LICH_KING:
                             if (Creature* lichKing = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_THE_LICH_KING)))
                             {
@@ -1807,6 +1812,7 @@ class npc_strangulate_vehicle : public CreatureScript
                                 {
                                     Position pos;
                                     lichKing->GetNearPosition(pos, std::min(float(rand_norm()) * 5.0f  + 7.5f, me->GetExactDist2d(lichKing)), lichKing->GetAngle(me) - lichKing->GetOrientation());
+                                    pos.m_positionZ += 3.0F;
                                     me->GetMotionMaster()->MovePoint(0, pos);
                                 }
                             }
@@ -3034,11 +3040,9 @@ namespace
         void on_effect_hit_target(SpellEffIndex effIndex UNUSED)
         {
             auto u = GetHitUnit();
-            if (u->GetExactDist(GetCaster()) > 10.0F)
-            {
-                u->NearTeleportTo(u->GetPositionX(), u->GetPositionY(), u->GetPositionZ(), u->GetAngle(GetCaster()));
-                u->SetOrientation(u->GetAngle(GetCaster()));
-            }
+            auto o = u->GetAngle(GetCaster());
+            u->SetFacingTo(o);
+            u->SetOrientation(o);
         }
     };
 }
@@ -3096,6 +3100,22 @@ class spell_the_lich_king_harvest_soul : public SpellScriptLoader
 
 namespace
 {
+    struct harvest_soul_summon_spell
+    : SpellScript
+    {
+        PrepareSpellScript(harvest_soul_summon_spell)
+
+        void Register() override
+        {
+            OnEffectHit += SpellEffectFn(harvest_soul_summon_spell::on_effect_hit, EFFECT_0, SPELL_EFFECT_SUMMON);
+        }
+
+        void on_effect_hit(SpellEffIndex effIndex)
+        {
+            GetHitDest()->m_positionZ += 3.0F;
+        }
+    };
+
     struct harvest_soul_teleport_aura
     : AuraScript
     {
@@ -3527,6 +3547,7 @@ void AddSC_boss_the_lich_king()
     new spell_the_lich_king_vile_spirit_move_target_search();
     new spell_the_lich_king_vile_spirit_damage_target_search();
     new spell_the_lich_king_harvest_soul();
+    load_spell_script<harvest_soul_summon_spell>("spell_the_lich_king_harvest_soul_summon");
     load_aura_script<harvest_soul_teleport_aura>("spell_the_lich_king_harvest_soul_teleport");
     new spell_the_lich_king_lights_favor();
     new spell_the_lich_king_soul_rip();
