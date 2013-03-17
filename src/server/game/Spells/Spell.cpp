@@ -3205,9 +3205,6 @@ void Spell::cast(bool skipCheck)
     }
     SetExecutedCurrently(true);
 
-    if (m_caster->GetTypeId() != TYPEID_PLAYER && m_targets.GetUnitTarget() && m_targets.GetUnitTarget() != m_caster)
-        m_caster->SetInFront(m_targets.GetUnitTarget());
-
     // Should this be done for original caster?
     if (m_caster->GetTypeId() == TYPEID_PLAYER)
     {
