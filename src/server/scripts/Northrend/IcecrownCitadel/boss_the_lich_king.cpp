@@ -3110,7 +3110,7 @@ namespace
             OnEffectHit += SpellEffectFn(harvest_soul_summon_spell::on_effect_hit, EFFECT_0, SPELL_EFFECT_SUMMON);
         }
 
-        void on_effect_hit(SpellEffIndex effIndex)
+        void on_effect_hit(SpellEffIndex effIndex UNUSED)
         {
             GetHitDest()->m_positionZ += 3.0F;
         }
