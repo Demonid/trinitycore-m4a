@@ -1,0 +1,5 @@
+DELETE FROM `smart_scripts` WHERE `entryorguid` = '185156';
+INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES 
+('185156', '1', '1', '0', '8', '0', '100', '1', '38790', '0', '0', '0', '33', '22112', '0', '0', '0', '0', '0', '16', '0', '0', '0', '0', '0', '0', '0', 'Zuluhed the Whacked - unchain dragon give quest credit');
+UPDATE `gameobject_template` SET `AIName`='SmartGameObjectAI' WHERE (`entry`='185156');
+UPDATE `quest_template` SET `RequiredSpellCast1` = 0 WHERE `id` = 10866; -- WDB field edited (Prev Value: 38790)
