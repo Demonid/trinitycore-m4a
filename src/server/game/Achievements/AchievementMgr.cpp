@@ -649,12 +649,13 @@ void AchievementMgr::LoadFromDB(PreparedQueryResult achievementResult, PreparedQ
             AchievementCriteriaEntry const* criteria = sAchievementMgr->GetAchievementCriteria(id);
             if (!criteria)
             {
-                // we will remove not existed criteria for all characters
-                sLog->outError(LOG_FILTER_ACHIEVEMENTSYS, "Non-existing achievement criteria %u data removed from table `character_achievement_progress`.", id);
+                // we will remove not existed criteria for this character
+                sLog->outError(LOG_FILTER_ACHIEVEMENTSYS, "Non-existing achievement criteria %u data removed from character %u.", id, static_cast<unsigned int>(GetPlayer()->GetGUIDLow()));
 
                 PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_INVALID_ACHIEV_PROGRESS_CRITERIA);
 
-                stmt->setUInt16(0, uint16(id));
+                stmt->setUInt32(0, GetPlayer()->GetGUIDLow());
+                stmt->setUInt16(1, uint16(id));
 
                 CharacterDatabase.Execute(stmt);
 
