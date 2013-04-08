@@ -1086,7 +1086,7 @@ class npc_blood_queen_lana_thel : public CreatureScript
                 if (Creature* summon = DoSummon(NPC_FLOATING_TRIGGER, triggerPos, 15000, TEMPSUMMON_TIMED_DESPAWN))
                 {
                     summon->CastSpell(summon, SPELL_OOC_INVOCATION_VISUAL, true);
-                    summon->SetSpeed(MOVE_FLIGHT, 0.15f, true);
+                    summon->SetSpeed(MOVE_RUN, 0.15f, true);
                     summon->GetMotionMaster()->MovePoint(0, triggerEndPos);
                 }
             }
