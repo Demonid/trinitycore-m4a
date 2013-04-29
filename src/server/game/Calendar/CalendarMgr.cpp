@@ -35,7 +35,8 @@ CalendarInvite::~CalendarInvite()
 
 CalendarEvent::~CalendarEvent()
 {
-    sCalendarMgr->FreeEventId(_eventId);
+    if (_eventId)
+        sCalendarMgr->FreeEventId(_eventId);
 }
 
 CalendarMgr::CalendarMgr()
@@ -44,6 +45,11 @@ CalendarMgr::CalendarMgr()
 
 CalendarMgr::~CalendarMgr()
 {
+    for (auto &event : _events)
+        event->SetEventId(0);
+    for (auto &p : _invites)
+        for (auto &invite : p.second)
+            invite->SetInviteId(0);
 }
 
 void CalendarMgr::LoadFromDB()
