@@ -254,6 +254,8 @@ Item::Item()
     m_refundRecipient = 0;
     m_paidMoney = 0;
     m_paidExtendedCost = 0;
+
+    m_TransmogEntry = 0;
 }
 
 bool Item::Create(uint32 guidlow, uint32 itemid, Player const* owner)
@@ -361,6 +363,14 @@ void Item::SaveToDB(SQLTransaction& trans)
                 stmt->setUInt32(1, guid);
                 trans->Append(stmt);
             }
+
+            if(IsTransmoged())
+            {
+              stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_TRANSMOG);
+              stmt->setUInt32(0, guid);
+              stmt->setUInt32(1, m_TransmogEntry);
+              trans->Append(stmt);
+            }
             break;
         }
         case ITEM_REMOVED:
@@ -368,6 +378,13 @@ void Item::SaveToDB(SQLTransaction& trans)
             PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_ITEM_INSTANCE);
             stmt->setUInt32(0, guid);
             trans->Append(stmt);
+
+            if(IsTransmoged())
+            {
+              stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG);
+              stmt->setUInt32(0, guid);
+              trans->Append(stmt);
+            }
 
             if (HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_WRAPPED))
             {
@@ -463,7 +480,10 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, Field* fields, uint32 entr
 
     SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, fields[9].GetUInt32());
     SetText(fields[10].GetString());
-
+    
+    if(sWorld->getBoolConfig(CONFIG_TRANSMOG_ENABLE))
+      LoadTransmog();
+    
     if (need_save)                                           // normal item changed state set not work at loading
     {
         PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ITEM_INSTANCE_ON_LOAD);
@@ -481,6 +501,9 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, Field* fields, uint32 entr
 void Item::DeleteFromDB(SQLTransaction& trans, uint32 itemGuid)
 {
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_ITEM_INSTANCE);
+    stmt->setUInt32(0, itemGuid);
+    trans->Append(stmt);
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG);
     stmt->setUInt32(0, itemGuid);
     trans->Append(stmt);
 }
@@ -1394,4 +1417,57 @@ void Item::ItemContainerDeleteLootMoneyAndLootItemsFromDB()
     // Deletes money and items associated with an openable item from the DB
     ItemContainerDeleteLootMoneyFromDB();
     ItemContainerDeleteLootItemsFromDB();
+}
+
+void Item::LoadTransmog()
+{
+  PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_TRANSMOG);
+  stmt->setUInt32(0, GetGUIDLow());
+  PreparedQueryResult result = CharacterDatabase.Query(stmt);
+  
+  if(!result)
+    return;
+
+  m_TransmogEntry = (*result)[0].GetUInt32();
+}
+
+void Item::Transmog(uint32 entry)
+{
+  m_TransmogEntry = entry;
+  GetOwner()->SetUInt32Value(PLAYER_VISIBLE_ITEM_1_ENTRYID + (GetSlot() * 2), m_TransmogEntry);
+  SetState(ITEM_CHANGED, GetOwner());
+}
+
+void Item::RemoveTransmog()
+{
+  m_TransmogEntry = 0;
+  GetOwner()->SetUInt32Value(PLAYER_VISIBLE_ITEM_1_ENTRYID + (GetSlot() * 2), GetEntry());
+  
+  PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG);
+  stmt->setUInt32(0, GetGUIDLow());
+  CharacterDatabase.Execute(stmt);
+}
+
+
+bool Item::CanBeTransmogedTo(uint32 entry)
+{
+  ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(entry);
+  
+  if(GetOwner()->CanUseItem(itemTemplate) != EQUIP_ERR_OK)
+    return false;
+
+  if(itemTemplate->Quality != ITEM_QUALITY_UNCOMMON && itemTemplate->Quality != ITEM_QUALITY_RARE && itemTemplate->Quality != ITEM_QUALITY_EPIC)
+    return false;
+
+  if(itemTemplate->Class != GetTemplate()->Class)
+    return false;
+		
+  if(itemTemplate->SubClass != GetTemplate()->SubClass)
+    return false;
+
+  if(itemTemplate->Class == ITEM_CLASS_ARMOR)
+    if(itemTemplate->InventoryType != GetTemplate()->InventoryType)
+      return false;
+
+  return true;
 }

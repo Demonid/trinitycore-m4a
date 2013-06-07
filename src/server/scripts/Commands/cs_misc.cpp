@@ -64,6 +64,12 @@ public:
             { "money",              SEC_ADMINISTRATOR,      true,  &HandleSendMoneyCommand,             "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
+        static ChatCommand transmogCommandTable[] =
+        {
+            { "add",                SEC_MODERATOR,          false,  &HandleTransmogAddCommand,           "", NULL },
+            { "remove",             SEC_MODERATOR,          false,  &HandleTransmogRemoveCommand,             "", NULL },
+            { NULL,                 0,                      false,  NULL,                                "", NULL }
+        };
         static ChatCommand commandTable[] =
         {
             { "dev",                SEC_ADMINISTRATOR,      false, &HandleDevCommand,                   "", NULL },
@@ -118,6 +124,7 @@ public:
             { "bindsight",          SEC_ADMINISTRATOR,      false, HandleBindSightCommand,              "", NULL },
             { "unbindsight",        SEC_ADMINISTRATOR,      false, HandleUnbindSightCommand,            "", NULL },
             { "playall",            SEC_GAMEMASTER,         false, HandlePlayAllCommand,                "", NULL },
+            { "transmog",           SEC_MODERATOR,          false, NULL,                                "", transmogCommandTable },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         return commandTable;
@@ -2787,6 +2794,85 @@ public:
             return false;
 
         player->StopCastingBindSight();
+        return true;
+    }
+
+    static bool HandleTransmogAddCommand(ChatHandler* handler, char const* args)
+    {
+        Player* targetPlayer = handler->getSelectedPlayer();
+        if (!targetPlayer)
+        {
+            handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        uint32 itemId = 0;
+
+        if (args[0] == '[')                                        // [name] manual form
+        {
+            char const* itemNameStr = strtok((char*)args, "]");
+
+            if (itemNameStr && itemNameStr[0])
+            {
+                std::string itemName = itemNameStr+1;
+                WorldDatabase.EscapeString(itemName);
+
+                PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_ITEM_TEMPLATE_BY_NAME);
+                stmt->setString(0, itemName);
+                PreparedQueryResult result = WorldDatabase.Query(stmt);
+
+                if (!result)
+                {
+                    handler->PSendSysMessage(LANG_COMMAND_COULDNOTFIND, itemNameStr+1);
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
+                itemId = result->Fetch()->GetUInt32();
+            }
+            else
+                return false;
+        }
+        else                                                    // item_id or [name] Shift-click form |color|Hitem:item_id:0:0:0|h[name]|h|r
+        {
+            char const* id = handler->extractKeyFromLink((char*)args, "Hitem");
+            if (!id)
+                return false;
+            itemId = uint32(atol(id));
+        }
+
+        char const* slot = strtok(NULL, " ");
+        if (!slot)
+          return false;
+
+        uint32 itemSlot = uint32(atol(slot));
+
+        if(Item* item = targetPlayer->GetItemByPos(INVENTORY_SLOT_BAG_0, itemSlot))
+          item->Transmog(itemId);
+
+        return true;
+    }
+
+    static bool HandleTransmogRemoveCommand(ChatHandler* handler, char const* args)
+    {
+        Player* targetPlayer = handler->getSelectedPlayer();
+
+        if (!targetPlayer)
+        {
+            handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        char const* slot = strtok((char*)args, " ");
+        if (!slot)
+          return false;
+
+        uint32 itemSlot = uint32(atol(slot));
+
+        if(Item* item = targetPlayer->GetItemByPos(INVENTORY_SLOT_BAG_0, itemSlot))
+          item->RemoveTransmog();
+
         return true;
     }
 };

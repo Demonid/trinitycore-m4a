@@ -2204,6 +2204,16 @@ Battleground.Random.ResetHour = 6
 ###################################################################################################
 
 ###################################################################################################
+# Transmog CONFIG
+#
+#     Transmog.Enable
+#         Description: Enable the Transmogs.
+#         Default:     1 - (Enabled)
+#                      0 - (Disabled)
+
+Transmog.Enable = 1
+
+###################################################################################################
 # BATTLEFIELD CONFIG
 #
 #     Wintergrasp.Enable

@@ -12529,7 +12529,7 @@ void Player::SetVisibleItemSlot(uint8 slot, Item* pItem)
                     || slot == EQUIPMENT_SLOT_OFFHAND
                     || slot == EQUIPMENT_SLOT_RANGED)) && pItem)
     {
-        SetUInt32Value(PLAYER_VISIBLE_ITEM_1_ENTRYID + (slot * 2), pItem->GetEntry());
+        SetUInt32Value(PLAYER_VISIBLE_ITEM_1_ENTRYID + (slot * 2), pItem->IsTransmoged()? pItem->GetTransmogEntry() : pItem->GetEntry());
         SetUInt16Value(PLAYER_VISIBLE_ITEM_1_ENCHANTMENT + (slot * 2), 0, pItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT));
         SetUInt16Value(PLAYER_VISIBLE_ITEM_1_ENCHANTMENT + (slot * 2), 1, pItem->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT));
     }
@@ -12652,6 +12652,7 @@ void Player::MoveItemFromInventory(uint8 bag, uint8 slot, bool update)
     {
         ItemRemovedQuestCheck(it->GetEntry(), it->GetCount());
         RemoveItem(bag, slot, update);
+        it->RemoveTransmog();
         it->SetNotRefundable(this, false);
         it->RemoveFromUpdateQueueOf(this);
         if (it->IsInWorld())
@@ -12712,6 +12713,8 @@ void Player::DestroyItem(uint8 bag, uint8 slot, bool update)
         RemoveEnchantmentDurations(pItem);
         RemoveItemDurations(pItem);
 
+        if(pItem->IsTransmoged())
+          pItem->RemoveTransmog();
         pItem->SetNotRefundable(this);
         pItem->ClearSoulboundTradeable(this);
         RemoveTradeableItem(pItem);

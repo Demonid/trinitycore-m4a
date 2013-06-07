@@ -2995,6 +2995,159 @@ public:
     }
 };
 
+#define SENDER_START EQUIPMENT_SLOT_END
+
+class npc_transmog : public CreatureScript
+{
+public:
+	npc_transmog() : CreatureScript("npc_transmog") { }
+
+    bool OnGossipHello(Player* player, Creature* creature)
+    {
+        for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; slot++)
+          if (const char* slotName = getSlotName(slot))
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_INTERACT_1, slotName, SENDER_START, slot);
+        
+        player->ADD_GOSSIP_ITEM(GOSSIP_ICON_TRAINER, "Remove transmogrifications", SENDER_START+1, 0);
+        player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
+        return true;
+    }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 sender, uint32 action)
+	{
+		player->PlayerTalkClass->ClearMenus();
+        switch(sender)
+        {
+        case SENDER_START:
+          {
+            Item* old_item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, action);
+            if (!old_item)
+            {
+                if (const char* slotname = getSlotName(action))
+                    player->GetSession()->SendNotification("No item equipped in %s slot", slotname);
+                OnGossipHello(player, creature);
+                return true;
+            }
+
+            _transmogItems[player->GetGUID()].clear();
+			
+			for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; i++)
+			    if (Item* new_item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+				    if(old_item->CanBeTransmogedTo(new_item->GetTemplate()->ItemId))
+                      if(_transmogItems[player->GetGUID()].find(new_item->GetTemplate()->ItemId) ==  _transmogItems[player->GetGUID()].end())
+                        {
+                          _transmogItems[player->GetGUID()].insert(new_item->GetTemplate()->ItemId);
+						  player->ADD_GOSSIP_ITEM_EXTENDED(GOSSIP_ICON_INTERACT_1, new_item->GetTemplate()->Name1, action, new_item->GetTemplate()->ItemId, "Are you sure you want to transmog item?", 0, false);
+                        }
+
+			for (uint8 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; i++)
+				if (Bag* pBag = player->GetBagByPos(i))
+					for (uint32 j = 0; j < pBag->GetBagSize(); j++)
+						if (Item* new_item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+                          if(old_item->CanBeTransmogedTo(new_item->GetTemplate()->ItemId))
+                               if(_transmogItems[player->GetGUID()].find(new_item->GetTemplate()->ItemId) ==  _transmogItems[player->GetGUID()].end())
+                               {
+                                    _transmogItems[player->GetGUID()].insert(new_item->GetTemplate()->ItemId);
+						            player->ADD_GOSSIP_ITEM_EXTENDED(GOSSIP_ICON_INTERACT_1, new_item->GetTemplate()->Name1, action, new_item->GetTemplate()->ItemId, "Are you sure you want to transmog item?", 0, false);
+                               }
+
+		    if(_transmogItems[player->GetGUID()].empty())
+			{
+			    player->GetSession()->SendNotification("You have no suitable items in your inventory");
+			    OnGossipHello(player, creature);
+			    return true;
+			}
+
+            _transmogItems[player->GetGUID()].clear();
+		    player->ADD_GOSSIP_ITEM(GOSSIP_ICON_TALK, "Back..", SENDER_START+4, 0);
+			player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
+            break;
+          }
+          case SENDER_START+1:
+          {
+            for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; slot++)
+            {
+                const char* slotname = getSlotName(slot);
+                if (!slotname)
+                    continue;
+                std::ostringstream ss;
+                ss << "Remove transmogrification from " << slotname << "?";
+                player->ADD_GOSSIP_ITEM_EXTENDED(GOSSIP_ICON_INTERACT_1, (std::string)"Remove from "+slotname, SENDER_START+2, slot, ss.str().c_str(), 0, false);
+            }
+
+            player->ADD_GOSSIP_ITEM_EXTENDED(GOSSIP_ICON_INTERACT_1, "Remove all transmogrifications", SENDER_START+3, 0, "Are you sure you want to remove all transmogrifications?", 0, false);
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_TALK, "Back..", SENDER_START+4, 0);
+            player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());  
+          }break;
+          case SENDER_START+2:
+            {
+              if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, action))
+                    item->RemoveTransmog();                                    
+                else if (getSlotName(action))   player->GetSession()->SendNotification("No item equipped in %s slot", getSlotName(action));
+                OnGossipSelect(player, creature, SENDER_START+1, 0);
+            }
+          case SENDER_START+3:
+            {
+              for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; slot++)
+                    if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+                      item->RemoveTransmog();
+              OnGossipSelect(player, creature, SENDER_START+1, 0);
+            }
+            case SENDER_START+4:
+            {
+                OnGossipHello(player, creature);
+            } break;
+        case EQUIPMENT_SLOT_HEAD      :
+		case EQUIPMENT_SLOT_SHOULDERS :
+        case EQUIPMENT_SLOT_CHEST     :
+		case EQUIPMENT_SLOT_WAIST     :
+        case EQUIPMENT_SLOT_LEGS      :
+        case EQUIPMENT_SLOT_FEET      :
+		case EQUIPMENT_SLOT_WRISTS    :
+		case EQUIPMENT_SLOT_HANDS     :
+		case EQUIPMENT_SLOT_BACK      : 
+		case EQUIPMENT_SLOT_MAINHAND  : 
+		case EQUIPMENT_SLOT_OFFHAND   : 
+		case EQUIPMENT_SLOT_RANGED    :
+          {
+            Item* old_item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, sender);
+            
+            if(!old_item || !old_item->CanBeTransmogedTo(action))
+				player->GetSession()->SendNotification("There is no suitable item in the slot");
+			else
+			{
+                old_item->Transmog(action);
+				player->GetSession()->SendAreaTriggerMessage("%s transmogrified", getSlotName(sender));
+			}
+			OnGossipHello(player, creature);
+          }break;
+        }
+		return true;
+	}
+private:
+  std::map<uint64,std::set<uint32>> _transmogItems; 
+
+  char* getSlotName(uint8 slot)
+	{
+		switch(slot)
+		{
+		case EQUIPMENT_SLOT_HEAD      : return "Head";
+		case EQUIPMENT_SLOT_SHOULDERS : return "Shoulders";
+		case EQUIPMENT_SLOT_CHEST     : return "Chest";
+		case EQUIPMENT_SLOT_WAIST     : return "Waist";
+		case EQUIPMENT_SLOT_LEGS      : return "Legs";
+		case EQUIPMENT_SLOT_FEET      : return "Feet";
+		case EQUIPMENT_SLOT_WRISTS    : return "Wrists";
+		case EQUIPMENT_SLOT_HANDS     : return "Hands";
+		case EQUIPMENT_SLOT_BACK      : return "Back";
+		case EQUIPMENT_SLOT_MAINHAND  : return "Main hand";
+		case EQUIPMENT_SLOT_OFFHAND   : return "Off hand";
+		case EQUIPMENT_SLOT_RANGED    : return "Ranged";
+		default: return NULL;
+		}
+	}
+};
+
 void AddSC_npcs_special()
 {
     new npc_air_force_bots();
@@ -3027,4 +3180,5 @@ void AddSC_npcs_special()
     new npc_firework();
     new npc_spring_rabbit();
     new npc_generic_harpoon_cannon();
+    new npc_transmog();
 }

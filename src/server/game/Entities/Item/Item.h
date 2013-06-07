@@ -218,7 +218,7 @@ class Item : public Object
         virtual bool Create(uint32 guidlow, uint32 itemid, Player const* owner);
 
         ItemTemplate const* GetTemplate() const;
-
+        
         uint64 GetOwnerGUID()    const { return GetUInt64Value(ITEM_FIELD_OWNER); }
         void SetOwnerGUID(uint64 guid) { SetUInt64Value(ITEM_FIELD_OWNER, guid); }
         Player* GetOwner()const;
@@ -351,6 +351,14 @@ class Item : public Object
 
         void BuildUpdate(UpdateDataMapType&);
 
+        // Transmog System
+        void LoadTransmog();
+        void Transmog(uint32 entry);
+        void RemoveTransmog();
+        bool IsTransmoged() {return m_TransmogEntry ? true : false;}
+        uint32 GetTransmogEntry() {return m_TransmogEntry;}
+        bool CanBeTransmogedTo(uint32 entry);
+
         uint32 GetScriptId() const { return GetTemplate()->ScriptId; }
     private:
         std::string m_text;
@@ -363,6 +371,7 @@ class Item : public Object
         uint32 m_refundRecipient;
         uint32 m_paidMoney;
         uint32 m_paidExtendedCost;
+        uint32 m_TransmogEntry;
         AllowedLooterSet allowedGUIDs;
 };
 #endif
