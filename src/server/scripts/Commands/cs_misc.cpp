@@ -125,6 +125,7 @@ public:
             { "unbindsight",        SEC_ADMINISTRATOR,      false, HandleUnbindSightCommand,            "", NULL },
             { "playall",            SEC_GAMEMASTER,         false, HandlePlayAllCommand,                "", NULL },
             { "transmog",           SEC_MODERATOR,          false, NULL,                                "", transmogCommandTable },
+            { "reviveifdead",       SEC_GAMEMASTER,         true,  &HandleReviveIfDeadCommand,          "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         return commandTable;
@@ -2873,6 +2874,42 @@ public:
         if(Item* item = targetPlayer->GetItemByPos(INVENTORY_SLOT_BAG_0, itemSlot))
           item->RemoveTransmog();
 
+        return true;
+    }
+
+    static bool HandleReviveIfDeadCommand(ChatHandler* handler, char const* args)
+    {
+        Player* target;
+        uint64 targetGuid;
+        if (!handler->extractPlayerTarget((char*)args, &target, &targetGuid))
+            return false;
+        
+        if(!target)
+        {
+          handler->SendSysMessage(LANG_REVIVE_NOT_ONLINE);
+          handler->SetSentErrorMessage(true);
+          return false;
+        }
+
+        if(!target->HasAura(8326 /*Ghost*/))
+        {
+          handler->SendSysMessage(LANG_REVIVE_NOT_RELEASED);
+          handler->SetSentErrorMessage(true);
+          return false;
+        }
+
+        if(target->InBattleground())
+        {
+          handler->SendSysMessage(LANG_REVIVE_IN_BG);
+          handler->SetSentErrorMessage(true);
+          return false;
+        }
+
+        target->ResurrectPlayer(!AccountMgr::IsPlayerAccount(target->GetSession()->GetSecurity()) ? 1.0f : 0.5f);
+        target->SpawnCorpseBones();
+        target->SaveToDB();
+        target->CastSpell(target, 15007, true); // ress sickness
+        
         return true;
     }
 };
