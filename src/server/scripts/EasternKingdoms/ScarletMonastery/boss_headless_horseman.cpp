@@ -324,6 +324,7 @@ public:
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                 DoCast(me, SPELL_HEAD_LANDS, true);                
                 DoCast(me, SPELL_HEAD, false);
+                me->SetVisible(true);
                 me->GetMotionMaster()->Clear(false);
                 me->GetMotionMaster()->MoveFleeing(caster->getVictim());
                 _events.ScheduleEvent(EVENT_HEAD_YELL,1000);
@@ -399,25 +400,36 @@ public:
 
     struct boss_headless_horsemanAI : public ScriptedAI
     {
-        boss_headless_horsemanAI(Creature* creature) : ScriptedAI(creature), _instance(creature->GetInstanceScript())
+      boss_headless_horsemanAI(Creature* creature) : ScriptedAI(creature), _instance(creature->GetInstanceScript()), _intro(false)
         {
         }
        
         void Reset()
         {
-            count = 0;
-            pointID = 0;
-            me->SetVisible(false);
-            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-            me->AddUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_DISABLE_GRAVITY);
-            me->SetSpeed(MOVE_WALK, 5.0f, true);
-            me->SetReactState(REACT_PASSIVE);
-            _events.SetPhase(PHASE_INTRO);
-            _events.ScheduleEvent(EVENT_SAY_PLAYER, 3000, 0, PHASE_INTRO);            
-            _events.ScheduleEvent(EVENT_LAUGH, urand(25000,30000));      
+            if(!_intro)
+            {
+              count = 0;
+              pointID = 0;
+              me->SetVisible(false);
+              me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+              me->AddUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_DISABLE_GRAVITY);
+              me->SetSpeed(MOVE_WALK, 5.0f, true);
+              me->SetReactState(REACT_PASSIVE);
 
-            DoCast(me, SPELL_HEAD);
-            me->SetInCombatWithZone();
+              _events.SetPhase(PHASE_INTRO);
+              _events.ScheduleEvent(EVENT_SAY_PLAYER, 3000, 0, PHASE_INTRO);            
+              _events.ScheduleEvent(EVENT_LAUGH, urand(25000,30000));      
+
+              DoCast(me, SPELL_HEAD);
+              me->SetCanFly(true);
+              me->SetDisableGravity(true);
+              me->SetInCombatWithZone();
+            }
+            else
+            {
+               _events.SetPhase(PHASE_ONE);
+               _events.ScheduleEvent(EVENT_CLEAVE,urand(2000,5000),0,PHASE_ONE);
+            }
         }
 
         void MovementInform(uint32 type, uint32 i)
@@ -430,7 +442,7 @@ public:
                 case 0:
                     me->SetVisible(true);
                     DoCast(me, SPELL_RHYME_BIG);
-                    me->MonsterYell(SAY_ENTRANCE, 0,0);
+                    me->MonsterYell(SAY_ENTRANCE, 0,0);                    
                   break;
                 case 1:
                 {
@@ -444,11 +456,14 @@ public:
                         _instance->SetData(GAMEOBJECT_PUMPKIN_SHRINE, 0);   //hide gameobject
                     break;
                 case 19:
-                    me->RemoveUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_DISABLE_GRAVITY);
+                    me->SetCanFly(false);
+                    me->SetDisableGravity(false);
                     break;
                 case 20:              
                     me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     me->SetReactState(REACT_AGGRESSIVE);
+                    me->SetInCombatWithZone();
+
                     _events.SetPhase(PHASE_ONE);
                     _events.ScheduleEvent(EVENT_CLEAVE,urand(2000,5000),0,PHASE_ONE);
                     
@@ -459,6 +474,8 @@ public:
                     }
                     if (Creature* flame = me->SummonCreature(HELPER, Spawn[0].x, Spawn[0].y, Spawn[0].z, 0, TEMPSUMMON_TIMED_DESPAWN, 17000))
                        CAST_AI(mob_wisp_invis::mob_wisp_invisAI, flame->AI())->SetType(2);
+
+                    _intro = true;
                     break;
                 }
             _events.ScheduleEvent(EVENT_MOVEMENT,1,0,PHASE_INTRO);
@@ -512,10 +529,6 @@ public:
 
             if (Creature* Head = Unit::GetCreature((*me), _instance->GetData64(ENTRY_HEAD)))
                 Head->DisappearAndDie();
-
-            Map::PlayerList const& players = me->GetMap()->GetPlayers();
-            if (!players.isEmpty())
-                sLFGMgr->FinishDungeon(players.begin()->getSource()->GetGroup()->GetGUID(), 285);
         }
 
         void SpellHit(Unit* caster, const SpellInfo* spell)
@@ -663,7 +676,7 @@ public:
              case EVENT_LAUGH:
                me->MonsterTextEmote(EMOTE_LAUGHS, 0);
                DoPlaySoundToSet(me, RandomLaugh[rand()%3]);
-               _events.ScheduleEvent(EVENT_LAUGH, urand(10000,12000));
+               _events.ScheduleEvent(EVENT_LAUGH, urand(20000,22000));
                break;
              }
           }
@@ -676,6 +689,7 @@ public:
           InstanceScript* _instance;
           int32 pointID;
           uint32 count;
+          bool _intro;
     };
 };
 
@@ -785,6 +799,19 @@ public:
     bool OnGossipHello(Player* player, GameObject* soil)
     {
         return GameObjectScript::OnGossipHello(std::move(player), std::move(soil));
+    }
+
+    bool OnQuestReward(Player* /*player*/, GameObject* go, Quest const* quest , uint32 /*opt*/)
+    {
+      if(quest->GetQuestId() != 11405)
+       return true;
+
+      InstanceScript* instance = go->GetInstanceScript();
+      if(instance && instance->GetData(DATA_HORSEMAN_EVENT) == IN_PROGRESS)
+        return true;
+
+      go->SummonCreature(HH_MOUNTED, FlightPoint[20].x, FlightPoint[20].y, FlightPoint[20].z, 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
+      return true;
     }
 };
 
