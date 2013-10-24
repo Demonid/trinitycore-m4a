@@ -1435,6 +1435,8 @@ void Item::Transmog(uint32 entry)
 {
   m_TransmogEntry = entry;
   GetOwner()->SetUInt32Value(PLAYER_VISIBLE_ITEM_1_ENTRYID + (GetSlot() * 2), m_TransmogEntry);
+  GetOwner()->RemoveTradeableItem(this);
+  ClearSoulboundTradeable(GetOwner());
   SetState(ITEM_CHANGED, GetOwner());
 }
 
@@ -1456,18 +1458,59 @@ bool Item::CanBeTransmogedTo(uint32 entry)
   if(GetOwner()->CanUseItem(itemTemplate) != EQUIP_ERR_OK)
     return false;
 
-  if(itemTemplate->Quality != ITEM_QUALITY_UNCOMMON && itemTemplate->Quality != ITEM_QUALITY_RARE && itemTemplate->Quality != ITEM_QUALITY_EPIC)
+  if(itemTemplate->Quality == ITEM_QUALITY_LEGENDARY)
+    return false;
+
+  if(GetTemplate()->Quality != ITEM_QUALITY_UNCOMMON && GetTemplate()->Quality != ITEM_QUALITY_RARE && GetTemplate()->Quality != ITEM_QUALITY_EPIC && GetTemplate()->Quality != ITEM_QUALITY_ARTIFACT)
     return false;
 
   if(itemTemplate->Class != GetTemplate()->Class)
     return false;
 		
-  if(itemTemplate->SubClass != GetTemplate()->SubClass)
-    return false;
-
   if(itemTemplate->Class == ITEM_CLASS_ARMOR)
     if(itemTemplate->InventoryType != GetTemplate()->InventoryType)
       return false;
+
+  if(itemTemplate->Class == ITEM_CLASS_WEAPON)
+  {     
+    switch(GetTemplate()->SubClass)
+    {
+    case ITEM_SUBCLASS_WEAPON_GUN:
+    case ITEM_SUBCLASS_WEAPON_BOW:
+    case ITEM_SUBCLASS_WEAPON_CROSSBOW:
+      if(itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_GUN && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_BOW && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_CROSSBOW)
+        return false;
+      break;
+
+    case ITEM_SUBCLASS_WEAPON_AXE2:
+    case ITEM_SUBCLASS_WEAPON_MACE2:
+    case ITEM_SUBCLASS_WEAPON_SWORD2:
+        if(itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_AXE2 && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_MACE2 && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_SWORD2)
+          return false;
+        break;
+    case ITEM_SUBCLASS_WEAPON_STAFF:
+    case ITEM_SUBCLASS_WEAPON_POLEARM:
+        if(itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_STAFF && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_POLEARM)
+          return false;
+        break;
+    case ITEM_SUBCLASS_WEAPON_AXE:
+    case ITEM_SUBCLASS_WEAPON_MACE:
+    case ITEM_SUBCLASS_WEAPON_SWORD:
+      if(itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_AXE && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_MACE && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_SWORD)
+          return false;
+        break;
+    case ITEM_SUBCLASS_WEAPON_WAND:
+    case ITEM_SUBCLASS_WEAPON_THROWN:
+    case ITEM_SUBCLASS_WEAPON_DAGGER:
+    case ITEM_SUBCLASS_WEAPON_FIST:
+      if(itemTemplate->SubClass != GetTemplate()->SubClass)
+        return false;
+      break;
+    default: return false;
+    }
+  }
+  else if(itemTemplate->SubClass != GetTemplate()->SubClass)
+    return false;
 
   return true;
 }

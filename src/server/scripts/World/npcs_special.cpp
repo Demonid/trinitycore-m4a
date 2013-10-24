@@ -3043,7 +3043,7 @@ public:
 			for (uint8 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; i++)
 				if (Bag* pBag = player->GetBagByPos(i))
 					for (uint32 j = 0; j < pBag->GetBagSize(); j++)
-						if (Item* new_item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+						if (Item* new_item = player->GetItemByPos(i, j))
                           if(old_item->CanBeTransmogedTo(new_item->GetTemplate()->ItemId))
                                if(_transmogItems[player->GetGUID()].find(new_item->GetTemplate()->ItemId) ==  _transmogItems[player->GetGUID()].end())
                                {
@@ -3084,14 +3084,12 @@ public:
               if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, action))
                     item->RemoveTransmog();                                    
                 else if (getSlotName(action))   player->GetSession()->SendNotification("No item equipped in %s slot", getSlotName(action));
-                OnGossipSelect(player, creature, SENDER_START+1, 0);
             }
           case SENDER_START+3:
             {
               for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; slot++)
                     if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
                       item->RemoveTransmog();
-              OnGossipSelect(player, creature, SENDER_START+1, 0);
             }
             case SENDER_START+4:
             {
