@@ -2205,23 +2205,38 @@ public:
         uint64 receiverGuid;
         std::string receiverName;
         if (!handler->extractPlayerTarget((char*)args, &receiver, &receiverGuid, &receiverName))
+        {
+            handler->SetSentErrorMessage(true);
             return false;
+        }
 
         char* tail1 = strtok(NULL, "");
         if (!tail1)
+        {
+            handler->SetSentErrorMessage(true);
             return false;
+        }
 
         char const* msgSubject = handler->extractQuotedArg(tail1);
         if (!msgSubject)
+        {
+            handler->SetSentErrorMessage(true);
             return false;
+        }
 
         char* tail2 = strtok(NULL, "");
         if (!tail2)
+        {
+            handler->SetSentErrorMessage(true);
             return false;
+        }
 
         char const* msgText = handler->extractQuotedArg(tail2);
         if (!msgText)
+        {
+            handler->SetSentErrorMessage(true);
             return false;
+        }
 
         // msgSubject, msgText isn't NUL after prev. check
         std::string subject = msgSubject;
@@ -2247,7 +2262,10 @@ public:
 
             uint32 itemId = atoi(itemIdStr);
             if (!itemId)
+            {
+                handler->SetSentErrorMessage(true);
                 return false;
+            }
 
             ItemTemplate const* item_proto = sObjectMgr->GetItemTemplate(itemId);
             if (!item_proto)
