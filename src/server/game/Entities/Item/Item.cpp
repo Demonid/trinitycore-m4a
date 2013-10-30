@@ -1468,8 +1468,17 @@ bool Item::CanBeTransmogedTo(uint32 entry)
     return false;
 		
   if(itemTemplate->Class == ITEM_CLASS_ARMOR)
-    if(itemTemplate->InventoryType != GetTemplate()->InventoryType)
-      return false;
+    switch(GetTemplate()->InventoryType)
+    {
+      case 5 :    //vest   
+      case 20:    //robe
+        if(itemTemplate->InventoryType != 5 && itemTemplate->InventoryType != 20)
+          return false;
+        break;
+      default:
+        if(itemTemplate->InventoryType != GetTemplate()->InventoryType)
+          return false;
+    }
 
   if(itemTemplate->Class == ITEM_CLASS_WEAPON)
   {     

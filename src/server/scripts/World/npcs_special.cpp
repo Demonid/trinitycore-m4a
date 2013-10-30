@@ -3084,13 +3084,13 @@ public:
               if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, action))
                     item->RemoveTransmog();                                    
                 else if (getSlotName(action))   player->GetSession()->SendNotification("No item equipped in %s slot", getSlotName(action));
-            }
+            }break;
           case SENDER_START+3:
             {
               for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; slot++)
                     if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
                       item->RemoveTransmog();
-            }
+            }break;
             case SENDER_START+4:
             {
                 OnGossipHello(player, creature);
