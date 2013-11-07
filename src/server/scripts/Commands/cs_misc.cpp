@@ -34,6 +34,7 @@
 #include "ace/INET_Addr.h"
 #include "Player.h"
 #include "Pet.h"
+#include <vector>
 
 class misc_commandscript : public CommandScript
 {
@@ -126,6 +127,7 @@ public:
             { "playall",            SEC_GAMEMASTER,         false, HandlePlayAllCommand,                "", NULL },
             { "transmog",           SEC_MODERATOR,          false, NULL,                                "", transmogCommandTable },
             { "reviveifdead",       SEC_GAMEMASTER,         true,  &HandleReviveIfDeadCommand,          "", NULL },
+            { "wintrade",           SEC_ADMINISTRATOR,      true,  &HandleWintradeCommand,              "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         return commandTable;
@@ -2930,6 +2932,78 @@ public:
         
         return true;
     }
+    
+    static bool HandleWintradeCommand(ChatHandler* handler, char const* args)
+    {
+        std::string name;
+        Player* player;
+        std::vector<uint32> gearList;
+
+        uint32 const gear[] = 
+        {
+          51538, 51540, 51536, 51539, 51537, 51327, 51328, 51365, 51366, 51337, 51338,
+          51406, 51397, 51398, 51399, 51337, 51338, 51453, 51454, 51404, 51456, 51400,
+          51403, 51401, 51405, 51457, 51402, 51532, 51531, 51410, 51451, 51407, 51396, 
+          51408, 51409, 51543, 51545, 51541, 51542, 51544, 51476, 51479, 51474, 51475, 
+          51477, 51470, 51473, 51468, 51469, 51471, 51465, 51467, 51463, 51464, 51466, 
+          51499, 51502, 51497, 51498, 51500, 51505, 51508, 51503, 51504, 51506, 51511, 
+          51514, 51509, 51510, 51512, 51460, 51462, 51458, 51459, 51461, 51494, 51496, 
+          51492, 51493, 51495, 51421, 51424, 51419, 51420, 51422, 51427, 51430, 51425, 
+          51426, 51428, 51435, 51438, 51433, 51434, 51436, 51489, 51491, 51487, 51488, 
+          51490, 51484, 51486, 51482, 51483, 51485, 51415, 51418, 51413, 51414, 51416, 
+          51374, 51375, 51371, 51372, 51350, 51351, 51343, 51344, 51340, 51341, 51368, 
+          51369, 51359, 51360, 51362, 51363, 51429, 51437, 51423, 51478, 51472, 42591, 
+          42585, 42580, 42854, 42616, 51523, 51530, 51443, 51517, 51527, 51441, 51521, 
+          51447, 51392, 51515, 51525, 51439, 51524, 51529, 51444, 51518, 51442, 51528, 
+          51522, 51448, 51393, 51516, 51440, 51526, 51388, 51519, 51445, 51390, 51480, 
+          51431, 51394, 51411, 51449, 51389, 51520, 51446, 51391, 51481, 51432, 51395, 
+          51412, 51450, 51452, 51455, 51533, 51535, 40830, 40871, 40791, 40811, 40851, 
+          41855, 41870, 41860, 41875, 41865, 41916, 41935, 41922, 41941, 41928, 41328, 
+          41282, 41317, 41294, 41305, 41679, 41716, 41662, 41774, 41668, 41322, 41276, 
+          41311, 41288, 41299, 41673, 41684, 41651, 41768, 41656, 41158, 41218, 41088, 
+          41144, 41206, 41020, 41045, 40995, 41008, 41034, 41152, 41212, 41082, 41138, 
+          41200, 41014, 41039, 40994, 41002, 41028, 41947, 41966, 41954, 41972, 41960, 
+          41994, 42012, 41999, 42018, 42006, 40934, 40964, 40910, 40928, 40940, 40831, 
+          40872, 40792, 40812, 40852, 40829, 40870, 40790, 40810, 40850, 51534
+        };
+
+        char const* TargetName = strtok((char*)args, " "); // get entered name
+        if (!TargetName) // if no name entered use target
+        {
+            player = handler->getSelectedPlayer();
+            if (player) //prevent crash with creature as target
+            {
+                name = player->GetName();
+                normalizePlayerName(name);
+            }
+        }
+        else // if name entered
+        {
+            name = TargetName;
+            normalizePlayerName(name);
+            player = sObjectAccessor->FindPlayerByName(name);
+        }
+
+        if (!player)
+        {
+            handler->PSendSysMessage(LANG_NO_PLAYERS_FOUND);
+            return true;
+        }
+
+        for(uint16 i = 0; i < (sizeof(gear) / sizeof(uint32));i++)
+          if(ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(gear[i]))
+            if(player->CanUseItem(itemTemplate) == EQUIP_ERR_OK)
+              gearList.push_back(gear[i]);
+
+        for (std::vector<uint32>::iterator it = gearList.begin(); it<gearList.end(); it++)
+          player->DestroyItemCount(*it, -1, true, false);
+
+        player->SetArenaPoints(0);
+        player->SetHonorPoints(0);
+
+        return true;
+    }
+     
 };
 
 void AddSC_misc_commandscript()
