@@ -7851,6 +7851,10 @@ void Player::DuelComplete(DuelCompleteType type)
     if (uint32 amount = sWorld->getIntConfig(CONFIG_HONOR_AFTER_DUEL))
         duel->opponent->RewardHonor(NULL, 1, amount);
 
+    // Reset Health & power, reset cooldowns and remove auras associated with them
+    ResetAferDuel();
+    duel->opponent->ResetAferDuel();
+
     //cleanups
     SetUInt64Value(PLAYER_DUEL_ARBITER, 0);
     SetUInt32Value(PLAYER_DUEL_TEAM, 0);
