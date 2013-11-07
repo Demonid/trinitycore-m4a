@@ -583,4 +583,9 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_SEL_TRANSMOG, "SELECT entry FROM item_transmog WHERE guid = ?;", CONNECTION_BOTH);
     PrepareStatement(CHAR_DEL_TRANSMOG, "DELETE FROM item_transmog WHERE guid = ?;", CONNECTION_BOTH);
     PrepareStatement(CHAR_INS_TRANSMOG, "REPLACE INTO item_transmog VALUES (?,?)", CONNECTION_BOTH);
+
+    //Xp Rates
+    PrepareStatement(CHAR_SEL_RATES, "SELECT kill_rate, quest_rate, explore_rate, craft_rate, gather_rate, rep_rate FROM character_rates WHERE guid = ?;", CONNECTION_BOTH);
+    PrepareStatement(CHAR_DEL_RATES, "DELETE FROM character_rates WHERE guid = ?;", CONNECTION_BOTH);
+    PrepareStatement(CHAR_REP_RATES, "REPLACE INTO character_rates VALUES (?,?,?,?,?,?,?)", CONNECTION_BOTH);
 }

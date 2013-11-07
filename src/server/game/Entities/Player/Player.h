@@ -173,6 +173,17 @@ enum ReputationSource
     REPUTATION_SOURCE_SPELL
 };
 
+enum PlayerRates
+{
+    PLAYER_RATE_XP_KILL,
+    PLAYER_RATE_XP_QUEST,
+    PLAYER_RATE_XP_EXPLORE,
+    PLAYER_RATE_PROF_CRAFTING,
+    PLAYER_RATE_PROF_GATHERING,
+    PLAYER_RATE_REPUTATION,
+    PLAYER_RATE_MAX
+};
+
 #define ACTION_BUTTON_ACTION(X) (uint32(X) & 0x00FFFFFF)
 #define ACTION_BUTTON_TYPE(X)   ((uint32(X) & 0xFF000000) >> 24)
 #define MAX_ACTION_BUTTON_ACTION_VALUE (0x00FFFFFF+1)
@@ -808,6 +819,7 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOAD_INSTANCE_LOCK_TIMES     = 30,
     PLAYER_LOGIN_QUERY_LOAD_SEASONAL_QUEST_STATUS   = 31,
     PLAYER_LOGIN_QUERY_LOAD_MONTHLY_QUEST_STATUS    = 32,
+    PLAYER_LOGIN_QUERY_LOAD_PLAYER_RATES            = 33,
     MAX_PLAYER_LOGIN_QUERY
 };
 
@@ -1813,6 +1825,7 @@ class Player : public Unit, public GridObject<Player>
         void CheckDuelDistance(time_t currTime);
         void DuelComplete(DuelCompleteType type);
         void SendDuelCountdown(uint32 counter);
+        void ResetAferDuel();
 
         bool IsGroupVisibleFor(Player const* p) const;
         bool IsInSameGroupWith(Player const* p) const;
@@ -2552,6 +2565,9 @@ class Player : public Unit, public GridObject<Player>
             }
         }
 
+
+        uint8 GetPlayerRate(PlayerRates rate) {return m_player_rates[rate];}
+        void SetPlayerRate(PlayerRates rate, uint8 value) {m_player_rates[rate] = value;}
     protected:
         // Gamemaster whisper whitelist
         WhisperListContainer WhisperList;
@@ -2624,7 +2640,7 @@ class Player : public Unit, public GridObject<Player>
         void _LoadGlyphs(PreparedQueryResult result);
         void _LoadTalents(PreparedQueryResult result);
         void _LoadInstanceTimeRestrictions(PreparedQueryResult result);
-
+        void _LoadPlayerRates(PreparedQueryResult result);
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
         /*********************************************************/
@@ -2814,6 +2830,8 @@ class Player : public Unit, public GridObject<Player>
         bool IsAlwaysDetectableFor(WorldObject const* seer) const;
 
         uint8 m_grantableLevels;
+
+        uint8 m_player_rates[PLAYER_RATE_MAX];
 
     private:
         // internal common parts for CanStore/StoreItem functions

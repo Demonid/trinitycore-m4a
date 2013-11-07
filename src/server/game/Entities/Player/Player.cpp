@@ -880,6 +880,8 @@ Player::Player(WorldSession* session): Unit(true),
     _activeCheats = CHEAT_NONE;
     m_achievementMgr = new AchievementMgr(this);
     m_reputationMgr = new ReputationMgr(this);
+
+    for(uint8 i = 0; i < PLAYER_RATE_MAX; m_player_rates[i++] = 0);
 }
 
 Player::~Player()
@@ -6254,7 +6256,7 @@ bool Player::UpdateCraftSkill(uint32 spellid)
                     learnSpell(discoveredSpell, false);
             }
 
-            uint32 craft_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_CRAFTING);
+            uint32 craft_skill_gain = GetPlayerRate(PLAYER_RATE_PROF_CRAFTING)? GetPlayerRate(PLAYER_RATE_PROF_CRAFTING) : sWorld->getIntConfig(CONFIG_SKILL_GAIN_CRAFTING);
 
             return UpdateSkillPro(_spell_idx->second->skillId, SkillGainChance(SkillValue,
                 _spell_idx->second->max_value,
@@ -6270,7 +6272,7 @@ bool Player::UpdateGatherSkill(uint32 SkillId, uint32 SkillValue, uint32 RedLeve
 {
     sLog->outDebug(LOG_FILTER_PLAYER_SKILLS, "UpdateGatherSkill(SkillId %d SkillLevel %d RedLevel %d)", SkillId, SkillValue, RedLevel);
 
-    uint32 gathering_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_GATHERING);
+    uint32 gathering_skill_gain = GetPlayerRate(PLAYER_RATE_PROF_GATHERING)? GetPlayerRate(PLAYER_RATE_PROF_GATHERING) : sWorld->getIntConfig(CONFIG_SKILL_GAIN_GATHERING);
 
     // For skinning and Mining chance decrease with level. 1-74 - no decrease, 75-149 - 2 times, 225-299 - 8 times
     switch (SkillId)
@@ -7010,7 +7012,7 @@ void Player::CheckAreaExploreAndOutdoor()
                 }
                 else
                 {
-                    XP = uint32(sObjectMgr->GetBaseXP(areaEntry->area_level)*sWorld->getRate(RATE_XP_EXPLORE));
+                  XP = uint32(sObjectMgr->GetBaseXP(areaEntry->area_level)*(GetPlayerRate(PLAYER_RATE_XP_EXPLORE) ?GetPlayerRate(PLAYER_RATE_XP_EXPLORE) : sWorld->getRate(RATE_XP_EXPLORE)));
                 }
 
                 GiveXP(XP, NULL);
@@ -7860,7 +7862,6 @@ void Player::DuelComplete(DuelCompleteType type)
     delete duel;
     duel = NULL;
 }
-
 //---------------------------------------------------------//
 
 void Player::_ApplyItemMods(Item* item, uint8 slot, bool apply)
@@ -15303,8 +15304,8 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
     bool rewarded = (m_RewardedQuests.find(quest_id) != m_RewardedQuests.end());
 
     // Not give XP in case already completed once repeatable quest
-    uint32 XP = rewarded ? 0 : uint32(quest->XPValue(this)*sWorld->getRate(RATE_XP_QUEST));
-
+    uint32 XP = rewarded ? 0 : uint32(quest->XPValue(this)*(GetPlayerRate(PLAYER_RATE_XP_QUEST)? GetPlayerRate(PLAYER_RATE_XP_QUEST) : sWorld->getRate(RATE_XP_QUEST)));
+ 
     // handle SPELL_AURA_MOD_XP_QUEST_PCT auras
     Unit::AuraEffectList const& ModXPPctAuras = GetAuraEffectsByType(SPELL_AURA_MOD_XP_QUEST_PCT);
     for (Unit::AuraEffectList::const_iterator i = ModXPPctAuras.begin(); i != ModXPPctAuras.end(); ++i)
@@ -17407,7 +17408,7 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
     _LoadSeasonalQuestStatus(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_SEASONAL_QUEST_STATUS));
     _LoadMonthlyQuestStatus(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_MONTHLY_QUEST_STATUS));
     _LoadRandomBGStatus(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_RANDOM_BG));
-
+    _LoadPlayerRates(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_PLAYER_RATES));
     // after spell and quest load
     InitTalentForLevel();
     learnDefaultSpells();
@@ -25878,6 +25879,20 @@ void Player::_LoadInstanceTimeRestrictions(PreparedQueryResult result)
         Field* fields = result->Fetch();
         _instanceResetTimes.insert(InstanceTimeMap::value_type(fields[0].GetUInt32(), fields[1].GetUInt64()));
     } while (result->NextRow());
+}
+
+void Player::_LoadPlayerRates(PreparedQueryResult result)
+{
+    if (!result)
+        return;
+
+   Field* fields = result->Fetch();
+   m_player_rates[PLAYER_RATE_XP_KILL] = fields[0].GetUInt8();
+   m_player_rates[PLAYER_RATE_XP_QUEST] = fields[1].GetUInt8();
+   m_player_rates[PLAYER_RATE_XP_EXPLORE] = fields[2].GetUInt8();
+   m_player_rates[PLAYER_RATE_PROF_CRAFTING] = fields[3].GetUInt8();
+   m_player_rates[PLAYER_RATE_PROF_GATHERING] = fields[4].GetUInt8();
+   m_player_rates[PLAYER_RATE_REPUTATION] = fields[1].GetUInt8();
 }
 
 void Player::_SaveInstanceTimeRestrictions(SQLTransaction& trans)
