@@ -128,6 +128,7 @@ public:
             { "transmog",           SEC_MODERATOR,          false, NULL,                                "", transmogCommandTable },
             { "reviveifdead",       SEC_GAMEMASTER,         true,  &HandleReviveIfDeadCommand,          "", NULL },
             { "wintrade",           SEC_ADMINISTRATOR,      true,  &HandleWintradeCommand,              "", NULL },
+            { "disbandarena",       SEC_ADMINISTRATOR,      true,  &HandleArenaDisbandCommand,          "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         return commandTable;
@@ -3003,7 +3004,52 @@ public:
 
         return true;
     }
-     
+    
+    static bool HandleArenaDisbandCommand(ChatHandler* handler, char const* args)
+    {
+      
+       std::string name;
+       Player* player;
+       
+       char const* TargetName = strtok((char*)args, " "); // get entered name
+       if (!TargetName) // if no name entered use target
+       {
+            player = handler->getSelectedPlayer();
+            if (player) //prevent crash with creature as target
+            {
+                name = player->GetName();
+                normalizePlayerName(name);
+            }
+        }
+        else // if name entered
+        {
+            name = TargetName;
+            normalizePlayerName(name);
+            player = sObjectAccessor->FindPlayerByName(name);
+        }
+
+        if (!player)
+        {
+            handler->PSendSysMessage(LANG_NO_PLAYERS_FOUND);
+            return true;
+        }
+
+        for (uint32 arena_slot = 0; arena_slot < MAX_ARENA_SLOT; ++arena_slot)
+        {
+          ArenaTeam* arena = sArenaTeamMgr->GetArenaTeamById(player->GetArenaTeamId(arena_slot));
+ 
+          if (!arena)
+            continue;
+
+          if (arena->IsFighting())
+            continue;
+
+          arena->Disband(handler->GetSession());        
+        }
+ 
+       
+       return true;
+    }
 };
 
 void AddSC_misc_commandscript()
