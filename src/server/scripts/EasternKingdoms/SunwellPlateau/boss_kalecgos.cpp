@@ -346,8 +346,8 @@ public:
 
         void DamageTaken(Unit* done_by, uint32 &damage)
         {
-            if (damage >= me->GetHealth() && done_by != me)
-                damage = 0;
+            //if (damage >= me->GetHealth() && done_by != me)
+                //damage = 0;
         }
 
         void EnterCombat(Unit* /*who*/)
