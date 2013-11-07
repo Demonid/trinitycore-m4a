@@ -620,12 +620,11 @@ class spell_hun_sniper_training : public SpellScriptLoader
                     Unit* caster = GetCaster();
                     uint32 spellId = SPELL_HUNTER_SNIPER_TRAINING_BUFF_R1 + GetId() - SPELL_HUNTER_SNIPER_TRAINING_R1;
                     if (Unit* target = GetTarget())
-                        if (!target->HasAura(spellId))
-                        {
-                            SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(spellId);
-                            Unit* triggerCaster = triggeredSpellInfo->NeedsToBeTriggeredByCaster() ? caster : target;
-                            triggerCaster->CastSpell(target, triggeredSpellInfo, true, 0, aurEff, aurEff->GetCasterGUID());
-                        }
+                    {
+                      SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(spellId);
+                      Unit* triggerCaster = triggeredSpellInfo->NeedsToBeTriggeredByCaster() ? caster : target;
+                      triggerCaster->CastSpell(target, triggeredSpellInfo, true, 0, aurEff, aurEff->GetCasterGUID());
+                    }
                 }
             }
 
@@ -634,10 +633,12 @@ class spell_hun_sniper_training : public SpellScriptLoader
                 if (Player* playerTarget = GetUnitOwner()->ToPlayer())
                 {
                     int32 baseAmount = aurEff->GetBaseAmount();
-                    int32 amount = playerTarget->isMoving() ?
-                    playerTarget->CalculateSpellDamage(playerTarget, GetSpellInfo(), aurEff->GetEffIndex(), &baseAmount) :
-                    aurEff->GetAmount() - 1;
-                    aurEff->SetAmount(amount);
+                    int32 curAmount = aurEff->GetAmount();
+                    int32 newAmount;
+                    if(playerTarget->isMoving() || curAmount < 0)
+                      newAmount = playerTarget->CalculateSpellDamage(playerTarget, GetSpellInfo(), aurEff->GetEffIndex(), &baseAmount);
+                    else newAmount =  curAmount - 1;
+                    aurEff->SetAmount(newAmount);
                 }
             }
 
