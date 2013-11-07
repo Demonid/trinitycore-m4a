@@ -7862,6 +7862,50 @@ void Player::DuelComplete(DuelCompleteType type)
     delete duel;
     duel = NULL;
 }
+
+void Player::ResetAferDuel()
+{
+  // remove cooldowns on spells that have <= 10 min CD
+  SpellCooldowns::iterator itr, next;
+  for (itr = m_spellCooldowns.begin(); itr != m_spellCooldowns.end(); itr = next)
+  {
+      next = itr;
+      ++next;
+      SpellInfo const* entry = sSpellMgr->GetSpellInfo(itr->first);
+      // check if spellentry is present and if the cooldown is less or equal to 10 min
+      if (entry &&
+          entry->RecoveryTime <= 10 * MINUTE * IN_MILLISECONDS &&
+          entry->CategoryRecoveryTime <= 10 * MINUTE * IN_MILLISECONDS)
+      {
+          // Remove aura associated with cooldown
+          RemoveAura(itr->first, 0, 0, AURA_REMOVE_BY_DEFAULT);
+          // remove & notify
+          RemoveSpellCooldown(itr->first, true);
+      }
+  }
+
+  // pet cooldowns
+  if (Pet* pet = GetPet())
+  {
+      // notify player
+      for (CreatureSpellCooldowns::const_iterator itr2 = pet->m_CreatureSpellCooldowns.begin(); itr2 != pet->m_CreatureSpellCooldowns.end(); ++itr2)
+      {
+          SendClearCooldown(itr2->first, pet);
+          pet->RemoveAura(itr2->first, 0, 0, AURA_REMOVE_BY_DEFAULT);
+      }
+
+      // actually clear cooldowns
+      pet->m_CreatureSpellCooldowns.clear();  
+  }
+
+  RemoveAura(57723); // Exhaustion
+  RemoveAura(41425); // Hypothermia
+  RemoveAura(25771); // Forbearance  
+  RemoveAura(66233); // Ardent Defender
+  RemoveAura(11196); // Recently Bandaged
+
+  ResetAllPowers();
+}
 //---------------------------------------------------------//
 
 void Player::_ApplyItemMods(Item* item, uint8 slot, bool apply)
