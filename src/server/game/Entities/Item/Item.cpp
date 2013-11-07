@@ -1505,13 +1505,13 @@ bool Item::CanBeTransmogedTo(uint32 entry)
     case ITEM_SUBCLASS_WEAPON_AXE:
     case ITEM_SUBCLASS_WEAPON_MACE:
     case ITEM_SUBCLASS_WEAPON_SWORD:
-      if(itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_AXE && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_MACE && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_SWORD)
+    case ITEM_SUBCLASS_WEAPON_FIST:
+      if(itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_AXE && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_MACE && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_SWORD && itemTemplate->SubClass != ITEM_SUBCLASS_WEAPON_FIST)
           return false;
         break;
     case ITEM_SUBCLASS_WEAPON_WAND:
     case ITEM_SUBCLASS_WEAPON_THROWN:
     case ITEM_SUBCLASS_WEAPON_DAGGER:
-    case ITEM_SUBCLASS_WEAPON_FIST:
       if(itemTemplate->SubClass != GetTemplate()->SubClass)
         return false;
       break;
