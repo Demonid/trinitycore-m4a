@@ -7878,13 +7878,25 @@ void Player::ResetAferDuel()
       SpellInfo const* entry = sSpellMgr->GetSpellInfo(itr->first);
       // check if spellentry is present and if the cooldown is less or equal to 10 min
       if (entry &&
-          entry->RecoveryTime <= 10 * MINUTE * IN_MILLISECONDS &&
-          entry->CategoryRecoveryTime <= 10 * MINUTE * IN_MILLISECONDS)
+          entry->RecoveryTime <= 8 * MINUTE * IN_MILLISECONDS &&
+          entry->CategoryRecoveryTime <= 8 * MINUTE * IN_MILLISECONDS)
       {
           // Remove aura associated with cooldown
-          RemoveAura(itr->first, 0, 0, AURA_REMOVE_BY_DEFAULT);
-          // remove & notify
-          RemoveSpellCooldown(itr->first, true);
+        for (AuraApplicationMap::iterator iter = m_appliedAuras.lower_bound(itr->first); iter != m_appliedAuras.upper_bound(itr->first);)
+        {
+          Aura const* aura = iter->second->GetBase();
+          if(!(aura->GetSpellInfo()->AttributesEx4 & SPELL_ATTR4_UNK21) // don't remove stances, shadowform, pally/hunter auras
+            && !aura->IsPassive()
+            && aura->GetCasterGUID() == GetGUID())
+          {
+            RemoveAura(iter);
+            iter = m_appliedAuras.lower_bound(itr->first);
+          }
+          else iter++;
+        }        
+        
+        // remove & notify
+        RemoveSpellCooldown(itr->first, true);
       }
   }
 
@@ -7893,14 +7905,15 @@ void Player::ResetAferDuel()
   {
       // notify player
       for (CreatureSpellCooldowns::const_iterator itr2 = pet->m_CreatureSpellCooldowns.begin(); itr2 != pet->m_CreatureSpellCooldowns.end(); ++itr2)
-      {
           SendClearCooldown(itr2->first, pet);
-          pet->RemoveAura(itr2->first, 0, 0, AURA_REMOVE_BY_DEFAULT);
-      }
 
       // actually clear cooldowns
       pet->m_CreatureSpellCooldowns.clear();  
   }
+
+  if(Guardian* guardian = GetGuardianPet())
+    guardian->UnSummon();
+
 
   RemoveAura(57723); // Exhaustion
   RemoveAura(41425); // Hypothermia
