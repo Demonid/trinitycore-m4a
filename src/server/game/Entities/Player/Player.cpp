@@ -7852,8 +7852,11 @@ void Player::DuelComplete(DuelCompleteType type)
         duel->opponent->RewardHonor(NULL, 1, amount);
 
     // Reset Health & power, reset cooldowns and remove auras associated with them
-    ResetAferDuel();
-    duel->opponent->ResetAferDuel();
+    if (type != DUEL_INTERRUPTED)
+    {
+      ResetAfterDuel();
+      duel->opponent->ResetAfterDuel();
+    }
 
     //cleanups
     SetUInt64Value(PLAYER_DUEL_ARBITER, 0);
@@ -7867,7 +7870,7 @@ void Player::DuelComplete(DuelCompleteType type)
     duel = NULL;
 }
 
-void Player::ResetAferDuel()
+void Player::ResetAfterDuel()
 {
   // remove cooldowns on spells that have <= 10 min CD
   SpellCooldowns::iterator itr, next;
@@ -7910,10 +7913,6 @@ void Player::ResetAferDuel()
       // actually clear cooldowns
       pet->m_CreatureSpellCooldowns.clear();  
   }
-
-  if(Guardian* guardian = GetGuardianPet())
-    guardian->UnSummon();
-
 
   RemoveAura(57723); // Exhaustion
   RemoveAura(41425); // Hypothermia
